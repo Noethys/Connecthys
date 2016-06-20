@@ -1,3 +1,14 @@
+# Connecthys
+Travaux/
+Connecthys.egg-info/
+SQLiteSpy.exe
+SQLiteSpy.db3
+setup_source.bat
+setup_wheel.bat
+setup_windows.bat
+.bak
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
