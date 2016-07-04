@@ -1,0 +1,164 @@
+{% extends "page.html" %}
+{% import "macros_historique.html" as macros_historique with context %}
+
+
+	
+	
+{% block content -%}
+<h4 class="page-header">
+	<small><i class="fa fa-info-circle"></i> Vous pouvez consulter ici la liste des inscriptions et demander des inscriptions à d'autres activités.</small>
+</h4>
+  
+  
+
+{% for individu in liste_individus %}
+<div class="box box-widget widget-user-2">
+	
+	<!-- Définit une couleur au hasard pour l'individu -->
+	{% set couleur = individu.couleur %}
+	
+	<!-- Nom de l'individu -->
+	<div class="widget-user-header bg-{{ couleur }}">
+		<div class="widget-user-image">
+			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
+		</div>
+		<h3 class="widget-user-username">{{ individu.prenom }}</h3>
+		<h5 class="widget-user-desc">{% if individu.age != None %}{{ individu.age }} ans{% else %}Age inconnu{% endif %}</h5>
+	</div>
+	
+	<!-- Liste des inscriptions -->
+	{% if individu.inscriptions|length > 1 %}
+		<div class="box-footer no-padding">
+			<table class="table table-bordered table-striped no-margin">
+				<tbody>
+					<tr>
+						<th><center>Activité</center></th>
+						<th><center>Groupe</center></th>
+					</tr>
+			
+					{% for inscription in individu.inscriptions %}
+					<tr>
+						<td><center>{{ inscription.activite.nom }}</center></td>
+						<td><center>{{ inscription.groupe.nom }}</center></td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		
+	{% else %}
+		<div class="box-footer">
+			<p>Aucune inscription</p>
+		</div>
+	{% endif %}
+	
+	<div class="box-footer no-margin">
+		<span class="pull-right"><a href="#" id="demander_inscription" data-toggle="modal" data-target="#modal_demander_inscription" data-idindividu="{{ individu.IDindividu }}" class="btn btn-primary btn-xs" title="Inscrire {{ individu.prenom }} à une activité">Inscrire à une activité</a></span>
+	</div>
+
+</div>
+{% endfor %}
+		  	
+			
+			
+<!-- Modal : Demander une inscription -->
+<div class="modal fade" id="modal_demander_inscription" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+	<div class="modal-content">
+		
+	  <div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		<h4 class="modal-title" id="myModalLabel"><strong>Demander une inscription</strong></h4>
+	  </div>
+	  
+	  <div class="modal-body">
+	  
+		<form>
+		<input type='hidden' id="idindividu" value=0>
+		</form>
+
+		<div class="form-group">
+		  <h4>Sélectionnez une activité et un groupe</h4>
+		  <select id="choix_activite" class="form-control">
+			{% for activite in liste_activites %}
+				{% for groupe in dict_groupes[activite.IDactivite] %}
+					<option value="{{ activite.IDactivite }}-{{ groupe.IDgroupe }}">{{ activite.nom }} - {{ groupe.nom }}</option>
+				{% endfor %}
+			{% endfor %}
+		  </select>
+		</div>
+		
+		<!-- Box commentaires -->
+		<h4>Vous pouvez ajouter un commentaire</h4>
+		<div class="form-group">
+			<textarea id="commentaire" class="form-control" rows="2" maxlength="300" placeholder=""></textarea>
+		</div>
+		
+		<!-- Div pour affiche erreur éventuelle de validation du form -->
+		<div id="message_erreur" class="text-red"></div>
+		
+	  </div><!-- Fin modal body -->
+	  
+	  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+			<button type="button" class="btn btn-primary" id="envoyer">Valider</button>
+	  </div>
+
+	</div>
+  </div>
+</div>
+			
+			
+<br>			
+			
+{# Historique des demandes #}
+{{ macros_historique.historique_body(titre="Historique des demandes", soustitre="Vous pouvez supprimer des demandes non traitées.", historique=historique) }}
+
+{%- endblock content %}
+
+{% block scripts %}
+
+	{{ super() }}
+
+	<script>
+		// Affichage de la fenêtre modale 'Recevoir un document'
+		$('#modal_demander_inscription').on('show.bs.modal', function (event) {
+		  var button = $(event.relatedTarget)
+		  var modal = $(this)
+		  // Remplissage des champs
+		  modal.find('#idindividu').val(button.data('idindividu'))
+		})
+	</script>
+
+	<script type=text/javascript>
+		// Validation de l'envoi de la demande d'inscription
+		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		$(function() {
+			$('button#envoyer').bind('click', function() {
+			
+				// Envoie les données au serveur
+				$.getJSON($SCRIPT_ROOT + 'envoyer_demande_inscription', {
+					idindividu: $("#idindividu").val(),
+					activite: $("#choix_activite").val(),
+					commentaire: $("#commentaire").val(),
+				}, function(data) {
+					if (data.success) {
+						// Cache la fenêtre modale
+						$('#modal_demander_inscription').modal('hide');
+						// Recharge la page
+						location.href = "{{ url_for('inscriptions') }}"
+					} else {
+						// Affiche un message d'erreur dans la fenêtre modale
+						$('#message_erreur').text('Erreur : ' + data.error_msg)
+					}
+				});
+				return false;
+			});
+		});
+	</script>
+
+	
+	{# Historiques des demandes #}
+	{{ macros_historique.historique_scripts(historique=historique, page="inscriptions") }}
+
+{%- endblock scripts %}

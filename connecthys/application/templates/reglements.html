@@ -1,0 +1,85 @@
+{% extends "page.html" %}
+{% import "macros_historique.html" as macros_historique with context %}
+{% import "macros_paiement_ligne.html" as macros_paiement_ligne with context %}
+{% import "macros_recevoir_document.html" as macros_recevoir_document with context %}
+
+
+{% block content -%}
+
+	<div class="row">
+		<div class="col-xs-12">
+						
+			{# Paiement en ligne #}
+			{{ macros_paiement_ligne.paiement_ligne_body() }}
+				  
+			<div class="box box-primary">
+				<div class="box-header with-border">
+					<h3 class="box-title">Liste des derniers règlements</h3>
+				</div>
+			<!-- /.box-header -->
+				<div class="box-body table-responsive">
+					<table class="table table-bordered table-striped">
+						<tbody>
+							<tr>
+								<th><center>N°</center></th>
+								<th><center>Date</center></th>
+								<th><center>Mode</center></th>
+								<th><center>N°</center></th>
+								<th><center>Montant</center></th>
+								<th><center>Encaissé</center></th>
+								<th><center>Recevoir un reçu</center></th>
+							</tr>
+					
+							{% for reglement in liste_reglements %}
+							<tr>
+								<td><center>{{ reglement.IDreglement }}</center></td>
+								<td><center>{{ DateDDEnFr(reglement.date) }}</center></td>
+								<td><center>{{ reglement.mode }}</center></td>
+								<td><center>{{ reglement.numero }}</center></td>
+								<td><center>{{ Formate_montant(reglement.montant) }}</center></td>
+								{% if reglement.date_encaissement == None %}
+									<td><center><span class="badge bg-red">Non</span></center></td>
+								{% else %}
+									<td><center><span class="badge bg-green">{{ DateDDEnFr(reglement.date_encaissement) }}</span></center></td>
+									{% endif %}
+								<td><center>
+									<button type="button" class="btn btn-box-tool" data-toggle="modal" data-target="#modal_recevoir_document" data-id="{{ reglement.IDreglement }}" data-info="" title="Recevoir un reçu pour ce règlement par Email ou par la Poste">
+									<i class="fa fa-download"></i></button>
+								</center></td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					
+				</div>
+			<!-- /.box-body -->
+			</div>
+			<!-- /.box -->
+		</div>
+	</div>		
+	
+	<br>
+	
+	{# Historique des demandes #}
+	{{ macros_historique.historique_body(titre="Historique des demandes", soustitre="Vous pouvez supprimer des demandes non traitées.", historique=historique) }}
+
+	{# Modal Recevoir un document #}
+	{{ macros_recevoir_document.recevoir_document_body(titre="Recevoir un reçu", action="{{ url_for('reglements') }}") }}
+
+
+{%- endblock content %}
+
+{% block scripts %}
+
+	{{ super() }}
+
+	{# Paiement en ligne #}
+	{{ macros_paiement_ligne.paiement_ligne_scripts() }}
+
+	{# Recevoir document #}
+	{{ macros_recevoir_document.recevoir_document_scripts(route='/envoyer_demande_recu') }}
+
+	{# Historiques des demandes #}
+	{{ macros_historique.historique_scripts(historique=historique, page="reglements") }}
+
+{%- endblock scripts %}

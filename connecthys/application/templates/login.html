@@ -1,0 +1,91 @@
+{% extends "adminlte/base_without_nav.html" %}
+
+{% block title %}Connexion{% endblock %}
+{% block description %}Connexion{% endblock %}
+{% block bodytag %}login-page{% endblock %}
+
+{% block head %}
+	{{ super() }}
+	<!-- iCheck -->
+	<link href="{{ adminlte_find_resource('plugins/iCheck/all.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">
+	
+	{# Affichage de l'image de fond #}
+	{% if config.IMAGE_FOND %}
+		<style type="text/css" media="screen">
+			html, body {
+				background-image:url({{ url_for('static', filename="fonds/" + config.IMAGE_FOND) }});
+			}
+			.login-page {
+				background-color:transparent;
+			}
+			.login-box-body
+			{
+			  background:rgba(255, 255, 255, 1);	
+			}
+		</style>
+	{% endif %}
+	
+{% endblock %}
+
+{% block body %}
+
+  <div class="login-box">
+    <div class="login-logo">
+      Le <strong>Portail</strong> Famille
+    </div>
+    <div class="login-box-body">
+      <p>Saisissez vos codes personnels</p>
+      {# Display errors (if there are any). #}
+      {% with messages = get_flashed_messages(category_filter=["error"]) %}
+        {% if messages %}
+            {% for message in messages %}
+              <p><strong style="color: red">{{ message }}</strong></p>
+            {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {# Render the login form. #}
+      <form action="{{ url_for('login') }}" method="post">
+	    {{ form.csrf_token }}
+        <div class="form-group has-feedback">
+          {{ form.identifiant(class='form-control', placeholder='Identifiant', type='text', required='true') }} 
+          <span class="glyphicon glyphicon-user form-control-feedback"></span>
+        </div>
+        <div class="form-group has-feedback">
+		  {{ form.password(class='form-control', placeholder='Mot de passe', type='password', required='true') }} 
+          <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+        </div>
+        <div class="row">
+			<div class="col-xs-8">
+			  <div class="checkbox icheck">
+				<label>
+				  {{ form.remember }} Mémoriser
+				</label>
+			  </div>
+			</div>
+			<!-- /.col -->
+			<div class="col-xs-4">
+			  <button type="submit" class="btn btn-primary btn-block btn-flat">Valider</button>
+			</div>
+			<!-- /.col -->
+        </div>
+      </form>
+    </div>
+  </div>
+
+{% endblock %}
+
+
+{% block scripts %}
+	{{ super() }}
+	<!-- iCheck -->
+	<script src="{{ adminlte_find_resource('js/plugins/iCheck/icheck.min.js', cdn='local', use_minified=False)}}"></script>
+	<script>
+	  $(function () {
+		$('input').iCheck({
+		  checkboxClass: 'icheckbox_square-blue',
+		  radioClass: 'iradio_square-blue',
+		  increaseArea: '20%' // optional
+		});
+	  });
+	</script>
+{%- endblock scripts %}

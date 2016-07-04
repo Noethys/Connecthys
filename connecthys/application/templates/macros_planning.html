@@ -1,0 +1,213 @@
+{% macro planning_body(dict_planning={}, impression=False) %}
+
+	
+	<table class="table table-bordered">
+		<tbody>
+			
+			<!-- Entêtes de colonnes unités -->
+			<tr>
+				<th></th>
+				{% for unite in dict_planning["liste_unites"] %}
+				<th><center>{{ unite.nom }}</center></th>
+				{% endfor %}
+			</tr>	
+
+			<!-- Lignes dates -->
+			{% for date in dict_planning["liste_dates"] %}
+			<tr>
+				<td><center>{{ DateDDEnFrComplet(date) }}</td>
+				
+				{% for unite in dict_planning["liste_unites"] %}
+					{% if unite.IDunite in dict_planning["dict_ouvertures"][date] %}
+						{% set etat_case = GetEtatFondCase(dict_planning["dict_consommations"], date, unite.IDunite) %}
+						{% set etat_coche = GetEtatCocheCase(dict_planning["dict_reservations"], date, unite.IDunite) %}
+						<td
+							{% if etat_case == "reservation" %} style="background-color: #00a65a;"{% endif %}
+							{% if etat_case == "attente" %} style="background-color: #fff111;"{% endif %}
+							>
+							{% if impression == False %}
+								<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %}></center>
+							{% else %}
+								<center><strong>{% if etat_coche == True %} X {% endif %}</strong></center>
+							{% endif %}
+						</td>
+					{% else %}
+						<td bgcolor="#000000">
+						</td>
+					{% endif %}
+					
+				{% endfor %}
+				
+			</tr>
+			{% endfor %}
+		
+		</tbody>
+	</table>
+
+{% endmacro %}
+
+
+
+{% macro planning_modals(dict_planning={}) %}
+
+	<!-- Modal : Confirmation de l'envoi -->
+	<div class="modal fade" id="modal_confirmation_envoi" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  <div class="modal-dialog" role="document">
+		<div class="modal-content">
+			
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="myModalLabel"><strong>Envoyer les réservations</strong></h4>
+		  </div>
+		  
+		  <div class="modal-body">
+			
+			<form action={{ action }} method="post">
+			
+			<!-- Box infos -->
+			<div>Votre demande de réservations est prête à être envoyée.</div>
+			<br>
+			
+			<!-- Box commentaires -->
+			<h4>Vous pouvez ajouter un commentaire</h4>
+			<div class="form-group">
+				<textarea id="commentaire" class="form-control" rows="2" maxlength="300" placeholder=""></textarea>
+			</div>
+			
+			<!-- Div pour affiche erreur éventuelle de validation du form -->
+			<div id="message_erreur" class="text-red"></div>
+			
+		  </form>
+		  
+		  </div><!-- Fin modal body -->
+		  
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+			<button type="button" class="btn btn-primary" id="confirmation">Valider</button>
+		  </div>
+
+		</div>
+	  </div>
+	</div>
+
+		
+	<!-- Modal : Annulation des modifications -->
+	<div class="modal fade" id="modal_annulation" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  <div class="modal-dialog" role="document">
+		<div class="modal-content">
+			
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="myModalLabel"><strong>Annuler les modifications</strong></h4>
+		  </div>
+		  
+		  <div class="modal-body">
+			
+			<form action={{ action }} method="post">
+			
+			<!-- Box infos -->
+			<div>Souhaitez-vous vraiment annuler vos dernières modifications ?</div>
+			<br>
+					
+		  </form>
+		  
+		  </div><!-- Fin modal body -->
+		  
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Non, je veux les conserver</button>
+			<button type="button" class="btn btn-danger" id="confirmation_annulation">Oui, je veux les annuler</button>
+		  </div>
+
+		</div>
+	  </div>
+	</div>
+
+{% endmacro %}
+
+
+{%  macro planning_scripts(dict_planning={}) %}
+	
+	<script>
+	// Annulation des modifications ?
+	dirty = 0;
+	$(function() {
+		$('a#retour_reservations,button#annuler,a[id!="imprimer"]').bind('click', function(event) {
+			var href = $(this).attr('href');
+			if(dirty == 1) {
+				$('#modal_annulation').modal('show');
+				event.preventDefault();
+				}
+			else {
+				location.href = href
+				}
+			});
+		});
+	</script>
+	
+	<script>
+	// Confirmation de l'annulation des modifications
+	$(function() {
+		$('button#confirmation_annulation').bind('click', function() {
+			location.href = "{{ url_for('reservations') }}"
+			});
+		});
+	</script>
+	
+	<script>
+		$('input#case').on('ifClicked', function(event){
+			// Coche une unité à la fois
+			if({{ dict_planning["periode"].activite.coche_unique }} == 1) {
+					var date = $(this).attr('data-date');
+					var IDunite = $(this).attr('data-IDunite');
+					$("input[data-date='" + date + "']:checked").each(function() {
+						$(this).iCheck('uncheck');
+						});
+				};
+			// définit dirty
+			dirty = 1;
+			});
+
+	</script>
+	
+	<script>
+	// Validation de l'envoi des réservations
+	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+	$(function() {
+		$('button#confirmation').bind('click', function() {
+			
+			var liste_resultats = [];
+			$("input#case:checked").each(function() {
+				var date = $(this).attr('data-date');
+				var IDunite = $(this).attr('data-IDunite');
+				var valeur = date + "#" + IDunite.toString();
+				liste_resultats.push(valeur);
+			});
+			
+			$.ajax({
+			  type: 'GET',
+			  dataType: "json",
+			  contentType: "application/json; charset=utf-8",
+			  url: $SCRIPT_ROOT + '/envoyer_reservations',
+			  data: {
+				resultats: liste_resultats.join(","),
+				IDinscription: {{ dict_planning["inscription"].IDinscription }},
+				IDperiode: {{ dict_planning["periode"].IDperiode }},
+				commentaire: $("#commentaire").val(),
+				},
+			  success: function(data) {
+					// Cache la fenêtre modale
+					$('#modal_confirmation_envoi').modal('hide');
+					// Recharge la page
+					location.href = "{{ url_for('reservations') }}"
+					},
+			  error: function(data) {
+					// Affiche un message d'erreur dans la fenêtre modale
+					alert("erreur !");
+					//$('#message_erreur').text('Erreur: ' + data.error_msg);
+					}
+			});
+		});
+	});
+	</script>
+	
+{% endmacro %}

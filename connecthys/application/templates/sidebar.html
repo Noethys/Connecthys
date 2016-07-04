@@ -1,0 +1,55 @@
+{% block sidebar -%}
+<!-- sidebar: style can be found in sidebar.less -->
+<!-- sidebar menu: : style can be found in sidebar.less -->
+  <div class="user-panel">
+	{% if config['ORGANISATEUR_IMAGE'] not in ('', None) %}
+	<div class="image">
+	  <img src="{{ url_for('static', filename=config['ORGANISATEUR_IMAGE']) }}" alt="User Image" {% if config['ORGANISATEUR_IMAGE_ROND'] == True %}class="img-circle"{% endif %}>
+	</div>
+	{% endif %}
+	<div class="info">
+		<ul>
+			{% if config['ORGANISATEUR_NOM'] not in ('', None) %}<li><p><strong>{{config['ORGANISATEUR_NOM']}}</strong></p></li>{% endif %}
+			{% if config['ORGANISATEUR_RUE'] not in ('', None) %}<li>{{config['ORGANISATEUR_RUE']}}</li>{% endif %}
+			{% if config['ORGANISATEUR_CP'] not in ('', None) %}<li>{{config['ORGANISATEUR_CP']}} {{config['ORGANISATEUR_VILLE']}}</li>{% endif %}
+			{% if config['ORGANISATEUR_TEL'] not in ('', None) %}<li><i class="fa fa-phone"></i> {{config['ORGANISATEUR_TEL']}}</li>{% endif %}
+			{% if config['ORGANISATEUR_FAX'] not in ('', None) %}<li><i class="fa fa-fax"></i> {{config['ORGANISATEUR_FAX']}}</li>{% endif %}
+		</ul>
+	</div>
+  </div>
+  
+
+<div>
+<ul class="sidebar-menu">
+
+	
+  
+	{% for dict_menu in g.liste_pages %}
+		
+		{% if dict_menu["type"] == "label" %}
+		
+			<li class="header">{{ dict_menu["label"] }}</li>
+		
+		{% else %}
+		
+			{% set page = dict_menu["page"] %}
+			
+			{% if page == active_page %}
+				<li class="active">
+			{% else %}
+				<li>
+			{% endif %}
+				<a class="item_sidemenu" href="{{ url_for(page) }}">
+					<i class="fa {{ g.dict_pages[page]['icone'] }}"></i> {# Pour avoir la couleur, ajouter : text-{{ g.dict_pages[page]['couleur']  #}
+					<span>{{ g.dict_pages[page]['nom'] }}</span>
+				</a>
+			</li>
+				
+		{% endif %}
+		
+	{% endfor %}
+	
+  </ul>
+</div>
+<!-- /.sidebar -->
+{%- endblock sidebar %}

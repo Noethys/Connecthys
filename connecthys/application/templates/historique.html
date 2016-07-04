@@ -1,0 +1,24 @@
+{% extends "page.html" %}
+{% import "macros_historique.html" as macros_historique with context %}
+
+
+{% block content -%}
+
+	{# Historique des demandes #}
+	
+	{% if historique["liste_dates"]|length > 0 %}
+		{{ macros_historique.historique_body(titre="Historique des demandes", soustitre="Vous pouvez supprimer des demandes non traitées.", historique=historique) }}
+	{% else %}
+		<p>L'historique est vide.</p>
+	{% endif %}
+	
+{%- endblock content %}
+
+{% block scripts %}
+
+	{{ super() }}
+
+	{# Historiques des demandes #}
+	{{ macros_historique.historique_scripts(historique=historique, page="historique") }}
+
+{%- endblock scripts %}

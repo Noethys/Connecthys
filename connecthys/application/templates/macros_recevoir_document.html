@@ -1,0 +1,114 @@
+{% macro recevoir_document_body(titre="Recevoir une facture", action="{{ url_for('factures') }}") %}
+
+	<!-- Modal : Recevoir un document -->
+	<div class="modal fade" id="modal_recevoir_document" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  <div class="modal-dialog" role="document">
+		<div class="modal-content">
+			
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="myModalLabel"><strong>{{ titre }}</strong></h4>
+		  </div>
+		  
+		  <div class="modal-body">
+			
+			<form action={{ action }} method="post">
+			<input type='hidden' id="id" value=0>
+			<input type='hidden' id="info" value="">
+			
+			<!-- Box sélection destinataire -->
+			<h4>Comment souhaitez-vous recevoir ce document ?</h4>
+			<div class="form-group">
+			<table class="table table-condensed">
+				{% if config.RECEVOIR_DOCUMENT_EMAIL == True %}
+				<tr>
+					<td><input type="radio" name="methode_envoi" value="email" class="minimal" checked></td>
+					<td>Recevoir par email</td>
+				</tr>
+				{% endif %}
+				{% if config.RECEVOIR_DOCUMENT_POSTE == True %}
+				<tr>
+					<td><input type="radio" name="methode_envoi" value="courrier" class="minimal"></td>
+					<td>Recevoir à mon domicile par voie postale</td>
+				</tr>
+				{% endif %}
+				{% if config.RECEVOIR_DOCUMENT_RETIRER == True %}
+				<tr>
+					<td><input type="radio" name="methode_envoi" value="retirer" class="minimal"></td>
+					<td>Retirer directement {{ config.RECEVOIR_DOCUMENT_RETIRER_LIEU }}</td>
+				</tr>
+				{% endif %}
+			</table>
+			</div>
+			
+			<!-- Box commentaires -->
+			<h4>Vous pouvez ajouter un commentaire</h4>
+			<div class="form-group">
+				<textarea id="commentaire" class="form-control" rows="2" maxlength="300" placeholder=""></textarea>
+			</div>
+			
+			<!-- Div pour affiche erreur éventuelle de validation du form -->
+			<div id="message_erreur" class="text-red"></div>
+			
+		  </form>
+		  
+		  </div><!-- Fin modal body -->
+		  
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+			<button type="button" class="btn btn-primary" id="envoyer" data-dismiss="modal">Valider</button>
+		  </div>
+
+		</div>
+	  </div>
+	</div>
+
+{% endmacro %}
+
+
+{% macro recevoir_document_scripts(route='/envoyer_demande', page="factures") %}
+
+	<script>
+		// Affichage de la fenêtre modale 'Recevoir un document'
+		$('#modal_recevoir_document').on('show.bs.modal', function (event) {
+		  var button = $(event.relatedTarget)
+		  var modal = $(this)
+		  // Remplissage des champs
+		  modal.find('#id').val(button.data('id'))
+		  modal.find('#info').val(button.data('info'))
+		})
+	</script>
+
+	<script type=text/javascript>
+		// Validation de l'envoi de la facture
+		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		$(function() {
+			$('button#envoyer').bind('click', function() {
+				$.ajax({
+				  type: 'GET',
+				  dataType: "json",
+				  contentType: "application/json; charset=utf-8",
+				  url: $SCRIPT_ROOT + '{{ route }}',
+				  data: {
+					id: $("#id").val(),
+					info: $("#info").val(),
+					methode_envoi: $("input:radio[name='methode_envoi']:checked").val(),
+					commentaire: $("#commentaire").val(),
+					},
+				  success: function(data) {
+						// Cache la fenêtre modale
+						$('#modal_recevoir_document').modal('hide');
+						// Recharge la page
+						location.href = "{{ url_for(page) }}"
+						},
+				  error: function(data) {
+						// Affiche un message d'erreur dans la fenêtre modale
+						$('#message_erreur').text('Erreur: ' + data.error_msg);
+						}
+				});
+			});
+		});
+	</script>
+
+	
+{% endmacro %}

@@ -1,0 +1,94 @@
+{% macro paiement_ligne_body() %}
+		
+	{% if config.PAIEMENT_EN_LIGNE_ACTIF == True %}
+	<div class="box box-success ">
+		<div class="box-header with-border">
+			<h3 class="box-title">Payer en ligne</h3>
+		</div>
+		<div class="box-body">
+			<p>Vous pouvez payer une ou plusieurs factures en ligne à l'aide de votre carte bancaire. Le paiement est sécurisé. Cliquez sur le bouton ci-dessous pour accéder au site de notre partenaire Paybox.</p>
+			<div>
+				<a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal_selection_factures" title="Payer en ligne avec une carte bancaire"><i class="fa fa-credit-card"></i> Payer en ligne</a>
+			</div>
+		</div>
+	</div>
+
+
+	<!-- Modal : Sélection de factures-->
+	<div class="modal fade" id="modal_selection_factures" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  <div class="modal-dialog" role="document">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="myModalLabel">Sélectionnez les factures à payer</h4>
+		  </div>
+		  <div class="modal-body">
+			
+			<div class="box-body table-responsive">
+				
+				<table class="table table-bordered table-striped">
+					<tbody>
+						<tr>
+							<th><center>Sélection</center></th>
+							<th><center>Du</center></th>
+							<th><center>Au</center></th>
+							<th><center>N°</center></th>
+							<th><center>Montant</center></th>
+							<th><center>Déjà réglé</center></th>
+							<th><center>Reste à régler</center></th>
+						</tr>
+				
+						{% for facture in liste_factures %}
+							{% if facture.montant_solde > 0.0 %}
+							<tr>
+								<td><center><input type="checkbox" name="check_facture" class="flat-red" value={{ facture.montant_solde }} checked></center></td>
+								<td><center>{{ DateDDEnFr(facture.date_debut) }}</center></td>
+								<td><center>{{ DateDDEnFr(facture.date_fin) }}</center></td>
+								<td><center>{{ facture.numero }}</center></td>
+								<td><center>{{ Formate_montant(facture.montant) }}</center></td>
+								<td><center>{{ Formate_montant(facture.montant_regle) }}</center></td>
+								<td><center><span class="badge bg-{% if facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
+							</tr>
+							{% endif %}
+						{% endfor %}
+					</tbody>
+				</table>
+				
+				</br>
+				<div>
+				Montant du règlement : <strong><span class="total">{{ Formate_montant(montant_factures_impayees) }}</span></strong>
+				</div>
+				
+			</div>
+			
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+			<button type="button" class="btn btn-primary">Valider</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
+	{% endif %}
+
+{% endmacro %}
+
+{%  macro paiement_ligne_scripts(liste_dates_actions=[]) %}
+
+{% if config.PAIEMENT_EN_LIGNE_ACTIF == True %}
+
+	<script>
+		// Mise à jour du montant total du règlement
+		$('input').on('ifToggled', function(event){
+			var montant_reglement = 0.0;
+			$("input[name='check_facture']:checked").each(function() {
+				montant_reglement += parseFloat($(this).val());
+				});
+			var montant_reglement = parseFloat(montant_reglement).toFixed(2) + " €";
+			$('.total').html(montant_reglement);
+		});
+	</script>
+	
+	{% endif %}
+	
+{% endmacro %}

@@ -1,0 +1,87 @@
+{% extends "page.html" %}
+{% import "macros_planning.html" as macros_planning with context %}
+	
+	
+{% block content -%}
+
+	<h4 class="page-header">
+		<small><i class="fa fa-info-circle"></i> Cliquez dans les cases pour ajouter ou supprimer des consommations avant de valider l'envoi des données.</small>
+	</h4>
+	  
+	<p>	
+	<a id="retour_reservations" href="{{ url_for('reservations') }}"><i class="fa fa-arrow-circle-o-left"></i> Revenir à la liste des périodes</a>
+	</p>
+
+	<!-- Widget: user widget style 1 -->
+	<div class="box box-widget widget-user">
+	<!-- Add the bg color to the header using any of the bg-* classes -->
+	{% set individu = dict_planning["inscription"].individu %}
+	<div class="widget-user-header bg-{{ dict_planning['couleur'] }}">
+	  <h3 class="widget-user-username">{{ individu.prenom }}</h3>
+	  <h5 class="widget-user-desc">{% if individu.age != None %}{{ individu.age }} ans{% else %}Age inconnu{% endif %}</h5>
+	</div>
+	<div class="widget-user-image">
+	  <img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
+	</div>
+	<div class="box-footer">
+	  <div class="row">
+		<div class="col-sm-4 border-right">
+		  <div class="description-block">
+			<h5 class="description-header"><small>Activité</small></h5>
+			<span class="description-text text-{{ dict_planning['couleur'] }}">{{ dict_planning["periode"].activite.nom }}</span>
+		  </div>
+		  <!-- /.description-block -->
+		</div>
+		<!-- /.col -->
+		<div class="col-sm-4 border-right">
+		  <div class="description-block">
+			<h5 class="description-header"><small>Période</small></h5>
+			<span class="description-text text-{{ dict_planning['couleur'] }}">{{ dict_planning["periode"].nom }}</span>
+		  </div>
+		  <!-- /.description-block -->
+		</div>
+		<!-- /.col -->
+		<div class="col-sm-4">
+		  <div class="description-block">
+			<h5 class="description-header"><small>Dates</small></h5>
+			<span class="description-text text-{{ dict_planning['couleur'] }}">Du {{ DateDDEnFr(dict_planning["periode"].date_debut) }} au {{ DateDDEnFr(dict_planning["periode"].date_fin) }}</span>
+		  </div>
+		  <!-- /.description-block -->
+		</div>
+		<!-- /.col -->
+	  </div>
+	  <!-- /.row -->
+	</div>
+	</div>
+	<!-- /.widget-user -->
+
+		
+	<!-- Planning -->
+	<div class="box box-solid">
+		<div class="box-body no-padding">
+			{{ macros_planning.planning_body(dict_planning=dict_planning) }}
+		</div>
+		<div class="box-footer clearfix">
+				<a id="imprimer" href="{{ url_for('imprimer_reservations', IDindividu=dict_planning['inscription'].IDindividu, IDperiode=dict_planning['periode'].IDperiode) }}" target="_blank" class="btn btn-default"><i class="fa fa-print"></i> Imprimer</a>
+				<ul class="pagination pagination-sm no-margin pull-right">
+				<li>
+					<button type="button" id="annuler" class="btn btn-danger" href="{{ url_for('reservations') }}">Annuler</button>
+				</li>
+				<li>
+					<button type="button" id="envoyer" class="btn btn-primary" data-toggle="modal" data-target="#modal_confirmation_envoi">Envoyer ma demande</button>
+				</li>
+			</ul>
+		</div>
+	</div>
+		
+	{{ macros_planning.planning_modals(dict_planning=dict_planning) }}
+
+{%- endblock content %}
+
+
+{% block scripts %}
+
+	{{ super() }}
+	{{ macros_planning.planning_scripts(dict_planning=dict_planning) }}
+
+{%- endblock scripts %}

@@ -1,0 +1,134 @@
+{%  macro historique_body(titre="Historique", soustitre=None, historique={}) %}
+	
+	{% if historique["liste_dates"]|length > 0 %}
+		
+		{% if titre not in ("", None) %}
+			<h4 class="page-header">
+				{{ titre }}
+				{% if soustitre not in ("", None) %}
+				<small>{{ soustitre }}</small>
+				{% endif %}
+			</h4>
+		{% endif %}
+		
+		<ul class="timeline">
+		
+			{% for date in historique["liste_dates"] %}
+
+				<!-- timeline time label -->
+				<li class="time-label">
+					<span class="bg-blue">{{ date }}</span>
+				</li>
+			
+				{% for action in historique["dict_actions"][date] %}
+				<li>
+					<i class="fa fa-envelope bg-{% if action.etat == 'attente' %}red{% endif %}{% if action.etat == 'ok' %}green{% endif %}{% if action.etat == 'suppression' %}orange{% endif %}"></i>
+					<div class="timeline-item">
+						<span class="time"><i class="fa fa-clock-o"></i> {{ DateDTEnHeureFr(action.horodatage) }}</span>
+						<h3 class="timeline-header">
+							{% if action.etat == "suppression" %}<del>{% endif %}
+							{{ action.description }}
+							{% if action.etat == "suppression" %}</del>{% endif %}
+						</h3>
+						<div class="timeline-footer">
+							{% if action.etat == "attente" %}
+								<span class="pull-right"><a href="#" id="supprimer_action" data-toggle="modal" data-target="#modal_supprimer_demande" data-idaction="{{ action.IDaction }}" class="btn btn-danger btn-xs" title="Supprimer cette demande">Supprimer</a></span>
+								<span class="text-red">Demande en attente de traitement.</span>
+							{% endif %}
+							{% if action.etat == "suppression" %}
+								<span class="text-yellow">Vous avez supprimé cette demande.</span>
+							{% endif %}
+							{% if action.etat == "ok" %}
+								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_horodatage) }}.</span>
+							{% endif %}
+						</div>
+					</div>
+				</li>
+				{% endfor %}
+
+			{% endfor %}
+			
+			<!-- END timeline item -->
+			<li>
+			  <i class="fa fa-clock-o bg-gray"></i>
+			</li>
+
+		</ul>
+
+
+		<!-- Modal : Supprimer une demande -->
+		<div class="modal fade" id="modal_supprimer_demande" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		  <div class="modal-dialog" role="document">
+			<div class="modal-content">
+				
+			  <div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel"><strong>Supprimer une demande</strong></h4>
+			  </div>
+			  
+			  <div class="modal-body">
+			  
+				<form>
+				<input type='hidden' id="idaction" value=0>
+				</form>
+				
+				Souhaitez-vous vraiment supprimer cette demande ?
+
+				<!-- Div pour affiche erreur éventuelle de validation du form -->
+				<div id="message_erreur_suppression" class="text-red"></div>
+				
+			  </div><!-- Fin modal body -->
+			  
+			  <div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+				<button type="button" class="btn btn-danger" id="supprimer" data-dismiss="modal">Supprimer</button>
+			  </div>
+
+			</div>
+		  </div>
+		</div>
+
+	{% endif %}
+
+{% endmacro %}
+
+{%  macro historique_scripts(historique={}, page="") %}
+
+	{% if historique["liste_dates"]|length > 0 %}
+		<script>
+			// Affichage de la fenêtre modale 'Supprimer une demande'
+			$('#modal_supprimer_demande').on('show.bs.modal', function (event) {
+			  var button = $(event.relatedTarget)
+			  var modal = $(this)
+			  // Remplissage des champs
+			  modal.find('#idaction').val(button.data('idaction'))
+			})
+		</script>
+
+		<script type=text/javascript>
+			// Validation de la suppression d'une demande
+			$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+			$(function() {
+				$('button#supprimer').bind('click', function() {
+					// Envoie les données au serveur
+					$.getJSON($SCRIPT_ROOT + '/supprimer_demande', {
+						idaction: $("#idaction").val(),
+					}, function(data) {
+						if (data.success) {
+							// Cache la fenêtre modale
+							$('#modal_supprimer_demande').modal('hide');
+							// Recharge la page
+							location.href = "{{ url_for(page) }}"
+						} else {
+							// Affiche un message d'erreur dans la fenêtre modale
+							$('#message_erreur_suppression').text('Erreur: ' + data.error_msg)
+						}
+					});
+					return false;
+				});
+			});
+		</script>
+
+	{% endif %}
+
+{% endmacro %}

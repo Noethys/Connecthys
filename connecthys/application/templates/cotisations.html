@@ -1,0 +1,41 @@
+{% extends "page.html" %}
+
+
+{% block content -%}
+	
+	<!-- Liste des cotisations manquantes -->
+	<div class="row">
+		<div class="col-xs-12">
+										  
+			<div class="box box-{% if liste_cotisations_manquantes|length > 0 %}danger{% else %}success{% endif %}">
+				<div class="box-header with-border">
+					<h3 class="box-title">Liste des cotisations manquantes</h3>
+				</div>
+			<!-- /.box-header -->
+				
+				<div class="box-body table-responsive">
+					{% if liste_cotisations_manquantes|length > 0 %}
+					
+					<p>Il reste {{ liste_cotisations_manquantes|length }} cotisation{% if liste_cotisations_manquantes|length > 1 %}s{% endif %} à mettre à jour :</p>
+					
+					<table class="table table-bordered table-striped">
+						<tbody>
+							{% for cotisation_manquante in liste_cotisations_manquantes %}
+							<tr>
+								<td class="text-red">{{ cotisation_manquante.nom }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				{% else %}
+					<p class="text-green"><i class="icon fa fa-check"></i> Aucune cotisation manquante</p>
+				{% endif %}
+				</div>
+			<!-- /.box-body -->
+			</div>
+			<!-- /.box -->
+		</div>
+	</div>
+	
+		
+{%- endblock content %}

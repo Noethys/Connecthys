@@ -1,0 +1,97 @@
+{% extends "page.html" %}
+{% import "macros_historique.html" as macros_historique with context %}
+
+
+{%- block styles %}
+{{ super() }}
+<!-- Modification couleur tab -->
+<style type="text/css" media="screen">
+.nav-tabs-custom > .nav-tabs > li.active {
+	border-top-color: #ffffff;
+	font-weight: bold;
+}
+</style>
+{%- endblock styles %}
+
+	
+	
+	
+{% block content -%}
+<h4 class="page-header">
+	<small><i class="fa fa-info-circle"></i> Sélectionnez une activité puis cliquez sur une des périodes disponibles pour accéder au calendrier des réservations correspondant.</small>
+</h4>
+  
+  
+
+{% for individu in liste_individus %}
+<div class="box box-widget widget-user-2">
+	
+	<!-- Définit une couleur au hasard pour l'individu -->
+	{% set couleur = individu.couleur %}
+	
+	<!-- Nom de l'individu -->
+	<div class="widget-user-header bg-{{ couleur }}">
+		<div class="widget-user-image">
+			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
+		</div>
+		<h3 class="widget-user-username">{{ individu.prenom }}</h3>
+		<h5 class="widget-user-desc">{% if individu.age != None %}{{ individu.age }} ans{% else %}Age inconnu{% endif %}</h5>
+	</div>
+	
+	<!-- Liste des périodes -->
+	<div class="box-footer no-padding">
+	
+		<div class="nav-tabs-custom no-margin">
+		
+			<ul class="nav nav-tabs">
+				{% set index = 1 %}
+				{% for inscription in individu.inscriptions %}
+					<li {% if index == 1 %}class="active"{% endif %}>
+						<a class="text-{{ couleur }}" href="#tab_{{ inscription.IDinscription }}_{{ index }}" data-toggle="tab">{{ inscription.activite.nom }}</a>
+					</li>
+					{% set index = index + 1 %}
+				{% endfor %}
+            </ul>
+						
+			<div class="tab-content no-padding">
+				
+				{% set index = 1 %}
+				{% for inscription in individu.inscriptions %}
+					<div class="tab-pane {% if index == 1 %}active{% endif %}" id="tab_{{ inscription.IDinscription }}_{{ index }}">
+						<ul class="nav nav-stacked">
+							{% for periode in inscription.activite.periodes %}
+								<li>
+									<a href="{{ url_for('planning', IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, index_couleur=individu.index_couleur) }}">
+										<i class="fa fa-calendar text-{{ couleur }}"></i> 
+										{{ periode.nom }} 
+										<small>- du {{ DateDDEnFr(periode.date_debut) }} au {{ DateDDEnFr(periode.date_fin) }}</small>
+									</a>
+								</li>
+							{% endfor %}
+						</ul>
+					</div>
+					{% set index = index + 1 %}
+				{% endfor %}
+				
+			</div>
+			
+		</div>
+	</div>
+</div>
+{% endfor %}
+		  	
+<br>
+			
+{# Historique des demandes #}
+{{ macros_historique.historique_body(titre="Historique des demandes", soustitre="Vous pouvez supprimer des demandes non traitées.", historique=historique) }}
+
+{%- endblock content %}
+
+{% block scripts %}
+
+	{{ super() }}
+
+	{# Historiques des demandes #}
+	{{ macros_historique.historique_scripts(historique=historique, page="reservations") }}
+
+{%- endblock scripts %}

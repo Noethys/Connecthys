@@ -1,0 +1,114 @@
+{% extends "page.html" %}
+
+
+{%- block styles %}
+	
+	{{ super() }}
+	
+	<style type="text/css" media="screen">
+	.small-box .icon {
+		top: -7px;
+		font-size: 70px;
+	}
+	</style>
+	
+{%- endblock styles %}
+
+	
+	
+	
+{% block content -%}
+
+	<h4 class="page-header">
+		Bienvenue sur le portail Famille
+	</h4>
+  
+  
+	<!-- Liste informations importantes -->
+	<div class="row">
+		<div class="col-xs-12">
+										  
+			<div class="box box-{% if liste_pieces_manquantes|length > 0 %}danger{% else %}success{% endif %}">
+				<div class="box-header with-border">
+					<h3 class="box-title">Etat de votre dossier</h3>
+				</div>
+			<!-- /.box-header -->
+				
+				<div class="box-body">
+					
+					<ul>
+					
+					{% if liste_pieces_manquantes|length > 0 %}
+						<li>{{ liste_pieces_manquantes|length }} pièce{% if liste_pieces_manquantes|length > 1 %}s{% endif %} manquante{% if liste_pieces_manquantes|length > 1 %}s{% endif %} :
+							<ul>
+								{% for piece_manquante in liste_pieces_manquantes %}
+									<li><a href="{{ url_for('pieces') }}">{{ piece_manquante.nom }}</a></li>
+								{% endfor %}
+							</ul>
+						</li>
+					{% endif %}
+					
+					{% if liste_cotisations_manquantes|length > 0 %}
+						<li>{{ liste_cotisations_manquantes|length }} cotisation{% if liste_cotisations_manquantes|length > 1 %}s{% endif %} manquante{% if liste_cotisations_manquantes|length > 1 %}s{% endif %} :
+							<ul>
+								{% for cotisation_manquante in liste_cotisations_manquantes %}
+									<li><a href="{{ url_for('cotisations') }}">{{ cotisation_manquante.nom }}</a></li>
+								{% endfor %}
+							</ul>
+						</li>
+					{% endif %}
+
+					</ul>
+					
+					{% if liste_pieces_manquantes|length == 0 and liste_cotisations_manquantes|length == 0 %}
+					<p class="text-green"><i class="icon fa fa-check"></i> Aucune pièce manquante</p>
+					{% endif %}
+				
+				</div>
+			<!-- /.box-body -->
+			</div>
+			<!-- /.box -->
+		</div>
+	</div>
+	
+	
+	<h4 class="page-header">
+		Accès rapide
+		<small>Cliquez sur un raccourci pour accéder à la fonctionnalité souhaitée</small>
+	</h4>
+
+	
+  <!-- Menu -->
+  <div class="row">
+
+	{% for dict_menu in g.liste_pages[2:] %}
+	
+		{%if dict_menu["type"] == "page" and dict_menu["raccourci"] == True %}
+		
+			{% set page = dict_menu["page"] %}
+			
+			<div class="col-lg-3 col-xs-6">
+			  <a href="{{ page }}" class="small-box bg-{{ g.dict_pages[page]['couleur'] }}">
+				<div class="inner">
+				  <h2>
+					{{ g.dict_pages[page]['nom'] }}
+				  </h2>
+
+				  <p><i class="fa fa-clock-o-noimage""></i></p>
+				</div>
+				<div class="icon">
+				  <i class="fa {{ g.dict_pages[page]['icone'] }}"></i>
+				</div>
+				<div class="small-box-footer">
+					{{ g.dict_pages[page]['description'] }}
+				</div>
+			  </a>
+			</div>
+		{% endif %}
+	
+	{% endfor %}
+	
+  </div><!-- /.row -->
+
+	 			
+{%- endblock content %}

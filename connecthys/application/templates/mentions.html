@@ -1,0 +1,53 @@
+{% extends "page.html" %}
+  
+  
+{% block content -%}
+  
+	<div class="box box-primary">
+	
+		<div class="box-header with-border">
+			<h3 class="box-title">Mentions légales</h3>
+		</div>
+		
+		<div class="box-body">		
+			
+			<strong>Éditeur</strong>
+
+			<p>
+			Ce portail internet est édité par '{{config['ORGANISATEUR_NOM'] }}'.
+			</p>
+
+			<strong>Loi Informatique et Libertés</strong>
+			<p>
+			Vous disposez d'un droit d'accès, de modification, de rectification et de suppression des données 
+			qui vous concernent (art. 34 de la loi "Informatique et Libertés" du 6 janvier 1978). Pour exercer ce droit, 
+			vous pouvez contacter l'éditeur par l'intermédiaire de la page Contact du portail.
+			</p>
+
+			<strong>La protection des données personnelles</strong>
+			<p>
+			Aucune information personnelle présente sur ce portail internet n'est cédée à des tiers ou utilisée 
+			à des fins non prévues.
+			</p>
+
+			<strong>Droits d'auteur du contenu</strong>
+			<p>
+			L'ensemble de ce portail relève de la législation française et internationale sur le droit d'auteur 
+			et la propriété intellectuelle. Tous les droits de reproduction sont réservés, y compris pour les 
+			documents téléchargeables et les représentations iconographiques et photographiques.
+			</p>
+			
+			<strong>Le portail Connecthys</strong>
+			<p>
+			Connecthys est le portail internet du logiciel libre et gratuit de gestion multi-activités Noethys. Pour davantage d'informations, consultez le site <a href="http://www.noethys.com" title="Découvrir Noethys">www.noethys.com</a>.
+			</p>
+			
+			<p>
+			Copyright © {{ g.date_jour.year }} Ivan LUCAS
+			</p>
+
+		</div>
+		
+	</div>
+		
+{%- endblock content %}

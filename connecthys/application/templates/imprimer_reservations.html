@@ -1,0 +1,52 @@
+{% import "macros_planning.html" as macros_planning with context %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    {%- block head %}
+		<title>{% block titre %}Planning des réservations{% endblock titre %}</title>
+    {%- block metas %}
+		<meta charset="UTF-8">
+		<meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    {%- endblock metas %}
+    {%- block styles %}
+		<!-- Theme style -->
+		<link href="{{ adminlte_find_resource('css/AdminLTE.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+		
+		<!-- Pour affiche du tableau -->
+		<style type="text/css" media="print,screen">
+		
+			table {
+				border-spacing: 0;
+				border-collapse: collapse;
+				font-size: 11px;
+			}
+
+			.table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
+				padding: 8px;
+				line-height: 1.42857143;
+				vertical-align: middle;
+				border-top: 1px solid #ddd;
+			}
+
+		</style>
+	
+	{%- endblock styles %}
+    {%- endblock head %}
+</head>
+
+<body onload="window.print();">
+	
+	<h3><center>Liste des réservations de {{ dict_planning["inscription"].individu.prenom }}</center></h3>
+	
+	<ul>
+		<li>Activité : {{ dict_planning["periode"].activite.nom }}</li>
+		<li>Période : {{ dict_planning["periode"].nom }}</li>
+		<li>Dates : du {{ DateDDEnFr(dict_planning["periode"].date_debut) }} au {{ DateDDEnFr(dict_planning["periode"].date_fin) }}</li>
+		<li>Date d'édition : {{ DateDDEnFr(g.date_jour) }}</li>
+	</ul>
+	
+	{{ macros_planning.planning_body(dict_planning=dict_planning, impression=True) }}
+
+</body>
+</html>

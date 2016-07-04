@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {%- block head %}
+    <title>{% block titre %}{{ g.dict_pages[active_page]['nom'] }}{% endblock titre %}</title>
+    {%- block metas %}
+    <meta charset="UTF-8">
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    {%- endblock metas %}
+    {%- block styles %}
+    <!-- bootstrap 3.0.2 -->
+    <link href="{{ adminlte_find_resource('css/bootstrap.css', cdn='local') }}" rel="stylesheet" type="text/css" />
+    <!-- Toastr Notifications -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet" />
+    <!-- font Awesome -->
+    <link href="{{ adminlte_find_resource('css/font-awesome.css', cdn='local') }}" rel="stylesheet" type="text/css" />
+    <!-- Ionicons -->
+    <link href="{{ adminlte_find_resource('css/ionicons.css', cdn='local') }}" rel="stylesheet" type="text/css" />
+    <!-- Theme style -->
+    <link href="{{ adminlte_find_resource('css/AdminLTE.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+    <!-- Skin  -->
+    <link href="{{ adminlte_find_resource('css/skins/skin-black.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+	<link href="{{ adminlte_find_resource('css/skins/skin-blue.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+	<link href="{{ adminlte_find_resource('css/skins/skin-green.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+	<link href="{{ adminlte_find_resource('css/skins/skin-purple.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+	<link href="{{ adminlte_find_resource('css/skins/skin-red.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+	<link href="{{ adminlte_find_resource('css/skins/skin-yellow.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+    <!-- Pace -->
+    <link href="{{ adminlte_find_resource('plugins/pace/pace.css', cdn='local') }}" rel="stylesheet" type="text/css">
+    <!-- iCheck -->
+    <link href="{{ adminlte_find_resource('plugins/iCheck/all.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">		
+	
+	<!-- Pour affichage logo organisateur dans sidebar -->
+	<style type="text/css" media="screen">
+	.user-panel {
+		position: relative;
+		width: 100%;
+		padding: 15px 10px 10px 10px;
+		overflow: hidden;
+	}
+	.user-panel > .image > img {
+		display: block;
+		width: 100%;
+		max-width: 200px;
+		height: auto;
+		margin-left: auto;
+		margin-right: auto;
+	}
+	.user-panel > .info {
+		padding: 15px 5px 10px 5px;
+		line-height: 1.2;
+		position: relative;
+		left: 0px;
+		text-align: center;
+		color: #ffffff;
+		font-size: 14px;
+		word-wrap : break-word;
+		white-space: normal;
+	}
+	.user-panel > .info > ul {
+		list-style: none;
+		margin:0;
+		padding: 0;
+		word-wrap : break-word;
+	}
+	
+	.table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
+	vertical-align: middle;
+	}
+		
+	</style>
+	
+	{%- endblock styles %}
+    {%- endblock head %}
+</head>
+
+<body class="{% block skin %}{{ config.SKIN }}{% endblock %} sidebar-mini">
+
+<noscript>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="row">
+	<div class="container">
+		<div class="col-1-1">
+		{% for category, message in messages %}
+		  <div class="alert-box {{ category }} banner">
+		   {{ message|safe }}
+		  </div>
+		{% endfor %}
+	   </div>
+	</div>
+  </div>
+  {% endif %}
+{% endwith %}
+</noscript>
+
+
+{% block page_body %}
+	<div class="wrapper">
+	
+		<header class="main-header">
+			{% block brand %}
+			  <a href="#" class="logo">
+				  <span class="logo-mini"></span>
+				  <span class="logo-lg">Le <strong>portail</strong> Famille</span>
+			  </a>
+			{% endblock %}
+
+			<!-- Header Navbar: style can be found in header.less -->
+			<nav class="navbar navbar-static-top" role="navigation">
+			{% include 'navbar.html' %}
+			</nav>
+
+		</header>
+
+		<aside class="main-sidebar">
+			<section class="sidebar">
+			{% include 'sidebar.html' %}
+			</section>
+		</aside>
+
+		<div class="content-wrapper">
+
+		  <!-- Content Header (Page header) -->
+		  <section class="content-header">
+			{% if active_page != 'accueil' %}
+				{% block content_header -%}
+				  <h1>
+					{{ g.dict_pages[active_page]['nom'] }}
+					<small>{{ sous_titre_page }}</small>
+				  </h1>
+				  <ol class="breadcrumb">
+					<li><a href="{{ url_for('accueil') }}"><i class="fa fa-home"></i> Accueil</a></li>
+					<li class="active">{{ g.dict_pages[active_page]['nom'] }}</li>
+				  </ol>
+				{%- endblock content_header %}
+			{% endif %}
+		  </section>
+
+		  <!-- Main content -->
+		  <section class="content">
+			  {% block content -%}
+			  {%- endblock content %}
+		  </section><!-- /.content -->
+		</div>
+		
+		<footer class="main-footer">
+			<div class="pull-right hidden-xs">
+				{% block version %}
+				<b><a href="http://www.noethys.com" title="Connecthys, le portail internet de Noethys">Connecthys</a></b> {{ g.version }}
+				{% endblock %}
+			</div>
+			{% block copyright %}<strong>Copyright © {{ g.date_jour.year }}</strong> Ivan LUCAS{% endblock %}
+		</footer>
+	</div>
+{% endblock %}
+
+{% block tail %}{% endblock %}
+
+{% block scripts %}
+  <!-- jQuery -->
+  <script src="{{ adminlte_find_resource('jquery.js', cdn='jquery') }}"></script>
+  <!-- jQuery UI 1.11.4 -->
+  <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+  <!-- Bootstrap -->
+  <script src="{{ adminlte_find_resource('js/bootstrap.js', cdn='local') }}"></script>
+  <!-- Toastr Notifications -->
+  <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+  <!-- PACE -->
+  <script src="{{ adminlte_find_resource('js/plugins/pace/pace.js', cdn='local', use_minified=False) }}"></script>
+  <!-- Slimscroll -->
+  <script src="{{ adminlte_find_resource('js/plugins/slimScroll/jquery.slimscroll.js', cdn='local')}}"></script>
+  <!-- Fastclick -->
+  <script src="{{ adminlte_find_resource('js/plugins/fastclick/fastclick.js', cdn='local')}}"></script>
+  <!-- iCheck -->
+  <script src="{{ adminlte_find_resource('js/plugins/iCheck/icheck.min.js', cdn='local', use_minified=False)}}"></script>
+  <!-- AdminLTE App -->
+  <script src="{{ adminlte_find_resource('js/AdminLTE/app.js', cdn='local', use_minified=False) }}"></script>
+  <!-- Sparkline -->
+  <script src="{{ adminlte_find_resource('js/plugins/sparkline/jquery.sparkline.js', cdn='local') }}"></script>
+  <!-- jvectormap -->
+  <script src="{{ adminlte_find_resource('js/plugins/jvectormap/jquery-jvectormap-1.2.2.js', cdn='local') }}"></script>
+  <script src="{{ adminlte_find_resource('js/plugins/jvectormap/jquery-jvectormap-world-mill-en.js', cdn='local', use_minified=False) }}"></script>
+  <!-- ChartJS 1.0.1 -->
+  <script src="{{ adminlte_find_resource('js/plugins/chartjs/Chart.js', cdn='local') }}"></script>
+  <script>
+	/* turning flask flash messages into js popup notifications */
+	window.popupMessages = {{ get_flashed_messages(with_categories=True) | tojson | safe }};
+  </script>
+  <!-- Local application JS -->
+  <script src="{{ adminlte_find_resource('js/app.js', cdn='local', use_minified=False) }}"></script>
+  
+	<script>
+	  $(function () {
+		//iCheck for checkbox and radio inputs
+		$('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+		  checkboxClass: 'icheckbox_minimal-blue',
+		  radioClass: 'iradio_minimal-blue'
+		});
+		//Red color scheme for iCheck
+		$('input[type="checkbox"].minimal-red, input[type="radio"].minimal-red').iCheck({
+		  checkboxClass: 'icheckbox_minimal-red',
+		  radioClass: 'iradio_minimal-red'
+		});
+		//Flat red color scheme for iCheck
+		$('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
+		  checkboxClass: 'icheckbox_flat-green',
+		  radioClass: 'iradio_flat-green',
+		  increaseArea: '+30%'
+		});
+	  });
+	</script>
+
+{%- endblock scripts %}
+
+</body>
+</html>
