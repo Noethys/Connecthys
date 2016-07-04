@@ -6,12 +6,13 @@ TAP ou NAP, clubs sportifs et culturels...
 
 Plus d'infos sur www.noethys.com
 
+
 **Installation locale**
 
 - Installez python 2.7
-- Placez-vous dans le répertoire connecthys et tapez la commande **python run.py**
+- Placez-vous dans le répertoire connecthys et lancez le fichier **run.py**
 - Lancez votre navigateur 
-- Chargez la page **http://localhost:5000/initdb** (Initialisation de la base de données)
-- Chargez la page **http://localhost:5000/accueil**
+- Chargez la page **http://localhost:5000/initdb** pour initialiser la base de données
+- Chargez la page **http://localhost:5000/accueil** pour ouvrir le portail
 
 
