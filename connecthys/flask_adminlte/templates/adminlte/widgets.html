@@ -1,0 +1,35 @@
+{% macro small_box(bgcolor="bg-yellow", header="44", percentage=False, body="User Registrations", iconclass="ion ion-person-add", footerlink="#") %}
+
+    <div class="col-lg-3 col-xs-6">
+      <!-- small box -->
+      <a href="{{footerlink}}" class="small-box {{bgcolor}}">
+        <div class="inner">
+          <h2>
+            {{header}}{% if percentage %}<sup style="font-size: 20px">%</sup>{% endif %}
+          </h2>
+
+          <p><i class="fa fa-clock-o-xxx"></i></p>
+        </div>
+        <div class="icon">
+          <i class="{{iconclass}}"></i>
+        </div>
+        <div class="small-box-footer">
+           Consulter et demander des réservations
+        </div>
+      </a>
+    </div>
+
+{% endmacro %}
+
+
+{% macro info_box(bgcolor="bg-aqua", text="Messages", number="1,410", iconclass="fa fa-envelope-o") %}
+<div class="col-md-3 col-sm-6 col-xs-12">
+  <div class="info-box">
+	<span class="info-box-icon {{bgcolor}}"><i class="{{iconclass}}"></i></span>
+	<div class="info-box-content">
+	  <span class="info-box-text">{{text}}</span>
+	  <span class="info-box-number">{{number}}</span>
+	</div>
+  </div>
+</div>
+{% endmacro %}
