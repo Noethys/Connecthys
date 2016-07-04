@@ -8,6 +8,7 @@ setup_wheel.bat
 setup_windows.bat
 .bak
 .idea/
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
