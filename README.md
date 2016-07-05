@@ -38,3 +38,10 @@ Utilisation sur un hébergement internet mutualisé (Testé sur OVH)
 - Avec votre client FTP (Filezilla par exemple), appliquez la valeur 755 aux droits d'accès du fichier "portail.cgi" du répertoire connecthys
 - Chargez la page **http://www.monsite.com/connecthys/portail.cgi/initdb** pour initialiser la base de données
 - Chargez la page **http://www.monsite.com/connecthys/portail.cgi/accueil** pour ouvrir le portail
+
+
+Utilisation sur un hébergement internet dédié ou sur Google App Engine
+-------------------------
+
+Connecthys peut être installé de plusieurs façons sur un hébergement internet. 
+Consultez la page http://flask.pocoo.org/docs/0.11/deploying/ pour découvrir ces possibilités.
