@@ -6,8 +6,8 @@ TAP ou NAP, clubs sportifs et culturels...
 
 Plus d'infos sur www.noethys.com
 
-*****Avertissement : A ce jour, Connecthys n'est qu'un prototype d'interface web. La synchronisation avec Noethys sera développée
-prochainement.*****
+*Avertissement : A ce jour, Connecthys n'est qu'un prototype d'interface web. La synchronisation avec Noethys sera développée
+prochainement.*
 
 
 Utilisation sur Windows
