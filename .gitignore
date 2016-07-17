@@ -1,5 +1,7 @@
 # Connecthys
 Travaux/
+migrations/
+journal.log
 Connecthys.egg-info/
 SQLiteSpy.exe
 SQLiteSpy.db3
