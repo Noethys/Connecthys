@@ -53,9 +53,11 @@
 				<p>Cliquez sur les pièces ci-dessous pour les télécharger :</p>
 				
 				{% for type_piece in liste_types_pieces %}
-				<a class="btn btn-app" href="{{ url_for('static', filename='pieces/' + type_piece.fichier) }}" target="_blank" title="Cliquez ici pour télécharger cette pièce">
-					<i class="fa {{ type_piece.get_icone_fichier() }}"></i> {{ type_piece.nom }}
-				</a>
+					{% for label_piece, nom_fichier in type_piece.GetListeFichiers() %}
+					<a class="btn btn-app" href="{{ url_for('static', filename='pieces/' + nom_fichier) }}" target="_blank" title="Cliquez ici pour télécharger cette pièce">
+						<i class="fa {{ GetIconeFichier(nom_fichier) }}"></i> {{ label_piece }}
+					</a>
+					{% endfor %}
 				{% endfor %}
 				
 			</div>

@@ -15,7 +15,7 @@ from models import *
 def Creation_donnees_fictives():
     """ Création de données fictives pour les tests """
     # Création d'un utilisateur
-    m = User(identifiant='demo', password="demo", nom='PALLIER Jean-Michel et Marie', email='test@test.com', role="famille", IDfamille=1)
+    m = User(identifiant='demo', decryptpassword="demo", nom='PALLIER Jean-Michel et Marie', email='test@test.com', role="famille", IDfamille=1)
     db.session.add(m)
     
     # Création de factures
@@ -65,15 +65,14 @@ def Creation_donnees_fictives():
     db.session.add(m)
 
     # Création des cotisations manquantes
-    m = Cotisation_manquante(IDfamille=1, IDindividu=None, nom=u"Cotisation familiale")
+    m = Cotisation_manquante(IDfamille=1, IDindividu=None, IDtype_cotisation=1, nom=u"Cotisation familiale")
     db.session.add(m)
 
     # Création des activités
-    m = Activite(IDactivite=1, nom=u"Accueil de loisirs", coche_unique=1)
+    m = Activite(IDactivite=1, nom=u"Accueil de loisirs", unites_multiples=0)
     db.session.add(m)
 
-    # Création des activités
-    m = Activite(IDactivite=2, nom=u"Garderie périscolaire", coche_unique=0)
+    m = Activite(IDactivite=2, nom=u"Garderie périscolaire", unites_multiples=1)
     db.session.add(m)
 
     # Création des groupes
@@ -84,6 +83,23 @@ def Creation_donnees_fictives():
     db.session.add(m)
     
     m = Groupe(IDgroupe=3, nom=u"Groupe unique", IDactivite=2, ordre=1)
+    db.session.add(m)
+
+    # Création des individus
+    m = Individu(IDindividu=1, IDfamille=1, prenom=u"Kévin", date_naiss=datetime.date(2010, 1, 1), IDcivilite=1)
+    db.session.add(m)
+
+    m = Individu(IDindividu=2, IDfamille=1, prenom=u"Sophie", date_naiss=datetime.date(2012, 2, 1), IDcivilite=2)
+    db.session.add(m)
+    
+    # Création des inscriptions
+    m = Inscription(IDindividu=1, IDfamille=1, IDactivite=1, IDgroupe=1)
+    db.session.add(m)
+
+    m = Inscription(IDindividu=2, IDfamille=1, IDactivite=1, IDgroupe=1)
+    db.session.add(m)
+
+    m = Inscription(IDindividu=2, IDfamille=1, IDactivite=2, IDgroupe=3)
     db.session.add(m)
 
     # Création des unités
@@ -112,23 +128,6 @@ def Creation_donnees_fictives():
             m = Ouverture(date=datetime.date(2016, 9, jour), IDunite=IDunite, IDgroupe=3)
             db.session.add(m)
                 
-    # Création des individus
-    m = Individu(IDindividu=1, IDfamille=1, prenom=u"Kévin", age=12, IDcivilite=1)
-    db.session.add(m)
-
-    m = Individu(IDindividu=2, IDfamille=1, prenom=u"Sophie", age=8, IDcivilite=2)
-    db.session.add(m)
-    
-    # Création des inscriptions
-    m = Inscription(IDindividu=1, IDfamille=1, IDactivite=1, IDgroupe=1)
-    db.session.add(m)
-
-    m = Inscription(IDindividu=2, IDfamille=1, IDactivite=1, IDgroupe=1)
-    db.session.add(m)
-
-    m = Inscription(IDindividu=2, IDfamille=1, IDactivite=2, IDgroupe=3)
-    db.session.add(m)
-
     # Création des périodes
     m = Periode(IDactivite=1, nom=u"Juillet 2016", date_debut=datetime.date(2016, 7, 1), date_fin=datetime.date(2016, 7, 31))
     db.session.add(m)

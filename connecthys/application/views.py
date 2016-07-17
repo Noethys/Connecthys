@@ -8,13 +8,12 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-import random, datetime
-from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify
+import random, datetime, traceback
+from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from application import app, login_manager, db
 from application import models, forms, utils, exemples
 from sqlalchemy import func
-
 
 
 LISTE_PAGES = [
@@ -51,6 +50,41 @@ DICT_PAGES = {
 COULEURS = ["green", "blue", "yellow", "red", "light-blue"]
 
 
+@app.route('/upgrade/<int:secret>')
+def upgrade(secret=0):
+    # Codage et vérification de la clé de sécurité
+    secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
+    for caract in app.config['SECRET_KEY'] :
+        if caract in "0123456789" :
+            secret_key += caract
+    secret_key = int(secret_key) 
+    
+    if secret_key != secret :
+        dict_resultat = {"resultat" : "erreur", "erreur" : u"Clé de sécurité erronée."}
+        
+    else :
+        try :
+            models.UpgradeDB()
+            dict_resultat = {"resultat" : "ok"}
+        except Exception, err:
+            dict_resultat = {"resultat" : "erreur", "erreur" : str(err), "trace" : traceback.format_exc()}
+        
+        if dict_resultat["resultat"] != "ok" :
+            app.logger.error("Erreur dans l'upgrade : %s" % traceback.format_exc())
+    
+    reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    return reponse
+
+
+@app.route('/get_version')
+def get_version():
+    # Renvoie le numéro de la version de l'application
+    version = app.config["VERSION_APPLICATION"]
+    dict_resultat = {"version_str" : version, "version_tuple" : utils.GetVersionTuple(version)}
+    reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    return reponse
+
+    
 @login_manager.user_loader
 def load_user(id):
     return models.User.query.get(int(id))
@@ -62,21 +96,37 @@ def before_request():
     g.liste_pages = LISTE_PAGES
     g.dict_pages = DICT_PAGES
     g.date_jour = datetime.date.today()
-    g.version = "0.0.1"
     
     
-@app.route('/initdb')
-def initdb():
-    db.drop_all()
-    db.create_all()
-    exemples.Creation_donnees_fictives()
-    return u"Base de donnees créée."
-
 @app.route('/')
 def index():
     return redirect(url_for('accueil'))
+    
 
+#@app.route('/exemples')
+#def exemples():
+#    db.drop_all()
+#    db.create_all()
+#    exemples.Creation_donnees_fictives()
+#    return u"Base de donnees créée et données fictives ajoutées."
 
+@app.route('/syncup/<int:secret>')
+def syncup(secret=0):
+    import importation
+    resultat = importation.Importation(secret=secret)
+    return str(resultat)
+    
+@app.route('/syncdown/<int:secret>')
+def syncdown(secret=0):
+    import exportation
+    resultat = exportation.Exportation(secret=secret)
+    return resultat
+
+@app.errorhandler(500)
+def internal_error(exception):
+    trace = traceback.format_exc()
+    return("<pre>" + trace + "</pre>"), 500
+    
 # ------------------------- LOGIN et LOGOUT ---------------------------------- 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -551,9 +601,12 @@ def mentions():
 def aide():    
     return render_template('aide.html', active_page="aide")
 
-
-
-
+    
+    
+    
+    
+    
+    
     
 def GetHistorique(IDuser=None, categorie=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """

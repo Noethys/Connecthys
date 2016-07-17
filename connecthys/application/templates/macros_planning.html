@@ -156,7 +156,7 @@
 	<script>
 		$('input#case').on('ifClicked', function(event){
 			// Coche une unité à la fois
-			if({{ dict_planning["periode"].activite.coche_unique }} == 1) {
+			if({{ dict_planning["periode"].activite.unites_multiples }} == 0) {
 					var date = $(this).attr('data-date');
 					var IDunite = $(this).attr('data-IDunite');
 					$("input[data-date='" + date + "']:checked").each(function() {

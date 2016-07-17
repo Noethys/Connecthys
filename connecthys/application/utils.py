@@ -12,10 +12,11 @@ import datetime
 from application import app
 
 
+# ------  Fonctions importables depuis les templates ----------
+
 def CallFonction(fonction="", *args):
     """ Pour appeller directement une fonction Utils depuis Python """
     return utility_processor()[fonction](*args)
-    
     
 @app.context_processor
 def utility_processor():
@@ -64,6 +65,21 @@ def utility_processor():
                 return True
         return False
         
+    def GetIconeFichier(nomFichier=""):
+        """ Retourne une icône selon le type de fichier (pdf, word, autre) """
+        if nomFichier in (None, "") :
+            return None
+        if nomFichier.endswith(".pdf"):
+            return "fa-file-pdf-o"
+        elif nomFichier.endswith(".doc") or nomFichier.endswith(".docx"):
+            return "fa-file-word-o"
+        elif nomFichier.endswith(".txt"):
+            return "fa-file-text-o"
+        elif nomFichier.endswith(".jpg") or nomFichier.endswith(".png"):
+            return "fa-file-image-o"
+        else :
+            return "fa-file-o"
+
         
     return dict(
         Formate_montant=Formate_montant,
@@ -74,7 +90,17 @@ def utility_processor():
         GetEtatCocheCase=GetEtatCocheCase,
         DateDDEnEng=DateDDEnEng,
         DateEngEnDD=DateEngEnDD,
+        GetIconeFichier=GetIconeFichier,
         )
 
         
+# ------  Fonctions non importables depuis les templates ----------
+
+def GetVersionTuple(version=""):
+    """ Renvoie un numéro de version donné au format tuple """
+    temp = []
+    for caract in version.split(".") :
+        temp.append(int(caract))
+    return tuple(temp)
+
     

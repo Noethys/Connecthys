@@ -14,7 +14,8 @@ LISTE_LIBS = [
 	"", "application", "lib/", "lib/flask", "lib/flask_sqlalchemy", 
 	"lib/flask_wtf", "lib/itsdangerous", "lib/markupsafe", "lib/sqlalchemy", 
 	"lib/werkzeug", "lib/jinja2", "lib/wtforms", "lib/flask_debugtoolbar",
-	"lib/passlib", "lib/pkg_resources", "lib/blinker",
+	"lib/pkg_resources", "lib/blinker", "lib/click", "lib/alembic",
+        "lib/flask_script", "lib/mako", "lib/flask_migrate",
 	]
     
 def AjouteCheminLibs(chemin=os.path.dirname(__name__)) :

@@ -23,7 +23,7 @@
 			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
 		</div>
 		<h3 class="widget-user-username">{{ individu.prenom }}</h3>
-		<h5 class="widget-user-desc">{% if individu.age != None %}{{ individu.age }} ans{% else %}Age inconnu{% endif %}</h5>
+		<h5 class="widget-user-desc">{% if individu.age != None %}{{ individu.get_date_naiss() }}{% else %}Age inconnu{% endif %}</h5>
 	</div>
 	
 	<!-- Liste des inscriptions -->
@@ -81,9 +81,11 @@
 		  <h4>Sélectionnez une activité et un groupe</h4>
 		  <select id="choix_activite" class="form-control">
 			{% for activite in liste_activites %}
-				{% for groupe in dict_groupes[activite.IDactivite] %}
-					<option value="{{ activite.IDactivite }}-{{ groupe.IDgroupe }}">{{ activite.nom }} - {{ groupe.nom }}</option>
-				{% endfor %}
+				{% if activite.inscriptions_affichage == 1 and (activite.inscriptions_date_debut == None or (activite_inscriptions_date_debut <= g.date_jour and activite_inscriptions_date_fin >= g.date_jour)) %}
+					{% for groupe in dict_groupes[activite.IDactivite] %}
+						<option value="{{ activite.IDactivite }}-{{ groupe.IDgroupe }}">{{ activite.nom }} - {{ groupe.nom }}</option>
+					{% endfor %}
+				{% endif %}
 			{% endfor %}
 		  </select>
 		</div>
