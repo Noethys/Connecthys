@@ -10,7 +10,7 @@ class Config_application(object):
      SQLALCHEMY_ECHO = False
      SECRET_KEY = "secret_key"
      WTF_CSRF_ENABLED = True
-     DEBUG = True
+     DEBUG = False
 
 class Config_utilisateur(object):
      SKIN = "skin-blue"
