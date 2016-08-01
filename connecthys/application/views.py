@@ -488,8 +488,11 @@ def envoyer_reservations():
         # Récupération de la période
         periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
         
+        # Inscription
+        inscription = models.Inscription.query.filter_by(IDinscription=IDinscription).first()
+
         # Paramètres
-        parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, periode.date_debut, periode.date_fin)
+        parametres = u"IDindividu=%d#IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDindividu, IDactivite, periode.date_debut, periode.date_fin)
         
         # Traitement des consommations
         liste_reservations = []
@@ -503,9 +506,10 @@ def envoyer_reservations():
                 liste_dates_uniques.append(date)
         
         # Description
+        individu_prenom = inscription.individu.prenom
         date_debut_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_debut)
         date_fin_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_fin)
-        description = u"Réservation de %d dates sur la période du %s au %s" % (len(liste_dates_uniques), date_debut_periode_fr, date_fin_periode_fr)
+        description = u"Réservations pour %s sur la période du %s au %s (%d dates)" % (individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
         
         # Enregistrement de l'action
         action = models.Action(IDfamille=current_user.IDfamille, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
