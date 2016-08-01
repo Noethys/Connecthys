@@ -116,10 +116,10 @@ def syncup(secret=0):
     resultat = importation.Importation(secret=secret)
     return str(resultat)
     
-@app.route('/syncdown/<int:secret>')
-def syncdown(secret=0):
+@app.route('/syncdown/<int:secret>/<int:last>')
+def syncdown(secret=0, last=0):
     import exportation
-    resultat = exportation.Exportation(secret=secret)
+    resultat = exportation.Exportation(secret=secret, last=last)
     return resultat
 
 @app.errorhandler(500)
@@ -209,7 +209,7 @@ def factures():
             montant_factures_impayees += facture.montant_solde
     
     # Recherche l'historique des demandes liées aux factures
-    historique = GetHistorique(IDuser=current_user.IDuser, categorie="factures")
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures")
     
     return render_template('factures.html', active_page="factures", liste_factures=liste_factures, \
                             nbre_factures_impayees=nbre_factures_impayees, \
@@ -227,7 +227,7 @@ def envoyer_demande_facture():
         commentaire = request.args.get("commentaire", "", type=str)
         
         # Enregistrement action
-        parametres = u"id=%d#methode_envoi=%s" % (id, methode_envoi)
+        parametres = u"IDfacture=%d#methode_envoi=%s" % (id, methode_envoi)
         if methode_envoi == "email" :
             description = u"Recevoir la facture n°%s par Email" % numfacture
         if methode_envoi == "courrier" :
@@ -235,7 +235,7 @@ def envoyer_demande_facture():
         if methode_envoi == "retirer" :
             description = u"Retirer la facture n°%s %s" % (numfacture, app.config["RECEVOIR_DOCUMENT_RETIRER_LIEU"])
 
-        m = models.Action(IDuser=current_user.IDuser, categorie="factures", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
+        m = models.Action(IDfamille=current_user.IDfamille, categorie="factures", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
         
@@ -269,7 +269,7 @@ def reglements():
                 montant_factures_impayees += facture.montant_solde
     
     # Recherche l'historique des demandes liées aux règlements
-    historique = GetHistorique(IDuser=current_user.IDuser, categorie="reglements")
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reglements")
     
     return render_template('reglements.html', active_page="reglements", liste_reglements=liste_reglements, \
                             liste_factures=liste_factures, nbre_factures_impayees=nbre_factures_impayees, \
@@ -287,7 +287,7 @@ def envoyer_demande_recu():
         commentaire = request.args.get("commentaire", "", type=str)
         
         # Enregistrement action
-        parametres = u"id=%d#methode_envoi=%s" % (id, methode_envoi)
+        parametres = u"IDreglement=%d#methode_envoi=%s" % (id, methode_envoi)
         if methode_envoi == "email" :
             description = u"Recevoir le reçu du règlement n°%d par Email" % id
         if methode_envoi == "courrier" :
@@ -295,7 +295,7 @@ def envoyer_demande_recu():
         if methode_envoi == "retirer" :
             description = u"Retirer le reçu du règlement n°%d %s" % (id, app.config["RECEVOIR_DOCUMENT_RETIRER_LIEU"])
 
-        m = models.Action(IDuser=current_user.IDuser, categorie="reglements", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
+        m = models.Action(IDfamille=current_user.IDfamille, categorie="reglements", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
         
@@ -312,7 +312,7 @@ def envoyer_demande_recu():
 @login_required
 def historique():
     # Recherche l'historique général
-    historique = GetHistorique(IDuser=current_user.IDuser, categorie=None)
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie=None)
     
     return render_template('historique.html', active_page="historique", historique=historique)
                             
@@ -383,7 +383,7 @@ def reservations():
             liste_individus.append(individu)
     
     # Recherche l'historique des demandes liées aux réservations
-    historique = GetHistorique(IDuser=current_user.IDuser, categorie="reservations")
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reservations")
     
     return render_template('reservations.html', active_page="reservations", \
                             liste_individus = liste_individus, \
@@ -424,7 +424,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     
     # Réservations
     dict_reservations = {}
-    action = models.Action.query.filter_by(categorie="reservations", IDuser=current_user.IDuser, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
+    action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
     if action != None :
         liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
         for reservation in liste_reservations :
@@ -479,7 +479,17 @@ def envoyer_reservations():
         resultats = request.args.get("resultats", "", type=str)
         IDinscription = request.args.get("IDinscription", None, type=int)
         IDperiode = request.args.get("IDperiode", None, type=int)
+        IDactivite = request.args.get("IDactivite", None, type=int)
+        IDindividu = request.args.get("IDindividu", None, type=int)
+        date_debut_periode = request.args.get("date_debut_periode", "", type=str)
+        date_fin_periode = request.args.get("date_fin_periode", "", type=str)
         commentaire = request.args.get("commentaire", None, type=str)
+        
+        # Récupération de la période
+        periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
+        
+        # Paramètres
+        parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, periode.date_debut, periode.date_fin)
         
         # Traitement des consommations
         liste_reservations = []
@@ -492,8 +502,13 @@ def envoyer_reservations():
             if date not in liste_dates_uniques :
                 liste_dates_uniques.append(date)
         
+        # Description
+        date_debut_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_debut)
+        date_fin_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_fin)
+        description = u"Réservation de %d dates sur la période du %s au %s" % (len(liste_dates_uniques), date_debut_periode_fr, date_fin_periode_fr)
+        
         # Enregistrement de l'action
-        action = models.Action(IDuser=current_user.IDuser, categorie="reservations", action="envoyer", description=u"Réservation de %d dates" % len(liste_dates_uniques), etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=None)
+        action = models.Action(IDfamille=current_user.IDfamille, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
         db.session.add(action)
         db.session.flush()
         
@@ -538,7 +553,7 @@ def inscriptions():
         dict_groupes[groupe.IDactivite].append(groupe)
     
     # Recherche l'historique des demandes liées aux réservations
-    historique = GetHistorique(IDuser=current_user.IDuser, categorie="inscriptions")
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="inscriptions")
     
     return render_template('inscriptions.html', active_page="inscriptions", \
                             liste_individus = liste_individus, \
@@ -568,7 +583,7 @@ def envoyer_demande_inscription():
         description = u"Inscrire %s à l'activité %s" % (individu.prenom, activite.nom)
         parametres = u"IDactivite=%d#IDgroupe=%d" % (IDactivite, IDgroupe)
 
-        m = models.Action(IDuser=current_user.IDuser, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
+        m = models.Action(IDfamille=current_user.IDfamille, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
         
@@ -608,13 +623,13 @@ def aide():
     
     
     
-def GetHistorique(IDuser=None, categorie=None):
+def GetHistorique(IDfamille=None, categorie=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """
     """ Si categorie == None > Toutes les catégories sont affichées """
     if categorie == None :
-        liste_actions = models.Action.query.filter_by(IDuser=IDuser).order_by(models.Action.horodatage.desc()).all()
+        liste_actions = models.Action.query.filter_by(IDfamille=IDfamille).order_by(models.Action.horodatage.desc()).all()
     else :
-        liste_actions = models.Action.query.filter_by(IDuser=IDuser, categorie=categorie).order_by(models.Action.horodatage.desc()).all()
+        liste_actions = models.Action.query.filter_by(IDfamille=IDfamille, categorie=categorie).order_by(models.Action.horodatage.desc()).all()
     liste_dates_actions = []
     dict_actions = {}
     for action in liste_actions :

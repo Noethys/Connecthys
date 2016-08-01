@@ -52,6 +52,12 @@ def utility_processor():
         if datetm == None : return ""
         return datetm.strftime("%H:%M")
     
+    def DateEngFr(textDate):
+        if textDate in (None, "") : return ""
+        if type(textDate) == datetime.date : return DateDDEnFr(textDate)
+        text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
+        return text
+
     def GetEtatFondCase(dict_consommations={}, date=None, IDunite=None):
         if dict_consommations.has_key(date) :
             if dict_consommations[date].has_key(IDunite) :
@@ -90,6 +96,7 @@ def utility_processor():
         GetEtatCocheCase=GetEtatCocheCase,
         DateDDEnEng=DateDDEnEng,
         DateEngEnDD=DateEngEnDD,
+        DateEngFr=DateEngFr,
         GetIconeFichier=GetIconeFichier,
         )
 

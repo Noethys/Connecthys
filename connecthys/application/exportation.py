@@ -11,9 +11,10 @@
 from application import app, models
 from flask import json, Response
 import datetime
+from sqlalchemy import func
 
 
-def Exportation(secret=0):
+def Exportation(secret=0, last=0):
     """ Exportation des données vers le serveur """
     # Codage et vérification de la clé de sécurité
     secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
@@ -25,8 +26,22 @@ def Exportation(secret=0):
     if secret_key != secret :
         return u"Erreur de clé de sécurité"
     
-    liste_actions = models.Action.query.all()
-    
+    if last == 0 :
+        liste_actions = models.Action.query.all()
+    else :
+        # Lecture de l'horodatage et de l'IDfamille envoyés à travers le last
+        last = str(last)
+        horodatage = datetime.datetime(int(last[0:4]), int(last[4:6]), int(last[6:8]), int(last[8:10]), int(last[10:12]), int(last[12:14]))
+        IDfamille = int(last[14:20])
+        
+        # Recherche de la dernière action téléchargée
+        last_action = models.Action.query.filter(func.strftime('%Y-%m-%d', models.Action.horodatage) == str(horodatage.date()), func.strftime('%H:%M:%S', models.Action.horodatage) == str(horodatage.time()), models.Action.IDfamille==IDfamille).first()
+        
+        if last_action != None :
+            liste_actions = models.Action.query.filter(models.Action.IDaction > last_action.IDaction).order_by(models.Action.IDaction).all()
+        else :
+            liste_actions = models.Action.query.filter(models.Action.horodatage > horodatage).order_by(models.Action.IDaction).all()
+        
     # Transformation de chaque enregistrement en dict
     liste_dict_actions = []
     for action in liste_actions :

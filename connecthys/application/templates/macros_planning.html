@@ -192,6 +192,8 @@
 				resultats: liste_resultats.join(","),
 				IDinscription: {{ dict_planning["inscription"].IDinscription }},
 				IDperiode: {{ dict_planning["periode"].IDperiode }},
+				IDactivite: {{ dict_planning["inscription"].IDactivite }},
+				IDindividu: {{ dict_planning["inscription"].IDindividu }},
 				commentaire: $("#commentaire").val(),
 				},
 			  success: function(data) {

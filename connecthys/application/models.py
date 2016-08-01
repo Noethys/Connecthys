@@ -183,30 +183,30 @@ class Action(Base):
     __tablename__ = "portail_actions"
     IDaction = Column(Integer, primary_key=True)
     horodatage = Column(DateTime, default=datetime.datetime.now)
-    IDuser = Column(Integer, index=True)
+    IDfamille = Column(Integer, index=True)
     categorie = Column(String(50))
     action = Column(String(50))
     description = Column(String(300))
     commentaire = Column(String(300))
     parametres = Column(String(300))
     etat = Column(String(50))
-    traitement_horodatage = Column(DateTime)
+    traitement_date = Column(Date)
     IDperiode = Column(Integer)
     
     reservations = relationship("Reservation")
     
-    def __init__(self , horodatage=None, IDuser=None, categorie=None, action=None, description=None, \
-                        commentaire=None, parametres=None, etat=None, traitement_horodatage=None, IDperiode=None):
+    def __init__(self , horodatage=None, IDfamille=None, categorie=None, action=None, description=None, \
+                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None):
         if horodatage != None :
             self.horodatage = horodatage
-        self.IDuser = IDuser
+        self.IDfamille = IDfamille
         self.categorie = categorie
         self.action = action
         self.description = description
         self.commentaire = commentaire
         self.parametres = parametres
         self.etat = etat
-        self.traitement_horodatage = traitement_horodatage
+        self.traitement_date = traitement_date
         self.IDperiode = IDperiode
  
     def __repr__(self):
@@ -462,7 +462,8 @@ class Periode(Base):
             return True
         else :
             return False
-            
+        
+        
 
 class Groupe(Base):
     __tablename__ = "portail_groupes"
