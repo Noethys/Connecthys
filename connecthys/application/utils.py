@@ -39,8 +39,8 @@ def utility_processor():
         """ Transforme une date DD en date FR """
         if date == None : return ""
         jours = [u"Lundi", u"Mardi", u"Mercredi", u"Jeudi", u"Vendredi", u"Samedi", u"Dimanche"]
-        mois = ["janvier", u"février", "mars", "avril", "mai", "juin", "juillet", u"août", "Septembre", "Octobre", u"novembre", u"décembre"]
-        return u"%s %d %s %d" % (jours[date.weekday()-1], date.day, mois[date.month-1], date.year)
+        mois = ["Janvier", u"Février", "Mars", "Avril", "Mai", "Juin", "Juillet", u"Août", "Septembre", "Octobre", u"Novembre", u"Décembre"]
+        return u"%s %d %s %d" % (jours[date.weekday()], date.day, mois[date.month-1], date.year)
 
     def DateEngEnDD(date):
         if date in (None, "", "None") : return None
