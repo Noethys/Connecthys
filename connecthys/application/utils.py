@@ -67,13 +67,13 @@ def utility_processor():
         return None
         
     def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
-        # Recherche en premier dans le dictionnaire des réservations si la case est cochée
         dict_reservations = dict_planning["dict_reservations"]
-        if dict_reservations.has_key(date) :
+        if dict_reservations != None :
         
-            # Recherche s'il y a une réservation sur cette date
-            if dict_reservations[date].has_key(IDunite) :
-                return True
+            # Recherche dans le dictionnaire des réservations si la case est cochée
+            if dict_reservations.has_key(date) :
+                if dict_reservations[date].has_key(IDunite) :
+                    return True
             
         else :
             # S'il n'y a aucune réservation sur cette ligne, on coche la conso
