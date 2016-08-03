@@ -630,10 +630,11 @@ def aide():
 def GetHistorique(IDfamille=None, categorie=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """
     """ Si categorie == None > Toutes les catégories sont affichées """
+    date_limite = datetime.datetime.now() - datetime.timedelta(days=90)
     if categorie == None :
-        liste_actions = models.Action.query.filter_by(IDfamille=IDfamille).order_by(models.Action.horodatage.desc()).all()
+        liste_actions = models.Action.query.filter(models.Action.IDfamille==IDfamille, models.Action.horodatage>=date_limite).order_by(models.Action.horodatage.desc()).all()
     else :
-        liste_actions = models.Action.query.filter_by(IDfamille=IDfamille, categorie=categorie).order_by(models.Action.horodatage.desc()).all()
+        liste_actions = models.Action.query.filter(models.Action.IDfamille==IDfamille, models.Action.horodatage>=date_limite, models.Action.categorie==categorie).order_by(models.Action.horodatage.desc()).all()
     liste_dates_actions = []
     dict_actions = {}
     for action in liste_actions :

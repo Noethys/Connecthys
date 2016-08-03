@@ -38,8 +38,8 @@
 							{% if action.etat == "suppression" %}
 								<span class="text-yellow">Vous avez supprimé cette demande.</span>
 							{% endif %}
-							{% if action.etat == "ok" %}
-								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_horodatage) }}.</span>
+							{% if action.etat == "validation" %}
+								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_date) }}.</span>
 							{% endif %}
 						</div>
 					</div>

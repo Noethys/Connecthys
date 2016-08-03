@@ -27,20 +27,21 @@ def Exportation(secret=0, last=0):
         return u"Erreur de clé de sécurité"
     
     if last == 0 :
-        liste_actions = models.Action.query.all()
+        liste_actions = models.Action.query.filter(models.Action.etat != "suppression").all()
     else :
         # Lecture de l'horodatage et de l'IDfamille envoyés à travers le last
         last = str(last)
-        horodatage = datetime.datetime(int(last[0:4]), int(last[4:6]), int(last[6:8]), int(last[8:10]), int(last[10:12]), int(last[12:14]))
-        IDfamille = int(last[14:20])
+        horodatage = datetime.datetime(int(last[0:4]), int(last[4:6]), int(last[6:8]), int(last[8:10]), int(last[10:12]), int(last[12:14]), int(last[14:20]))
+        IDfamille = int(last[-6:])
         
         # Recherche de la dernière action téléchargée
-        last_action = models.Action.query.filter(func.strftime('%Y-%m-%d', models.Action.horodatage) == str(horodatage.date()), func.strftime('%H:%M:%S', models.Action.horodatage) == str(horodatage.time()), models.Action.IDfamille==IDfamille).first()
+        #last_action = models.Action.query.filter(func.strftime('%Y-%m-%d', models.Action.horodatage) == str(horodatage.date()), func.strftime('%H:%M:%S', models.Action.horodatage) == str(horodatage.time()), models.Action.IDfamille==IDfamille).first()
+        last_action = models.Action.query.filter(models.Action.ref_unique == last).first()
         
         if last_action != None :
-            liste_actions = models.Action.query.filter(models.Action.IDaction > last_action.IDaction).order_by(models.Action.IDaction).all()
+            liste_actions = models.Action.query.filter(models.Action.IDaction > last_action.IDaction, models.Action.etat == "attente").order_by(models.Action.IDaction).all()
         else :
-            liste_actions = models.Action.query.filter(models.Action.horodatage > horodatage).order_by(models.Action.IDaction).all()
+            liste_actions = models.Action.query.filter(models.Action.horodatage > horodatage, models.Action.etat == "attente").order_by(models.Action.IDaction).all()
         
     # Transformation de chaque enregistrement en dict
     liste_dict_actions = []

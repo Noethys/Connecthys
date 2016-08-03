@@ -13,9 +13,9 @@ import os
 import os.path
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-from application import app
+from application import app, models
 
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import create_engine, MetaData, Table, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -68,17 +68,40 @@ def Importation(secret=0):
     # Importation des données
     from_db = "sqlite:///" + os.path.join(basedir, "data/" + os.path.basename(nomFichierDB))
     to_db = app.config['SQLALCHEMY_DATABASE_URI']
+        
+    # Ouvertures des bases
+    source, sengine = make_session(from_db)
+    smeta = MetaData(bind=sengine)
+    destination, dengine = make_session(to_db)
+    dmeta = MetaData(bind=dengine)
     
+    # Liste des tables à transférer
     tables = [
         "activites", "consommations", "cotisations_manquantes", "factures", "groupes", 
         "individus", "inscriptions", "ouvertures", "periodes", "pieces_manquantes", 
         "reglements", "types_pieces", "unites", "users",
         ]
     
-    # Ouvertures des bases
-    source, sengine = make_session(from_db)
-    smeta = MetaData(bind=sengine)
-    destination, dengine = make_session(to_db)
+    # Recherche si des actions sont présentes
+    nbre_actions_destination = destination.query(func.count(models.Action.IDaction)).scalar()
+    
+    if nbre_actions_destination == 0 :
+        # S'il n'y a aucune actions présentes, on importe toute la table Actions de la source
+        tables.append("actions")
+    else :
+        # Sinon, on importe uniquement l'état des actions
+        liste_actions_source = source.query(models.Action).all() 
+        
+        for action in liste_actions_source :
+            
+            # Update
+            table_actions_destination = Table('portail_actions', dmeta, autoload=True)
+            u = table_actions_destination.update()
+            u = u.values({"etat" : action.etat, "traitement_date" : action.traitement_date})
+            u = u.where(table_actions_destination.c.ref_unique == action.ref_unique)
+            dengine.execute(u)
+        
+        destination.commit()
     
     # Parcours les tables
     for nom_table in tables:
@@ -96,9 +119,9 @@ def Importation(secret=0):
             
         dengine.execute(table.insert(), listeDonnees)
     
-    # Commit final
+    # Commit de l'importation des tables
     destination.commit()
-    
+        
     # Fermeture et suppression de la base d'import
     source.close()
     os.remove(os.path.join(basedir, "data/" + os.path.basename(nomFichierDB)))

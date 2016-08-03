@@ -60,7 +60,14 @@ def UpgradeDB():
     """ Mise à jour de la DB """
     with app.app_context():
         app.logger.info("Migration de la base de donnees...")
-        flask_migrate.migrate()
+        try :
+            flask_migrate.migrate()
+        except Exception, err :
+            if "Path doesn't exist" in str(err) :
+                app.logger.info("Repertoire Migrations manquant -> Initialisation de flask_migrate maintenant...")
+                flask_migrate.init()
+                flask_migrate.migrate()
+            
         app.logger.info("Migration ok.")
         app.logger.info("Upgrade de la base de donnees...")
         flask_migrate.upgrade()
@@ -182,7 +189,7 @@ class Facture(Base):
 class Action(Base):
     __tablename__ = "portail_actions"
     IDaction = Column(Integer, primary_key=True)
-    horodatage = Column(DateTime, default=datetime.datetime.now)
+    horodatage = Column(DateTime)
     IDfamille = Column(Integer, index=True)
     categorie = Column(String(50))
     action = Column(String(50))
@@ -192,12 +199,15 @@ class Action(Base):
     etat = Column(String(50))
     traitement_date = Column(Date)
     IDperiode = Column(Integer)
+    ref_unique = Column(String(50))
     
     reservations = relationship("Reservation")
     
-    def __init__(self , horodatage=None, IDfamille=None, categorie=None, action=None, description=None, \
-                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None):
-        if horodatage != None :
+    def __init__(self, horodatage=None, IDfamille=None, categorie=None, action=None, description=None, \
+                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None):
+        if horodatage == None :
+            self.horodatage = datetime.datetime.now()
+        else :
             self.horodatage = horodatage
         self.IDfamille = IDfamille
         self.categorie = categorie
@@ -208,7 +218,16 @@ class Action(Base):
         self.etat = etat
         self.traitement_date = traitement_date
         self.IDperiode = IDperiode
- 
+        if ref_unique == None :
+            self.ref_unique = self.GetRefUnique()
+        else :
+            self.ref_unique = ref_unique
+    
+    def GetRefUnique(self):
+        horodatage = self.horodatage.strftime("%Y%m%d%H%M%S%f")
+        ref_unique = "%s%06d" % (horodatage, self.IDfamille)
+        return ref_unique
+        
     def __repr__(self):
         return '<Action %d>' % (self.IDaction)
 
