@@ -19,8 +19,8 @@
 				
 				{% for unite in dict_planning["liste_unites"] %}
 					{% if unite.IDunite in dict_planning["dict_ouvertures"][date] %}
-						{% set etat_case = GetEtatFondCase(dict_planning["dict_consommations"], date, unite.IDunite) %}
-						{% set etat_coche = GetEtatCocheCase(dict_planning["dict_reservations"], date, unite.IDunite) %}
+						{% set etat_case = GetEtatFondCase(dict_planning, date, unite.IDunite) %}
+						{% set etat_coche = GetEtatCocheCase(dict_planning, date, unite.IDunite) %}
 						<td
 							{% if etat_case == "reservation" %} style="background-color: #00a65a;"{% endif %}
 							{% if etat_case == "attente" %} style="background-color: #fff111;"{% endif %}

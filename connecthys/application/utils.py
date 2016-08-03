@@ -58,17 +58,31 @@ def utility_processor():
         text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
         return text
 
-    def GetEtatFondCase(dict_consommations={}, date=None, IDunite=None):
+    def GetEtatFondCase(dict_planning={}, date=None, IDunite=None):
+        dict_consommations = dict_planning["dict_consommations"]
         if dict_consommations.has_key(date) :
             if dict_consommations[date].has_key(IDunite) :
                 etat = dict_consommations[date][IDunite]
                 return etat
         return None
         
-    def GetEtatCocheCase(dict_reservations={}, date=None, IDunite=None):
+    def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
+        # Recherche en premier dans le dictionnaire des réservations si la case est cochée
+        dict_reservations = dict_planning["dict_reservations"]
         if dict_reservations.has_key(date) :
+        
+            # Recherche s'il y a une réservation sur cette date
             if dict_reservations[date].has_key(IDunite) :
                 return True
+            
+        else :
+            # S'il n'y a aucune réservation sur cette ligne, on coche la conso
+            dict_consommations = dict_planning["dict_consommations"]
+            if dict_consommations.has_key(date) :
+                if dict_consommations[date].has_key(IDunite) :
+                    if dict_consommations[date][IDunite] != None :
+                        return True
+        
         return False
         
     def GetIconeFichier(nomFichier=""):
