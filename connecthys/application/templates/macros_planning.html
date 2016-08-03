@@ -16,17 +16,24 @@
 			{% for date in dict_planning["liste_dates"] %}
 			<tr>
 				<td><center>{{ DateDDEnFrComplet(date) }}</td>
-				
+
 				{% for unite in dict_planning["liste_unites"] %}
 					{% if unite.IDunite in dict_planning["dict_ouvertures"][date] %}
 						{% set etat_case = GetEtatFondCase(dict_planning["dict_consommations"], date, unite.IDunite) %}
 						{% set etat_coche = GetEtatCocheCase(dict_planning["dict_reservations"], date, unite.IDunite) %}
+						{% set actualDate = Today() %}
+						{% set disabled = (date <= actualDate) %}
+						{% if date == actualDate %}
+							{% if TodayTime().hour < 9 %}
+								{% set disabled = False %}
+							{% endif %}
+						{% endif %}
 						<td
 							{% if etat_case == "reservation" %} style="background-color: #00a65a;"{% endif %}
 							{% if etat_case == "attente" %} style="background-color: #fff111;"{% endif %}
 							>
 							{% if impression == False %}
-								<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %}></center>
+							<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled="disabled" {% endif %}></center>
 							{% else %}
 								<center><strong>{% if etat_coche == True %} X {% endif %}</strong></center>
 							{% endif %}

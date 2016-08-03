@@ -21,7 +21,12 @@ def CallFonction(fonction="", *args):
 @app.context_processor
 def utility_processor():
     """ Variables accessibles dans tous les templates """
-    
+    def Today():
+        return datetime.date.today()
+
+    def TodayTime():
+        return datetime.datetime.now().time()
+
     def Formate_montant(montant, symbole=u'€'):
         return u"{0:.2f} {1}".format(montant, symbole)
 
@@ -88,6 +93,8 @@ def utility_processor():
 
         
     return dict(
+        Today=Today,
+        TodayTime=TodayTime,
         Formate_montant=Formate_montant,
         DateDDEnFr=DateDDEnFr,
         DateDDEnFrComplet=DateDDEnFrComplet,
