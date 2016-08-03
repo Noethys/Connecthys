@@ -8,7 +8,7 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-from application import app, models
+from application import app, db, models
 from flask import json, Response
 import datetime
 from sqlalchemy import func
@@ -47,7 +47,17 @@ def Exportation(secret=0, last=0):
     liste_dict_actions = []
     for action in liste_actions :
         liste_dict_actions.append(action.as_dict())
-
+    
+    # Mémorise la date de la dernière synchro
+    maintenant_str = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    m = models.Parametre.query.filter_by(nom="derniere_synchro").first()
+    if m == None :
+        m = models.Parametre(nom="derniere_synchro", parametre=maintenant_str)
+        db.session.add(m)
+    else :
+        m.parametre = maintenant_str
+    db.session.commit()
+    
     # Encodage des champs spéciaux (dates...)
     def Encoder(obj):
         """JSON encoder function for SQLAlchemy special classes."""

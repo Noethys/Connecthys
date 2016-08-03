@@ -199,7 +199,7 @@ class Action(Base):
     etat = Column(String(50))
     traitement_date = Column(Date)
     IDperiode = Column(Integer)
-    ref_unique = Column(String(50))
+    ref_unique = Column(String(50), index=True)
     
     reservations = relationship("Reservation")
     

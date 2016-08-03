@@ -630,6 +630,14 @@ def aide():
 def GetHistorique(IDfamille=None, categorie=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """
     """ Si categorie == None > Toutes les catégories sont affichées """
+    # Récupération de la date de la dernière synchro
+    m = models.Parametre.query.filter_by(nom="derniere_synchro").first()
+    if m != None :
+        derniere_synchro = datetime.datetime.strptime(m.parametre, "%Y%m%d%H%M%S%f")
+    else :
+        derniere_synchro = None
+    
+    # Récupération des actions
     date_limite = datetime.datetime.now() - datetime.timedelta(days=(app.config["HISTORIQUE_DELAI"]+1)*30)
     if categorie == None :
         liste_actions = models.Action.query.filter(models.Action.IDfamille==IDfamille, models.Action.horodatage>=date_limite).order_by(models.Action.horodatage.desc()).all()
@@ -645,5 +653,5 @@ def GetHistorique(IDfamille=None, categorie=None):
             dict_actions[horodatage] = []
         dict_actions[horodatage].append(action)
     
-    return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions}
+    return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro}
     
