@@ -423,15 +423,17 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     liste_dates.sort() 
     
     # Réservations
-    dict_reservations = {}
     action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
     if action != None :
         liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
+        dict_reservations = {}
         for reservation in liste_reservations :
             if not dict_reservations.has_key(reservation.date) :
                 dict_reservations[reservation.date] = {}
             dict_reservations[reservation.date][reservation.IDunite] = 1
-
+    else :
+        dict_reservations = None
+        
     # Consommations
     liste_consommations = models.Consommation.query.filter_by(IDinscription=inscription.IDinscription).all()
     dict_consommations = {}
@@ -497,13 +499,14 @@ def envoyer_reservations():
         # Traitement des consommations
         liste_reservations = []
         liste_dates_uniques = []
-        for valeur in resultats.split(",") :
-            date = utils.CallFonction("DateEngEnDD", valeur.split("#")[0])
-            IDunite = int(valeur.split("#")[1])
-            liste_reservations.append((date, IDunite))
-            
-            if date not in liste_dates_uniques :
-                liste_dates_uniques.append(date)
+        if len(resultats) > 0 :
+            for valeur in resultats.split(",") :
+                date = utils.CallFonction("DateEngEnDD", valeur.split("#")[0])
+                IDunite = int(valeur.split("#")[1])
+                liste_reservations.append((date, IDunite))
+                
+                if date not in liste_dates_uniques :
+                    liste_dates_uniques.append(date)
         
         # Description
         individu_prenom = inscription.individu.prenom
@@ -630,12 +633,22 @@ def aide():
 def GetHistorique(IDfamille=None, categorie=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """
     """ Si categorie == None > Toutes les catégories sont affichées """
-    if categorie == None :
-        liste_actions = models.Action.query.filter_by(IDfamille=IDfamille).order_by(models.Action.horodatage.desc()).all()
+    # Récupération de la date de la dernière synchro
+    m = models.Parametre.query.filter_by(nom="derniere_synchro").first()
+    if m != None :
+        derniere_synchro = datetime.datetime.strptime(m.parametre, "%Y%m%d%H%M%S%f")
     else :
-        liste_actions = models.Action.query.filter_by(IDfamille=IDfamille, categorie=categorie).order_by(models.Action.horodatage.desc()).all()
+        derniere_synchro = None
+    
+    # Récupération des actions
+    date_limite = datetime.datetime.now() - datetime.timedelta(days=(app.config["HISTORIQUE_DELAI"]+1)*30)
+    if categorie == None :
+        liste_actions = models.Action.query.filter(models.Action.IDfamille==IDfamille, models.Action.horodatage>=date_limite).order_by(models.Action.horodatage.desc()).all()
+    else :
+        liste_actions = models.Action.query.filter(models.Action.IDfamille==IDfamille, models.Action.horodatage>=date_limite, models.Action.categorie==categorie).order_by(models.Action.horodatage.desc()).all()
     liste_dates_actions = []
     dict_actions = {}
+    dict_dernieres_reservations = {}
     for action in liste_actions :
         horodatage = utils.CallFonction("DateDDEnFr", action.horodatage)
         if horodatage not in liste_dates_actions :
@@ -643,6 +656,10 @@ def GetHistorique(IDfamille=None, categorie=None):
         if not dict_actions.has_key(horodatage) :
             dict_actions[horodatage] = []
         dict_actions[horodatage].append(action)
+        
+        if action.categorie == "reservations" :
+            if not dict_dernieres_reservations.has_key(action.IDperiode) or (action.horodatage > dict_dernieres_reservations[action.IDperiode].horodatage and action.etat != "suppression") :
+                dict_dernieres_reservations[action.IDperiode] = action
     
-    return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions}
+    return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro}
     

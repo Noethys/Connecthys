@@ -32,14 +32,18 @@
 						</h3>
 						<div class="timeline-footer">
 							{% if action.etat == "attente" %}
-								<span class="pull-right"><a href="#" id="supprimer_action" data-toggle="modal" data-target="#modal_supprimer_demande" data-idaction="{{ action.IDaction }}" class="btn btn-danger btn-xs" title="Supprimer cette demande">Supprimer</a></span>
-								<span class="text-red">Demande en attente de traitement.</span>
+								{% if historique["derniere_synchro"] != None and action.horodatage <= historique["derniere_synchro"] %}
+									<span class="text-red">Votre demande a été transmise et sera traitée prochainement.</span>
+								{% else %}
+									<span class="pull-right"><a href="#" id="supprimer_action" data-toggle="modal" data-target="#modal_supprimer_demande" data-idaction="{{ action.IDaction }}" class="btn btn-danger btn-xs" title="Supprimer cette demande">Supprimer</a></span>
+									<span class="text-red">Demande en attente de traitement.</span>
+								{% endif %}
 							{% endif %}
 							{% if action.etat == "suppression" %}
 								<span class="text-yellow">Vous avez supprimé cette demande.</span>
 							{% endif %}
-							{% if action.etat == "ok" %}
-								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_horodatage) }}.</span>
+							{% if action.etat == "validation" %}
+								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_date) }}.</span>
 							{% endif %}
 						</div>
 					</div>
