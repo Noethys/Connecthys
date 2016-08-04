@@ -441,7 +441,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         if not dict_consommations.has_key(consommation.date) :
             dict_consommations[consommation.date] = {}
         dict_consommations[consommation.date][consommation.IDunite] = consommation.etat
-        
+
     # Mémorise toutes les données du planning
     dict_planning = {
         "periode" : periode,

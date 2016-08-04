@@ -66,27 +66,38 @@ def utility_processor():
     def GetEtatFondCase(dict_planning={}, date=None, IDunite=None):
         dict_consommations = dict_planning["dict_consommations"]
         if dict_consommations.has_key(date) :
-            if dict_consommations[date].has_key(IDunite) :
-                etat = dict_consommations[date][IDunite]
-                return etat
+            unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
+            if unitId is not None:
+                if dict_consommations[date].has_key(unitId) :
+                    etat = dict_consommations[date][unitId]
+                    return etat
         return None
-        
+    
+    def GetPrincipalUnitOfIDunit(dict_planning={}, IDunite=None):
+        liste_unites = dict_planning["liste_unites"]
+        for unit in liste_unites:
+            if unit.IDunite == IDunite:
+                return int(unit.unites_principales)
+        return None    
+
     def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
         dict_reservations = dict_planning["dict_reservations"]
-        if dict_reservations != None :
+        unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
+        if unitId is not None:
+            if dict_reservations != None :
         
-            # Recherche dans le dictionnaire des réservations si la case est cochée
-            if dict_reservations.has_key(date) :
-                if dict_reservations[date].has_key(IDunite) :
-                    return True
-            
-        else :
-            # S'il n'y a aucune réservation sur cette ligne, on coche la conso
-            dict_consommations = dict_planning["dict_consommations"]
-            if dict_consommations.has_key(date) :
-                if dict_consommations[date].has_key(IDunite) :
-                    if dict_consommations[date][IDunite] != None :
+                # Recherche dans le dictionnaire des réservations si la case est cochée
+                if dict_reservations.has_key(date) :
+                    if dict_reservations[date].has_key(unitId) :
                         return True
+            
+            else :
+                # S'il n'y a aucune réservation sur cette ligne, on coche la conso
+                dict_consommations = dict_planning["dict_consommations"]
+                if dict_consommations.has_key(date) :
+                    if dict_consommations[date].has_key(unitId) :
+                        if dict_consommations[date][unitId] != None :
+                            return True
         
         return False
         
@@ -115,6 +126,7 @@ def utility_processor():
         DateDTEnHeureFr=DateDTEnHeureFr,
         GetEtatFondCase=GetEtatFondCase,
         GetEtatCocheCase=GetEtatCocheCase,
+        GetPrincipalUnitOfIDunit=GetPrincipalUnitOfIDunit,
         DateDDEnEng=DateDDEnEng,
         DateEngEnDD=DateEngEnDD,
         DateEngFr=DateEngFr,
