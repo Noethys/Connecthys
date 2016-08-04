@@ -98,7 +98,7 @@ def Importation(secret=0):
             table_actions_destination = Table('portail_actions', dmeta, autoload=True)
             u = table_actions_destination.update()
             u = u.values({"etat" : action.etat, "traitement_date" : action.traitement_date})
-            u = u.where(table_actions_destination.c.ref_unique == action.ref_unique)
+            u = u.where(table_actions_destination.c.horodatage == action.horodatage)
             dengine.execute(u)
         
         destination.commit()

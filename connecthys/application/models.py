@@ -199,12 +199,11 @@ class Action(Base):
     etat = Column(String(50))
     traitement_date = Column(Date)
     IDperiode = Column(Integer)
-    ref_unique = Column(String(50), index=True)
     
     reservations = relationship("Reservation")
     
     def __init__(self, horodatage=None, IDfamille=None, categorie=None, action=None, description=None, \
-                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None):
+                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None):
         if horodatage == None :
             self.horodatage = datetime.datetime.now()
         else :
@@ -218,15 +217,7 @@ class Action(Base):
         self.etat = etat
         self.traitement_date = traitement_date
         self.IDperiode = IDperiode
-        if ref_unique == None :
-            self.ref_unique = self.GetRefUnique()
-        else :
-            self.ref_unique = ref_unique
     
-    def GetRefUnique(self):
-        horodatage = self.horodatage.strftime("%Y%m%d%H%M%S%f")
-        ref_unique = "%s%06d" % (horodatage, self.IDfamille)
-        return ref_unique
         
     def __repr__(self):
         return '<Action %d>' % (self.IDaction)
