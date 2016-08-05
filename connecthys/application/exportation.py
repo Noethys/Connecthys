@@ -35,10 +35,10 @@ def Exportation(secret=0, last=0):
         IDfamille = int(last[-6:])
         
         # Recherche de la dernière action téléchargée
-        if last_action != None :
-            liste_actions = models.Action.query.filter(models.Action.IDaction > last_action.IDaction, models.Action.etat == "attente").order_by(models.Action.IDaction).all()
-        else :
-            liste_actions = models.Action.query.filter(models.Action.horodatage > horodatage, models.Action.etat == "attente").order_by(models.Action.IDaction).all()
+        #if last_action != None :
+        #    liste_actions = models.Action.query.filter(models.Action.IDaction > last_action.IDaction, models.Action.etat == "attente").order_by(models.Action.IDaction).all()
+        #else :
+        liste_actions = models.Action.query.filter(models.Action.horodatage > horodatage, models.Action.etat == "attente").order_by(models.Action.IDaction).all()
         
     # Transformation de chaque enregistrement en dict
     liste_dict_actions = []
