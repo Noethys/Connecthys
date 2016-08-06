@@ -29,14 +29,14 @@
 							{% endif %}
 						{% endif %}
 						<td
-							{% if etat_case == "present" %} style="background-color: #009900;" {% endif %}
-							{% if etat_case == "absenti" %} style="background-color: #ff0000;" {% endif %}
-							{% if etat_case == "absentj" %} style="background-color: #ff8800;" {% endif %}
-							{% if etat_case == "reservation" %} style="background-color: #33ccff;" {% endif %}
-							{% if etat_case == "attente" %} style="background-color: #fff111;" {% endif %}
-						>
+							{% if etat_case == "present" %} style="background-color: #009900;"{% endif %}
+							{% if etat_case == "reservation" %} style="background-color: #33ccff;"{% endif %}
+							{% if etat_case == "attente" %} style="background-color: #fff111;"{% endif %}
+							{% if etat_case == "absenti" %} style="background-color: #ff0000;"{% endif %}
+							{% if etat_case == "absentj" %} style="background-color: #ff8800;"{% endif %}
+							>
 							{% if impression == False %}
-								<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled="disabled" {% endif %}></center>
+							<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled="disabled" {% endif %}></center>
 							{% else %}
 								<center><strong>{% if etat_coche == True %} X {% endif %}</strong></center>
 							{% endif %}
