@@ -35,6 +35,10 @@ def Exportation(secret=0, last=0):
         IDfamille = int(last[-6:])
         
         # Recherche de la dernière action téléchargée
+        #last_action = models.Action.query.filter(func.strftime('%Y-%m-%d', models.Action.horodatage) == str(horodatage.date()), func.strftime('%H:%M:%S', models.Action.horodatage) == str(horodatage.time()), models.Action.IDfamille==IDfamille).first()
+        last_action = models.Action.query.filter(models.Action.ref_unique == last).first()
+
+        # Recherche de la dernière action téléchargée
         if last_action != None :
             liste_actions = models.Action.query.filter(models.Action.IDaction > last_action.IDaction, models.Action.etat == "attente").order_by(models.Action.IDaction).all()
         else :

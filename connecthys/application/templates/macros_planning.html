@@ -36,7 +36,7 @@
 							{% if etat_case == "absentj" %} style="background-color: #ff8800;"{% endif %}
 							>
 							{% if impression == False %}
-							<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled="disabled" {% endif %}></center>
+							<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled {% endif %}></center>
 							{% else %}
 								<center><strong>{% if etat_coche == True %} X {% endif %}</strong></center>
 							{% endif %}
@@ -186,7 +186,7 @@
 		$('button#confirmation').bind('click', function() {
 			
 			var liste_resultats = [];
-			$("input#case:checked").each(function() {
+			$("input#case:checked:not([disabled])").each(function() {
 				var date = $(this).attr('data-date');
 				var IDunite = $(this).attr('data-IDunite');
 				var valeur = date + "#" + IDunite.toString();
