@@ -13,14 +13,15 @@
 			</tr>	
 
 			<!-- Lignes dates -->
+			{% set date_precedente = None %}
+			
 			{% for date in dict_planning["liste_dates"] %}
-			<tr>
+			<tr {% if date_precedente != None and GetNumSemaine(date) != GetNumSemaine(date_precedente) %}style="border-top-style: dashed;"{% endif %}>
 				<td><center>{{ DateDDEnFrComplet(date) }}</td>
-				
 				{% for unite in dict_planning["liste_unites"] %}
-					{% if unite.IDunite in dict_planning["dict_ouvertures"][date] %}
-						{% set etat_case = GetEtatFondCase(dict_planning, date, unite.IDunite) %}
-						{% set etat_coche = GetEtatCocheCase(dict_planning, date, unite.IDunite) %}
+					{% if IsUniteOuverte(unite, date, dict_planning) == True %}
+						{% set etat_case = GetEtatFondCase(unite, date, dict_planning) %}
+						{% set etat_coche = GetEtatCocheCase(unite, date, dict_planning) %}
 						<td
 							{% if etat_case == "reservation" %} style="background-color: #00a65a;"{% endif %}
 							{% if etat_case == "attente" %} style="background-color: #fff111;"{% endif %}
@@ -32,12 +33,12 @@
 							{% endif %}
 						</td>
 					{% else %}
-						<td bgcolor="#000000">
+						<td bgcolor="#ffffff">
 						</td>
 					{% endif %}
 					
 				{% endfor %}
-				
+				{% set date_precedente = date %}
 			</tr>
 			{% endfor %}
 		

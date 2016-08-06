@@ -350,8 +350,8 @@ class Activite(Base):
     IDactivite = Column(Integer, primary_key=True)
     nom = Column(String(300))
     inscriptions_affichage = Column(Integer)
-    inscriptions_date_debut = Column(Date)
-    inscriptions_date_fin = Column(Date)
+    inscriptions_date_debut = Column(DateTime)
+    inscriptions_date_fin = Column(DateTime)
     reservations_affichage = Column(Integer)
     unites_multiples = Column(Integer)
     
@@ -374,7 +374,6 @@ class Activite(Base):
     
     def Get_nbre_periodes_actives(self):
         """ Compte le nombre de périodes actives ce jour """
-        today = datetime.date.today()
         nbre = 0
         for periode in self.periodes :
             if periode.Is_active_today() :
@@ -452,8 +451,8 @@ class Periode(Base):
     nom = Column(String(300))
     date_debut = Column(Date)
     date_fin = Column(Date)
-    affichage_date_debut = Column(Date)
-    affichage_date_fin = Column(Date)
+    affichage_date_debut = Column(DateTime)
+    affichage_date_fin = Column(DateTime)
     
     IDactivite = Column(Integer, ForeignKey("portail_activites.IDactivite"))
     activite = relationship("Activite")  
@@ -474,9 +473,9 @@ class Periode(Base):
     
     def Is_active_today(self):
         """ Vérifie si la période est active ce jour """
-        today = datetime.date.today()
-        if self.affichage_date_debut == None or (today >= self.affichage_date_debut and today <= self.affichage_date_fin) :
-            if self.date_fin < today :
+        now = datetime.datetime.now()
+        if self.affichage_date_debut == None or (now >= self.affichage_date_debut and now <= self.affichage_date_fin) :
+            if self.date_fin < datetime.date.today() :
                 return False
             return True
         else :

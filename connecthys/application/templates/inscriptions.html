@@ -81,7 +81,7 @@
 		  <h4>Sélectionnez une activité et un groupe</h4>
 		  <select id="choix_activite" class="form-control">
 			{% for activite in liste_activites %}
-				{% if activite.inscriptions_affichage == 1 and (activite.inscriptions_date_debut == None or (activite_inscriptions_date_debut <= g.date_jour and activite_inscriptions_date_fin >= g.date_jour)) %}
+				{% if activite.inscriptions_affichage == 1 and (activite.inscriptions_date_debut == None or (activite.inscriptions_date_debut <= GetNow() and activite.inscriptions_date_fin >= GetNow())) %}
 					{% for groupe in dict_groupes[activite.IDactivite] %}
 						<option value="{{ activite.IDactivite }}-{{ groupe.IDgroupe }}">{{ activite.nom }} - {{ groupe.nom }}</option>
 					{% endfor %}

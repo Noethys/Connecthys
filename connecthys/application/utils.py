@@ -22,6 +22,12 @@ def CallFonction(fonction="", *args):
 def utility_processor():
     """ Variables accessibles dans tous les templates """
     
+    def GetNow():
+        return datetime.datetime.now() 
+        
+    def GetToday():
+        return datetime.date.today() 
+        
     def Formate_montant(montant, symbole=u'€'):
         return u"{0:.2f} {1}".format(montant, symbole)
 
@@ -31,7 +37,7 @@ def utility_processor():
         return date.strftime("%d/%m/%Y")
         
     def DateDDEnEng(date):
-        """ Transforme une date DD en date Eng sans tirets """
+        """ Transforme une date DD en date Eng avec tirets """
         if date == None : return ""
         return date.strftime("%Y-%m-%d")
 
@@ -40,7 +46,7 @@ def utility_processor():
         if date == None : return ""
         jours = [u"Lundi", u"Mardi", u"Mercredi", u"Jeudi", u"Vendredi", u"Samedi", u"Dimanche"]
         mois = ["janvier", u"février", "mars", "avril", "mai", "juin", "juillet", u"août", "Septembre", "Octobre", u"novembre", u"décembre"]
-        return u"%s %d %s %d" % (jours[date.weekday()-1], date.day, mois[date.month-1], date.year)
+        return u"%s %d %s %d" % (jours[date.weekday()], date.day, mois[date.month-1], date.year)
 
     def DateEngEnDD(date):
         if date in (None, "", "None") : return None
@@ -57,33 +63,39 @@ def utility_processor():
         if type(textDate) == datetime.date : return DateDDEnFr(textDate)
         text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
         return text
-
-    def GetEtatFondCase(dict_planning={}, date=None, IDunite=None):
-        dict_consommations = dict_planning["dict_consommations"]
-        if dict_consommations.has_key(date) :
-            if dict_consommations[date].has_key(IDunite) :
-                etat = dict_consommations[date][IDunite]
+    
+    def IsUniteOuverte(unite=None, date=None, dict_planning={}):
+        for IDunite_conso in unite.Get_unites_principales() :
+            if not IDunite_conso in dict_planning["dict_ouvertures"][date] :
+                return False
+        return True
+    
+    def GetEtatFondCase(unite=None, date=None, dict_planning={}):
+        dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
+        if dict_conso_par_unite_resa.has_key(date) :
+            if dict_conso_par_unite_resa[date].has_key(unite) :
+                etat = dict_conso_par_unite_resa[date][unite]
                 return etat
         return None
         
-    def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
+    def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
         dict_reservations = dict_planning["dict_reservations"]
         if dict_reservations != None :
         
             # Recherche dans le dictionnaire des réservations si la case est cochée
             if dict_reservations.has_key(date) :
-                if dict_reservations[date].has_key(IDunite) :
+                if dict_reservations[date].has_key(unite.IDunite) :
                     return True
             
         else :
             # S'il n'y a aucune réservation sur cette ligne, on coche la conso
-            dict_consommations = dict_planning["dict_consommations"]
-            if dict_consommations.has_key(date) :
-                if dict_consommations[date].has_key(IDunite) :
-                    if dict_consommations[date][IDunite] != None :
-                        return True
+            if GetEtatFondCase(unite, date, dict_planning) != None :
+                return True
         
         return False
+    
+    def GetNumSemaine(date):
+        return date.isocalendar()[1]
         
     def GetIconeFichier(nomFichier=""):
         """ Retourne une icône selon le type de fichier (pdf, word, autre) """
@@ -102,15 +114,19 @@ def utility_processor():
 
         
     return dict(
+        GetNow=GetNow,
+        GetToday=GetToday,
         Formate_montant=Formate_montant,
         DateDDEnFr=DateDDEnFr,
         DateDDEnFrComplet=DateDDEnFrComplet,
         DateDTEnHeureFr=DateDTEnHeureFr,
+        IsUniteOuverte=IsUniteOuverte,
         GetEtatFondCase=GetEtatFondCase,
         GetEtatCocheCase=GetEtatCocheCase,
         DateDDEnEng=DateDDEnEng,
         DateEngEnDD=DateEngEnDD,
         DateEngFr=DateEngFr,
+        GetNumSemaine=GetNumSemaine,
         GetIconeFichier=GetIconeFichier,
         )
 
