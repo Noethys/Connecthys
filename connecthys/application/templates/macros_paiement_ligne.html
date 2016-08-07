@@ -41,7 +41,7 @@
 						{% for facture in liste_factures %}
 							{% if facture.montant_solde > 0.0 %}
 							<tr>
-								<td><center><input type="checkbox" name="check_facture" class="flat-red" value={{ facture.montant_solde }} checked></center></td>
+								<td><center><input type="checkbox" name="check_facture" class="flat-green" value={{ facture.montant_solde }} checked></center></td>
 								<td><center>{{ DateDDEnFr(facture.date_debut) }}</center></td>
 								<td><center>{{ DateDDEnFr(facture.date_fin) }}</center></td>
 								<td><center>{{ facture.numero }}</center></td>

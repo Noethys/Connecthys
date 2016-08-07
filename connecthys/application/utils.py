@@ -94,6 +94,20 @@ def utility_processor():
         
         return False
     
+    def GetDictDatesAttente(dict_planning={}):
+        dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
+        dict_dates_attente = {}
+        for date, dict_unites in dict_conso_par_unite_resa.iteritems() :
+            for unite, etat in dict_unites.iteritems() :
+                if etat == "attente" :
+                    if not dict_dates_attente.has_key(date) :
+                        dict_dates_attente[date] = 0
+                    dict_dates_attente[date] += 1
+        return dict_dates_attente
+    
+    def GetNbreDatesAttente(dict_planning={}):
+        return len(GetDictDatesAttente(dict_planning))
+    
     def GetNumSemaine(date):
         return date.isocalendar()[1]
         
@@ -126,6 +140,8 @@ def utility_processor():
         DateDDEnEng=DateDDEnEng,
         DateEngEnDD=DateEngEnDD,
         DateEngFr=DateEngFr,
+        GetDictDatesAttente=GetDictDatesAttente,
+        GetNbreDatesAttente=GetNbreDatesAttente,
         GetNumSemaine=GetNumSemaine,
         GetIconeFichier=GetIconeFichier,
         )

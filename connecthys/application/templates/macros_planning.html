@@ -24,10 +24,10 @@
 						{% set etat_coche = GetEtatCocheCase(unite, date, dict_planning) %}
 						<td
 							{% if etat_case == "reservation" %} style="background-color: #00a65a;"{% endif %}
-							{% if etat_case == "attente" %} style="background-color: #fff111;"{% endif %}
+							{% if etat_case == "attente" %} style="background-color: #dd4b39;"{% endif %}
 							>
 							{% if impression == False %}
-								<center><input type="checkbox" id="case" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} class="flat-red" {% if etat_coche == True %} checked {% endif %}></center>
+								<center><input type="checkbox" id="case" class="flat-black" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} {% if etat_coche == True %} checked {% endif %}></center>
 							{% else %}
 								<center><strong>{% if etat_coche == True %} X {% endif %}</strong></center>
 							{% endif %}
