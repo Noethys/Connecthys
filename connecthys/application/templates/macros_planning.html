@@ -164,8 +164,16 @@
 	</script>
 	
 	<script>
+		modified = [];
 		$('input#case').on('ifClicked', function(event){
 			// Coche une unité à la fois
+			var index = modified.indexOf($(this).attr('data-date'));
+			if (index > -1) {
+				modified.splice(index, 1);
+			}
+			else {
+				modified.push($(this).attr('data-date'));
+			}
 			if({{ dict_planning["periode"].activite.unites_multiples }} == 0) {
 					var date = $(this).attr('data-date');
 					var IDunite = $(this).attr('data-IDunite');
@@ -186,13 +194,17 @@
 		$('button#confirmation').bind('click', function() {
 			
 			var liste_resultats = [];
-			$("input#case:checked:not([disabled])").each(function() {
+			alert(modified);
+			$("input#case:not([disabled])").each(function() {
 				var date = $(this).attr('data-date');
 				var IDunite = $(this).attr('data-IDunite');
 				var valeur = date + "#" + IDunite.toString();
-				liste_resultats.push(valeur);
+				var index = modified.indexOf($(this).attr('data-date'));
+				if (index > -1) {
+					liste_resultats.push(valeur);
+					modified.splice(index, 1);
+				}
 			});
-			
 			$.ajax({
 			  type: 'GET',
 			  dataType: "json",
