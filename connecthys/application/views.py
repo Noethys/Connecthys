@@ -224,7 +224,7 @@ def envoyer_demande_facture():
         id = request.args.get("id", 0, type=int)
         numfacture = request.args.get("info", "", type=str)
         methode_envoi = request.args.get("methode_envoi", "", type=str)
-        commentaire = request.args.get("commentaire", "", type=str)
+        commentaire = request.args.get("commentaire", "", type=unicode)
         
         # Enregistrement action
         parametres = u"IDfacture=%d#methode_envoi=%s" % (id, methode_envoi)
@@ -284,7 +284,7 @@ def envoyer_demande_recu():
         id = request.args.get("id", 0, type=int)
         info = request.args.get("info", "", type=str)
         methode_envoi = request.args.get("methode_envoi", "", type=str)
-        commentaire = request.args.get("commentaire", "", type=str)
+        commentaire = request.args.get("commentaire", "", type=unicode)
         
         # Enregistrement action
         parametres = u"IDreglement=%d#methode_envoi=%s" % (id, methode_envoi)
@@ -526,7 +526,7 @@ def envoyer_reservations():
         IDindividu = request.args.get("IDindividu", None, type=int)
         date_debut_periode = request.args.get("date_debut_periode", "", type=str)
         date_fin_periode = request.args.get("date_fin_periode", "", type=str)
-        commentaire = request.args.get("commentaire", None, type=str)
+        commentaire = request.args.get("commentaire", None, type=unicode)
         
         # Récupération de la période
         periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
@@ -618,7 +618,7 @@ def envoyer_demande_inscription():
         activite = request.args.get("activite", "", type=str)
         IDactivite = int(activite.split("-")[0])
         IDgroupe = int(activite.split("-")[1])
-        commentaire = request.args.get("commentaire", "", type=str)
+        commentaire = request.args.get("commentaire", "", type=unicode)
         
         # Vérifie que l'individu n'est pas déjà inscrit
         inscription = models.Inscription.query.filter_by(IDindividu=IDindividu, IDactivite=IDactivite).first()
