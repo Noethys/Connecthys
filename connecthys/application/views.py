@@ -628,8 +628,8 @@ def envoyer_demande_inscription():
         # Enregistrement
         individu = models.Individu.query.filter_by(IDindividu=IDindividu).first()
         activite = models.Activite.query.filter_by(IDactivite=IDactivite).first()
-        description = u"Inscrire %s à l'activité %s" % (individu.prenom, activite.nom)
-        parametres = u"IDactivite=%d#IDgroupe=%d" % (IDactivite, IDgroupe)
+        description = u"Inscription de %s à l'activité %s" % (individu.prenom, activite.nom)
+        parametres = u"IDindividu=%d#IDactivite=%d#IDgroupe=%d" % (IDindividu, IDactivite, IDgroupe)
 
         m = models.Action(IDfamille=current_user.IDfamille, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
