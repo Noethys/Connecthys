@@ -193,19 +193,36 @@
 	<script>
 	  $(function () {
 		//iCheck for checkbox and radio inputs
-		$('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
-		  checkboxClass: 'icheckbox_minimal-blue',
-		  radioClass: 'iradio_minimal-blue'
-		});
+		//$('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+		//  checkboxClass: 'icheckbox_minimal-blue',
+		//  radioClass: 'iradio_minimal-blue'
+		//});
 		//Red color scheme for iCheck
-		$('input[type="checkbox"].minimal-red, input[type="radio"].minimal-red').iCheck({
-		  checkboxClass: 'icheckbox_minimal-red',
-		  radioClass: 'iradio_minimal-red'
+		//$('input[type="checkbox"].minimal-red, input[type="radio"].minimal-red').iCheck({
+		//  checkboxClass: 'icheckbox_minimal-red',
+		//  radioClass: 'iradio_minimal-red'
+		//iCheck square-blue
+		$('input[type="checkbox"].square-blue, input[type="radio"].square-blue').iCheck({
+		  checkboxClass: 'icheckbox_square-blue',
+		  radioClass: 'iradio_square-blue',
+		  increaseArea: '+30%'
 		});
 		//Flat red color scheme for iCheck
 		$('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
 		  checkboxClass: 'icheckbox_flat-green',
 		  radioClass: 'iradio_flat-green',
+		  increaseArea: '+30%'
+		});
+		//iCheck flat-black
+		$('input[type="checkbox"].flat-black, input[type="radio"].flat-black').iCheck({
+		  checkboxClass: 'icheckbox_flat',
+		  radioClass: 'iradio_flat',
+		  increaseArea: '+30%'
+		});
+		//iCheck flat-blue
+		$('input[type="checkbox"].flat-blue, input[type="radio"].flat-blue').iCheck({
+		  checkboxClass: 'icheckbox_flat-blue',
+		  radioClass: 'iradio_flat-blue',
 		  increaseArea: '+30%'
 		});
 	  });

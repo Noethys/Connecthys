@@ -54,8 +54,18 @@
 	</div>
 	</div>
 	<!-- /.widget-user -->
+	
+	<!-- Alerte si conso en attente -->
+	{% set nbre_dates_attente = GetNbreDatesAttente(dict_planning) %}
+	{% if nbre_dates_attente > 0 %}
+		<div class="alert alert-danger alert-dismissible">
+			<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+			<h4><i class="icon fa fa-warning"></i> Attention !</h4>
+			Il y a {{ nbre_dates_attente }} {% if nbre_dates_attente == 1 %}date qui comporte{% else %}dates qui comportent{% endif %} au moins une réservation en attente.
+		</div>
 
-		
+	{% endif %}
+
 	<!-- Planning -->
 	<div class="box box-solid">
 		<div class="box-body no-padding">
@@ -73,7 +83,22 @@
 			</ul>
 		</div>
 	</div>
-		
+
+	<!-- Légende -->
+	<div class="box box-solid">
+		<div class="box-header with-border">
+			<h3 class="box-title">Légende</h3>
+		</div>
+				
+		<div class="box-body">
+			<ul class="list-unstyled">
+				<li><small class="label bg-black"><i class="fa fa-check"></i></small> Réservation que vous avez demandé</li>
+				<li><small class="label bg-green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small> Réservation transmise et acceptée</li>
+				<li><small class="label bg-red">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small> Réservation transmise et refusée</li>
+			</ul>
+		</div>
+	</div>
+
 	{{ macros_planning.planning_modals(dict_planning=dict_planning) }}
 
 {%- endblock content %}
