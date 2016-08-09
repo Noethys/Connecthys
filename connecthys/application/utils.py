@@ -21,11 +21,17 @@ def CallFonction(fonction="", *args):
 @app.context_processor
 def utility_processor():
     """ Variables accessibles dans tous les templates """
-    def Today():
-        return datetime.date.today()
+    #def Today():
+    #    return datetime.date.today()
 
-    def TodayTime():
-        return datetime.datetime.now().time()
+    #def TodayTime():
+    #    return datetime.datetime.now().time()
+
+    def GetNow():
+        return datetime.datetime.now()
+
+    def GetToday():
+        return datetime.date.today()
 
     def Formate_montant(montant, symbole=u'€'):
         return u"{0:.2f} {1}".format(montant, symbole)
@@ -36,7 +42,7 @@ def utility_processor():
         return date.strftime("%d/%m/%Y")
         
     def DateDDEnEng(date):
-        """ Transforme une date DD en date Eng sans tirets """
+        """ Transforme une date DD en date Eng avec tirets """
         if date == None : return ""
         return date.strftime("%Y-%m-%d")
 
@@ -63,43 +69,63 @@ def utility_processor():
         text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
         return text
 
-    def GetEtatFondCase(dict_planning={}, date=None, IDunite=None):
-        dict_consommations = dict_planning["dict_consommations"]
-        if dict_consommations.has_key(date) :
-            unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
-            if unitId is not None:
-                if dict_consommations[date].has_key(unitId) :
-                    etat = dict_consommations[date][unitId]
-                    return etat
+    def IsUniteOuverte(unite=None, date=None, dict_planning={}):
+        for IDunite_conso in unite.Get_unites_principales() :
+            if not IDunite_conso in dict_planning["dict_ouvertures"][date] :
+                return False
+        return True
+
+#    def GetEtatFondCase(dict_planning={}, date=None, IDunite=None):
+#        dict_consommations = dict_planning["dict_consommations"]
+#        if dict_consommations.has_key(date) :
+#            unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
+#            if unitId is not None:
+#                if dict_consommations[date].has_key(unitId) :
+#                    etat = dict_consommations[date][unitId]
+#                    return etat
+#        return None
+
+    def GetEtatFondCase(unite=None, date=None, dict_planning={}):
+        dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
+        if dict_conso_par_unite_resa.has_key(date) :
+            if dict_conso_par_unite_resa[date].has_key(unite) :
+                etat = dict_conso_par_unite_resa[date][unite]
+                return etat
         return None
-    
+
     def GetPrincipalUnitOfIDunit(dict_planning={}, IDunite=None):
         liste_unites = dict_planning["liste_unites"]
         for unit in liste_unites:
             if unit.IDunite == IDunite:
                 return int(unit.unites_principales)
-        return None    
+        return None
 
-    def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
+#    def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
+    def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
         dict_reservations = dict_planning["dict_reservations"]
-        unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
-        if unitId is not None:
-            if dict_reservations != None :
+        #unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
+        #if unitId is not None:
+        if dict_reservations != None :
         
-                # Recherche dans le dictionnaire des réservations si la case est cochée
-                if dict_reservations.has_key(date) :
-                    if dict_reservations[date].has_key(unitId) :
-                        return True
+            # Recherche dans le dictionnaire des réservations si la case est cochée
+            if dict_reservations.has_key(date) :
+                if dict_reservations[date].has_key(unitId) :
+                    return True
             
-            else :
-                # S'il n'y a aucune réservation sur cette ligne, on coche la conso
-                dict_consommations = dict_planning["dict_consommations"]
-                if dict_consommations.has_key(date) :
-                    if dict_consommations[date].has_key(unitId) :
-                        if dict_consommations[date][unitId] != None :
-                            return True
+        else :
+            # S'il n'y a aucune réservation sur cette ligne, on coche la conso
+            #dict_consommations = dict_planning["dict_consommations"]
+            #if dict_consommations.has_key(date) :
+            #    if dict_consommations[date].has_key(unitId) :
+            #        if dict_consommations[date][unitId] != None :
+            #            return True
+            if GetEtatFondCase(unite, date, dict_planning) != None :
+                return True
         
         return False
+
+    def GetNumSemaine(date):
+        return date.isocalendar()[1]
         
     def GetIconeFichier(nomFichier=""):
         """ Retourne une icône selon le type de fichier (pdf, word, autre) """
@@ -118,18 +144,22 @@ def utility_processor():
 
         
     return dict(
-        Today=Today,
-        TodayTime=TodayTime,
+#        Today=Today,
+#        TodayTime=TodayTime,
+        GetNow=GetNow,
+        GetToday=GetToday,
         Formate_montant=Formate_montant,
         DateDDEnFr=DateDDEnFr,
         DateDDEnFrComplet=DateDDEnFrComplet,
         DateDTEnHeureFr=DateDTEnHeureFr,
+        IsUniteOuverte=IsUniteOuverte,
         GetEtatFondCase=GetEtatFondCase,
         GetEtatCocheCase=GetEtatCocheCase,
-        GetPrincipalUnitOfIDunit=GetPrincipalUnitOfIDunit,
+#        GetPrincipalUnitOfIDunit=GetPrincipalUnitOfIDunit,
         DateDDEnEng=DateDDEnEng,
         DateEngEnDD=DateEngEnDD,
         DateEngFr=DateEngFr,
+        GetNumSemaine=GetNumSemaine,
         GetIconeFichier=GetIconeFichier,
         )
 

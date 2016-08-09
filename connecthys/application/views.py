@@ -442,6 +442,33 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
             dict_consommations[consommation.date] = {}
         dict_consommations[consommation.date][consommation.IDunite] = consommation.etat
 
+    # Attribution des consommations à chaque unité de réservation
+    liste_unites_temp = []
+    for unite in liste_unites :
+        liste_unites_principales = unite.Get_unites_principales()
+        liste_unites_temp.append( (len(liste_unites_principales), liste_unites_principales, unite) )
+    liste_unites_temp.sort(reverse=True)
+    
+    dict_conso_par_unite_resa = {}
+    for date in liste_dates :
+        for nbre_unites_principales, liste_unites_principales, unite in liste_unites_temp :
+            
+            liste_etats = []
+            for IDunite_conso in liste_unites_principales :
+                if dict_consommations.has_key(date) :
+                    if dict_consommations[date].has_key(IDunite_conso) :
+                        liste_etats.append(dict_consommations[date][IDunite_conso])
+                
+            if len(liste_etats) == nbre_unites_principales :
+                if not dict_conso_par_unite_resa.has_key(date) :
+                    dict_conso_par_unite_resa[date] = {}
+                    
+                if "attente" in liste_etats :
+                    dict_conso_par_unite_resa[date][unite] = "attente"
+                else :
+                    dict_conso_par_unite_resa[date][unite] = "reservation"
+                break
+
     # Mémorise toutes les données du planning
     dict_planning = {
         "periode" : periode,
@@ -450,6 +477,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         "liste_dates" : liste_dates,
         "dict_ouvertures" : dict_ouvertures,
         "dict_consommations" : dict_consommations,
+        "dict_conso_par_unite_resa" : dict_conso_par_unite_resa,
         "dict_reservations" : dict_reservations,
         "couleur" : couleur,
         }
