@@ -27,7 +27,7 @@
 	</div>
 	
 	<!-- Liste des inscriptions -->
-	{% if individu.inscriptions|length > 1 %}
+	{% if individu.inscriptions|length > 0 %}
 		<div class="box-footer no-padding">
 			<table class="table table-bordered table-striped no-margin">
 				<tbody>
@@ -139,7 +139,7 @@
 			$('button#envoyer').bind('click', function() {
 			
 				// Envoie les données au serveur
-				$.getJSON($SCRIPT_ROOT + 'envoyer_demande_inscription', {
+				$.getJSON($SCRIPT_ROOT + '/envoyer_demande_inscription', {
 					idindividu: $("#idindividu").val(),
 					activite: $("#choix_activite").val(),
 					commentaire: $("#commentaire").val(),
