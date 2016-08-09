@@ -191,6 +191,7 @@ class Action(Base):
     IDaction = Column(Integer, primary_key=True)
     horodatage = Column(DateTime)
     IDfamille = Column(Integer, index=True)
+    IDindividu = Column(Integer)
     categorie = Column(String(50))
     action = Column(String(50))
     description = Column(String(300))
@@ -203,13 +204,14 @@ class Action(Base):
     
     reservations = relationship("Reservation")
     
-    def __init__(self, horodatage=None, IDfamille=None, categorie=None, action=None, description=None, \
+    def __init__(self, horodatage=None, IDfamille=None, IDindividu=None, categorie=None, action=None, description=None, \
                         commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None):
         if horodatage == None :
             self.horodatage = datetime.datetime.now()
         else :
             self.horodatage = horodatage
         self.IDfamille = IDfamille
+        self.IDindividu = IDindividu
         self.categorie = categorie
         self.action = action
         self.description = description
