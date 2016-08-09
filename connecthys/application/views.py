@@ -451,23 +451,47 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     
     dict_conso_par_unite_resa = {}
     for date in liste_dates :
+
+        liste_unites_conso_utilisees = []
+
         for nbre_unites_principales, liste_unites_principales, unite in liste_unites_temp :
             
-            liste_etats = []
+            #liste_etats = []
+            valide = True
             for IDunite_conso in liste_unites_principales :
-                if dict_consommations.has_key(date) :
-                    if dict_consommations[date].has_key(IDunite_conso) :
-                        liste_etats.append(dict_consommations[date][IDunite_conso])
+                #if dict_consommations.has_key(date) :
+                #    if dict_consommations[date].has_key(IDunite_conso) :
+                #        liste_etats.append(dict_consommations[date][IDunite_conso])
+                if IDunite_conso in liste_unites_conso_utilisees :
+                    valide = False
+
+            if valide :
                 
-            if len(liste_etats) == nbre_unites_principales :
-                if not dict_conso_par_unite_resa.has_key(date) :
-                    dict_conso_par_unite_resa[date] = {}
+            #if len(liste_etats) == nbre_unites_principales :
+            #    if not dict_conso_par_unite_resa.has_key(date) :
+            #        dict_conso_par_unite_resa[date] = {}
+                liste_etats = []
+                for IDunite_conso in liste_unites_principales :
+                    if dict_consommations.has_key(date) :
+                        if dict_consommations[date].has_key(IDunite_conso) :
+                            liste_etats.append(dict_consommations[date][IDunite_conso])
+
+                #if "attente" in liste_etats :
+                #    dict_conso_par_unite_resa[date][unite] = "attente"
+                #else :
+                #    dict_conso_par_unite_resa[date][unite] = "reservation"
+                #break
+                if len(liste_etats) == nbre_unites_principales :
+                    if not dict_conso_par_unite_resa.has_key(date) :
+                        dict_conso_par_unite_resa[date] = {}
                     
-                if "attente" in liste_etats :
-                    dict_conso_par_unite_resa[date][unite] = "attente"
-                else :
-                    dict_conso_par_unite_resa[date][unite] = "reservation"
-                break
+                    if "attente" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "attente"
+                    else :
+                        dict_conso_par_unite_resa[date][unite] = "reservation"
+                    
+                    for IDunite_conso in liste_unites_principales :
+                        liste_unites_conso_utilisees.append(IDunite_conso)
 
     # Mémorise toutes les données du planning
     dict_planning = {
@@ -540,7 +564,8 @@ def envoyer_reservations():
         individu_prenom = inscription.individu.prenom
         date_debut_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_debut)
         date_fin_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_fin)
-        description = u"Réservations pour %s sur la période du %s au %s (%d dates)" % (individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
+        #description = u"Réservations pour %s sur la période du %s au %s (%d dates)" % (individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
+        description = u"Réservations %s pour %s sur la période du %s au %s (%d dates)" % (inscription.activite.nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
 
         # Enregistrement de l'action
         action = models.Action(IDfamille=current_user.IDfamille, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
