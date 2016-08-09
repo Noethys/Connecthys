@@ -423,7 +423,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     liste_dates.sort() 
     
     # Réservations
-    action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
+    action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
     if action != None :
         liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
         dict_reservations = {}
@@ -629,9 +629,9 @@ def envoyer_demande_inscription():
         individu = models.Individu.query.filter_by(IDindividu=IDindividu).first()
         activite = models.Activite.query.filter_by(IDactivite=IDactivite).first()
         description = u"Inscription de %s à l'activité %s" % (individu.prenom, activite.nom)
-        parametres = u"IDindividu=%d#IDactivite=%d#IDgroupe=%d" % (IDindividu, IDactivite, IDgroupe)
+        parametres = u"IDactivite=%d#IDgroupe=%d" % (IDactivite, IDgroupe)
 
-        m = models.Action(IDfamille=current_user.IDfamille, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
+        m = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
         
