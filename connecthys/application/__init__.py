@@ -8,14 +8,15 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-__version__ = "0.0.3"
-
 
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_adminlte import AdminLTE
 
+# Récupération du numéro de version de l'application
+import versions
+__version__ = versions.GetVersion()
 
 # Init application
 app = Flask(__name__)
