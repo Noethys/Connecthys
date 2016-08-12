@@ -476,9 +476,9 @@ class Periode(Base):
     
     def Is_active_today(self):
         """ Vérifie si la période est active ce jour """
-        now = datetime.date.now()
-        if self.affichage_date_debut == None or (now >= self.affichage_date_debut and now <= self.affichage_date_fin) :
-            if self.date_fin < datetime.date.today() :
+        now = datetime.datetime.now()
+        if self.affichage_date_debut == None or (now.date() >= self.affichage_date_debut and now.date() <= self.affichage_date_fin) :
+            if self.date_fin < datetime.datetime.today() :
                 return False
             return True
         else :
