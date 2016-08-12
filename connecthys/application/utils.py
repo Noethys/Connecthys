@@ -21,12 +21,6 @@ def CallFonction(fonction="", *args):
 @app.context_processor
 def utility_processor():
     """ Variables accessibles dans tous les templates """
-    #def Today():
-    #    return datetime.date.today()
-
-    #def TodayTime():
-    #    return datetime.datetime.now().time()
-
     def GetNow():
         return datetime.datetime.now()
 
@@ -71,9 +65,9 @@ def utility_processor():
 
     def IsUniteOuverte(unite=None, date=None, dict_planning={}):
         for IDunite_conso in unite.Get_unites_principales() :
-            if not IDunite_conso in dict_planning["dict_ouvertures"][date] :
-                return False
-        return True
+            if unite.IDunite in dict_planning["dict_ouvertures"][date] :
+                return True
+        return False
 
 #    def GetEtatFondCase(dict_planning={}, date=None, IDunite=None):
 #        dict_consommations = dict_planning["dict_consommations"]
@@ -91,13 +85,6 @@ def utility_processor():
             if dict_conso_par_unite_resa[date].has_key(unite) :
                 etat = dict_conso_par_unite_resa[date][unite]
                 return etat
-        return None
-
-    def GetPrincipalUnitOfIDunit(dict_planning={}, IDunite=None):
-        liste_unites = dict_planning["liste_unites"]
-        for unit in liste_unites:
-            if unit.IDunite == IDunite:
-                return int(unit.unites_principales)
         return None
 
 #    def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
@@ -158,8 +145,6 @@ def utility_processor():
 
         
     return dict(
-#        Today=Today,
-#        TodayTime=TodayTime,
         GetNow=GetNow,
         GetToday=GetToday,
         Formate_montant=Formate_montant,
@@ -169,7 +154,6 @@ def utility_processor():
         IsUniteOuverte=IsUniteOuverte,
         GetEtatFondCase=GetEtatFondCase,
         GetEtatCocheCase=GetEtatCocheCase,
-#        GetPrincipalUnitOfIDunit=GetPrincipalUnitOfIDunit,
         DateDDEnEng=DateDDEnEng,
         DateEngEnDD=DateEngEnDD,
         DateEngFr=DateEngFr,

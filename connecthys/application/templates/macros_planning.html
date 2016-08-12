@@ -22,10 +22,10 @@
 					{% if IsUniteOuverte(unite, date, dict_planning) == True %}
 						{% set etat_case = GetEtatFondCase(unite, date, dict_planning) %}
 						{% set etat_coche = GetEtatCocheCase(unite, date, dict_planning) %}
-						{% set actualDate = Today() %}
+						{% set actualDate = GetToday() %}
 						{% set disabled = (date <= actualDate) %}
 						{% if date == actualDate %}
-							{% if TodayTime().hour < 9 %}
+							{% if GetNow().hour < 9 %}
 								{% set disabled = False %}
 							{% endif %}
 						{% endif %}
@@ -37,7 +37,7 @@
 							{% if etat_case == "absentj" %} style="background-color: #ff8800;"{% endif %}
 							>
 							{% if impression == False %}
-							<center><input type="checkbox" id="case" class="flat-black" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} {% if etat_coche == True %} checked {% endif %}></center>
+							<center><input type="checkbox" id="case" class="flat-black" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled {% endif %}></center>
 							{% else %}
 								<center><strong>{% if etat_coche == True %} X {% endif %}</strong></center>
 							{% endif %}
