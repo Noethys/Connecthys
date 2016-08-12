@@ -87,27 +87,27 @@ def utility_processor():
                 return etat
         return None
 
-#    def GetEtatCocheCase(dict_planning={}, date=None, IDunite=None):
     def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
+        print >> open('log.txt', 'a'), dict_planning["dict_reservations"]
         dict_reservations = dict_planning["dict_reservations"]
-        #unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
-        #if unitId is not None:
         if dict_reservations != None :
         
             # Recherche dans le dictionnaire des réservations si la case est cochée
             if dict_reservations.has_key(date) :
-                if dict_reservations[date].has_key(unitId) :
+                print >> open("log.txt", 'a'), "has_key(date) = true"
+                print >> open("log.txt", 'a'), "unite = ", unite, " || unite.unites_principales = ", unite.unites_principales
+                print >> open("log.txt", 'a'), "dict_reservations[date] =", dict_reservations[date]
+                if dict_reservations[date].has_key(unite.IDunite) :
                     return True
             
-        else :
-            # S'il n'y a aucune réservation sur cette ligne, on coche la conso
-            #dict_consommations = dict_planning["dict_consommations"]
-            #if dict_consommations.has_key(date) :
-            #    if dict_consommations[date].has_key(unitId) :
-            #        if dict_consommations[date][unitId] != None :
-            #            return True
-            if GetEtatFondCase(unite, date, dict_planning) != None :
-                return True
+        # S'il n'y a aucune réservation sur cette ligne, on coche la conso
+        #dict_consommations = dict_planning["dict_consommations"]
+        #if dict_consommations.has_key(date) :
+        #    if dict_consommations[date].has_key(unitId) :
+        #        if dict_consommations[date][unitId] != None :
+        #            return True
+        if GetEtatFondCase(unite, date, dict_planning) != None :
+            return True
         
         return False
 

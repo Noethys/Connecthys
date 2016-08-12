@@ -17,7 +17,7 @@
 
 			{% for date in dict_planning["liste_dates"] %}
 			<tr {% if date_precedente != None and GetNumSemaine(date) != GetNumSemaine(date_precedente) %}style="border-top-style: dashed;"{% endif %}>
-				<td><center>{{ DateDDEnFrComplet(date) }}</td>
+				<td><center>{{ DateDDEnFrComplet(date) }}</center></td>
 				{% for unite in dict_planning["liste_unites"] %}
 					{% if IsUniteOuverte(unite, date, dict_planning) == True %}
 						{% set etat_case = GetEtatFondCase(unite, date, dict_planning) %}
@@ -29,15 +29,9 @@
 								{% set disabled = False %}
 							{% endif %}
 						{% endif %}
-						<td
-							{% if etat_case == "present" %} style="background-color: #009900;"{% endif %}
-							{% if etat_case == "reservation" %} style="background-color: #33ccff;"{% endif %}
-							{% if etat_case == "attente" %} style="background-color: #dd4b39;"{% endif %}
-							{% if etat_case == "absenti" %} style="background-color: #ff0000;"{% endif %}
-							{% if etat_case == "absentj" %} style="background-color: #ff8800;"{% endif %}
-							>
+						<td {% if etat_case == "present" %} style="background-color: #00a65a;" {% elif etat_case == "attente" %} style="background-color: #dd4b39;"{% elif etat_case == "absenti" %} style="background-color: #dd4b39;" {% elif etat_case == "absentj" %} style="background-color: #f39c12;"{% endif %}>
 							{% if impression == False %}
-							<center><input type="checkbox" id="case" class="flat-black" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled {% endif %}></center>
+								<center><input type="checkbox" id="case" class="flat-black" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} {% if etat_coche == True %} checked {% endif %} {% if disabled == True %} disabled {% endif %}></center>
 							{% else %}
 								<center><strong>{% if etat_coche == True %} X {% endif %}</strong></center>
 							{% endif %}
@@ -195,7 +189,6 @@
 		$('button#confirmation').bind('click', function() {
 			
 			var liste_resultats = [];
-			alert(modified);
 			$("input#case:not([disabled])").each(function() {
 				var date = $(this).attr('data-date');
 				var IDunite = $(this).attr('data-IDunite');

@@ -423,14 +423,15 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     liste_dates.sort() 
 
     # Réservations
-    action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
-    if action != None :
-        liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
+    actions = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc())
+    if actions != None :
         dict_reservations = {}
-        for reservation in liste_reservations :
-            if not dict_reservations.has_key(reservation.date) :
-                dict_reservations[reservation.date] = {}
-            dict_reservations[reservation.date][reservation.IDunite] = 1
+        for action in actions:
+            liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
+            for reservation in liste_reservations :
+                if not dict_reservations.has_key(reservation.date) :
+                    dict_reservations[reservation.date] = {}
+                dict_reservations[reservation.date][reservation.IDunite] = 1
     else :
         dict_reservations = None
 
@@ -484,9 +485,15 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
                 if len(liste_etats) == nbre_unites_principales :
                     if not dict_conso_par_unite_resa.has_key(date) :
                         dict_conso_par_unite_resa[date] = {}
-                    
+                  
                     if "attente" in liste_etats :
                         dict_conso_par_unite_resa[date][unite] = "attente"
+                    elif "present" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "present"
+                    elif "absenti" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "absenti"
+                    elif "absentj" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "absentj"
                     else :
                         dict_conso_par_unite_resa[date][unite] = "reservation"
                     
@@ -512,6 +519,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
 @login_required
 def planning(IDindividu=None, IDperiode=None, index_couleur=0):
     dict_planning = Get_dict_planning(IDindividu, IDperiode, index_couleur)
+    print >> open('log.txt', 'a'), dict_planning["inscription"]
     return render_template('planning.html', active_page="reservations", \
                             dict_planning = dict_planning)
 
@@ -568,7 +576,7 @@ def envoyer_reservations():
         description = u"Réservations %s pour %s sur la période du %s au %s (%d dates)" % (inscription.activite.nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
 
         # Enregistrement de l'action
-        action = models.Action(IDfamille=current_user.IDfamille, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
+        action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
         db.session.add(action)
         db.session.flush()
 

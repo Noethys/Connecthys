@@ -47,6 +47,7 @@ def Exportation(secret=0, last=0):
     # Transformation de chaque enregistrement en dict
     liste_dict_actions = []
     for action in liste_actions :
+        print >> open('log.txt', 'a'), action
         liste_dict_actions.append(action.as_dict())
     
     # Mémorise la date de la dernière synchro

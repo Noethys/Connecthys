@@ -91,11 +91,40 @@
 		</div>
 				
 		<div class="box-body">
-			<ul class="list-unstyled">
-				<li><small class="label bg-black"><i class="fa fa-check"></i></small> Réservation que vous demandez</li>
-				<li><small class="label bg-green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small> Réservation traitée et acceptée</li>
-				<li><small class="label bg-red">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small> Réservation traitée et refusée</li>
-			</ul>
+			<table class="table table-bordered">
+				<tr>
+					<td><center> Réservation </center></td>
+					<td><center> Status </center></td>
+				</tr>
+				<tr>
+					<td>
+						<table class="table table-bordered">
+							<tr><td><center> Modifiable </center></td><td><center> Non modifiable </center></td></tr>
+							<tr>
+								<td>
+									<ul class="list-unstyled">
+										<li><small class="label" style="background-color: #d7dcde;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small> Non réservé </li>
+										<li><small class="label bg-black"><i class="fa fa-check"></i></small> Reservé </li>
+									</ul>
+								</td>
+								<td>
+									<ul class="list-unstyled">
+										<li><small class="label" style="background-color: #eaedee;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small> Non réservé </li>
+										<li><small class="label" style="background-color: #eaedee;"><i class="fa fa-check"></i></small> Reservé </li>
+									</ul>
+								</td>
+							</tr>
+						</table>
+					</td>
+					<td>
+						<ul class="list-unstyled">
+							<li><small class="label bg-green"><i class="fa fa-check"></i></small> Présent</li>
+							<li><small class="label bg-red"><i class="fa fa-check"></i></small> Absence injustifiée</li>
+							<li><small class="label" style="background-color: #f39c12;"><i class="fa fa-check"></i></small> Absence justifiée</li>
+							<li><small class="label bg-red">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small> Attente</li>
+						</ul>
+				</tr>
+			</table>
 		</div>
 	</div>
 
