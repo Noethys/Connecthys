@@ -535,7 +535,7 @@ def envoyer_reservations():
         inscription = models.Inscription.query.filter_by(IDinscription=IDinscription).first()
 
         # Paramètres
-        parametres = u"IDindividu=%d#IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDindividu, IDactivite, periode.date_debut, periode.date_fin)
+        parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, periode.date_debut, periode.date_fin)
         
         # Traitement des consommations
         liste_reservations = []
@@ -556,7 +556,7 @@ def envoyer_reservations():
         description = u"Réservations %s pour %s sur la période du %s au %s (%d dates)" % (inscription.activite.nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
         
         # Enregistrement de l'action
-        action = models.Action(IDfamille=current_user.IDfamille, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
+        action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
         db.session.add(action)
         db.session.flush()
         
