@@ -356,12 +356,15 @@ class Activite(Base):
     inscriptions_date_fin = Column(DateTime)
     reservations_affichage = Column(Integer)
     unites_multiples = Column(Integer)
+    reservations_limite = Column(String(20))
+    reservations_absenti = Column(String(20))
     
     periodes = relationship("Periode")
     
     def __init__(self , IDactivite=None, nom=None, inscriptions_affichage=1, \
                 inscriptions_date_debut=None, inscriptions_date_fin=inscriptions_date_debut, \
-                reservations_affichage=1, unites_multiples=0):
+                reservations_affichage=1, unites_multiples=0, \
+                reservations_limite=None, reservations_absenti=None):
         if IDactivite != None :
             self.IDactivite = IDactivite
         self.nom = nom
@@ -370,6 +373,8 @@ class Activite(Base):
         self.inscriptions_date_fin = inscriptions_date_fin
         self.reservations_affichage = reservations_affichage
         self.unites_multiples = unites_multiples
+        self.reservations_limite = reservations_limite
+        self.reservations_absenti = reservations_absenti
  
     def __repr__(self):
         return '<IDactivite %d>' % (self.IDactivite)
@@ -381,7 +386,16 @@ class Activite(Base):
             if periode.Is_active_today() :
                 nbre += 1
         return nbre
-
+    
+    def Is_modification_allowed(self, date=None):
+        """ Demande s'il est possible d'ajouter, modifier ou supprimer la réservation en fonction de la date """
+        if self.reservations_limite != None :
+            nbre_jours, heure = self.reservations_limite.split("#")
+            dt_limite = datetime.datetime(year=date.year, month=date.month, day=date.day, hour=int(heure[:2]), minute=int(heure[3:])) - datetime.timedelta(days=int(nbre_jours))
+            if datetime.datetime.now() > dt_limite :
+                return False
+        return True
+        
         
 class Individu(Base):
     __tablename__ = "portail_individus"
