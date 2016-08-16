@@ -226,6 +226,7 @@ def envoyer_demande_facture():
         methode_envoi = request.args.get("methode_envoi", "", type=str)
         commentaire = request.args.get("commentaire", "", type=unicode)
 
+
         # Enregistrement action
         parametres = u"IDfacture=%d#methode_envoi=%s" % (id, methode_envoi)
         if methode_envoi == "email" :
@@ -285,6 +286,7 @@ def envoyer_demande_recu():
         info = request.args.get("info", "", type=str)
         methode_envoi = request.args.get("methode_envoi", "", type=str)
         commentaire = request.args.get("commentaire", "", type=unicode)
+
 
         # Enregistrement action
         parametres = u"IDreglement=%d#methode_envoi=%s" % (id, methode_envoi)
@@ -423,8 +425,9 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     liste_dates.sort() 
 
     # Réservations
-    actions = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc())
-    if actions != None :
+    action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
+    if action != None :
+        liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
         dict_reservations = {}
         for action in actions:
             liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
@@ -451,37 +454,26 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     liste_unites_temp.sort(reverse=True)
     
     dict_conso_par_unite_resa = {}
+    
     for date in liste_dates :
-
+    
         liste_unites_conso_utilisees = []
-
+        
         for nbre_unites_principales, liste_unites_principales, unite in liste_unites_temp :
             
-            #liste_etats = []
             valide = True
             for IDunite_conso in liste_unites_principales :
-                #if dict_consommations.has_key(date) :
-                #    if dict_consommations[date].has_key(IDunite_conso) :
-                #        liste_etats.append(dict_consommations[date][IDunite_conso])
                 if IDunite_conso in liste_unites_conso_utilisees :
                     valide = False
-
+            
             if valide :
-                
-            #if len(liste_etats) == nbre_unites_principales :
-            #    if not dict_conso_par_unite_resa.has_key(date) :
-            #        dict_conso_par_unite_resa[date] = {}
+
                 liste_etats = []
                 for IDunite_conso in liste_unites_principales :
                     if dict_consommations.has_key(date) :
                         if dict_consommations[date].has_key(IDunite_conso) :
                             liste_etats.append(dict_consommations[date][IDunite_conso])
 
-                #if "attente" in liste_etats :
-                #    dict_conso_par_unite_resa[date][unite] = "attente"
-                #else :
-                #    dict_conso_par_unite_resa[date][unite] = "reservation"
-                #break
                 if len(liste_etats) == nbre_unites_principales :
                     if not dict_conso_par_unite_resa.has_key(date) :
                         dict_conso_par_unite_resa[date] = {}
@@ -554,7 +546,9 @@ def envoyer_reservations():
         inscription = models.Inscription.query.filter_by(IDinscription=IDinscription).first()
 
         # Paramètres
-        parametres = u"IDindividu=%d#IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDindividu, IDactivite, periode.date_debut, periode.date_fin)
+#        parametres = u"IDindividu=%d#IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDindividu, IDactivite, periode.date_debut, periode.date_fin)
+
+        parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, periode.date_debut, periode.date_fin)
 
         # Traitement des consommations
         liste_reservations = []
@@ -572,9 +566,9 @@ def envoyer_reservations():
         individu_prenom = inscription.individu.prenom
         date_debut_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_debut)
         date_fin_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_fin)
-        #description = u"Réservations pour %s sur la période du %s au %s (%d dates)" % (individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
-        description = u"Réservations %s pour %s sur la période du %s au %s (%d dates)" % (inscription.activite.nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
 
+        description = u"Réservations %s pour %s sur la période du %s au %s (%d dates)" % (inscription.activite.nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
+        
         # Enregistrement de l'action
         action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
         db.session.add(action)
@@ -648,10 +642,13 @@ def envoyer_demande_inscription():
         # Enregistrement
         individu = models.Individu.query.filter_by(IDindividu=IDindividu).first()
         activite = models.Activite.query.filter_by(IDactivite=IDactivite).first()
-        description = u"Inscrire de %s à l'activité %s" % (individu.prenom, activite.nom)
-        parametres = u"IDindividu=%d#IDactivite=%d#IDgroupe=%d" % (IDindividu, IDactivite, IDgroupe)
 
-        m = models.Action(IDfamille=current_user.IDfamille, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
+#        description = u"Inscrire de %s à l'activité %s" % (individu.prenom, activite.nom)
+#        parametres = u"IDindividu=%d#IDactivite=%d#IDgroupe=%d" % (IDindividu, IDactivite, IDgroupe)
+        description = u"Inscription de %s à l'activité %s" % (individu.prenom, activite.nom)
+        parametres = u"IDactivite=%d#IDgroupe=%d" % (IDactivite, IDgroupe)
+
+        m = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
 

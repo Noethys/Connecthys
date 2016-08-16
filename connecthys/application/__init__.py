@@ -8,8 +8,6 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-
-
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask

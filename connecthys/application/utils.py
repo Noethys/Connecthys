@@ -69,16 +69,6 @@ def utility_processor():
                 return True
         return False
 
-#    def GetEtatFondCase(dict_planning={}, date=None, IDunite=None):
-#        dict_consommations = dict_planning["dict_consommations"]
-#        if dict_consommations.has_key(date) :
-#            unitId = GetPrincipalUnitOfIDunit(dict_planning, IDunite)
-#            if unitId is not None:
-#                if dict_consommations[date].has_key(unitId) :
-#                    etat = dict_consommations[date][unitId]
-#                    return etat
-#        return None
-
     def GetEtatFondCase(unite=None, date=None, dict_planning={}):
         dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
         if dict_conso_par_unite_resa.has_key(date) :
@@ -88,24 +78,15 @@ def utility_processor():
         return None
 
     def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
-        print >> open('log.txt', 'a'), dict_planning["dict_reservations"]
         dict_reservations = dict_planning["dict_reservations"]
         if dict_reservations != None :
         
             # Recherche dans le dictionnaire des réservations si la case est cochée
             if dict_reservations.has_key(date) :
-                print >> open("log.txt", 'a'), "has_key(date) = true"
-                print >> open("log.txt", 'a'), "unite = ", unite, " || unite.unites_principales = ", unite.unites_principales
-                print >> open("log.txt", 'a'), "dict_reservations[date] =", dict_reservations[date]
                 if dict_reservations[date].has_key(unite.IDunite) :
                     return True
             
         # S'il n'y a aucune réservation sur cette ligne, on coche la conso
-        #dict_consommations = dict_planning["dict_consommations"]
-        #if dict_consommations.has_key(date) :
-        #    if dict_consommations[date].has_key(unitId) :
-        #        if dict_consommations[date][unitId] != None :
-        #            return True
         if GetEtatFondCase(unite, date, dict_planning) != None :
             return True
         
