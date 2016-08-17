@@ -1,12 +1,9 @@
 Connecthys
 ==================
 Connecthys est le portail internet de Noethys, le logiciel de gestion libre et gratuit de gestion multi-activités pour 
-les accueils de loisirs, crèches, garderies périscolaires, cantines, 
-TAP ou NAP, clubs sportifs et culturels...
+les accueils de loisirs, crèches, garderies périscolaires, cantines, TAP ou NAP, clubs sportifs et culturels...
 
 Plus d'infos sur www.noethys.com
-
-*Avertissement : A ce jour, Connecthys est encore en développement. Certaines fonctionnalités sont manquantes.*
 
 
 Installation depuis Noethys (sur Windows ou Linux)
