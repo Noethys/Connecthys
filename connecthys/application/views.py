@@ -431,7 +431,12 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
             for reservation in liste_reservations :
                 if not dict_reservations.has_key(reservation.date) :
                     dict_reservations[reservation.date] = {}
-                dict_reservations[reservation.date][reservation.IDunite] = 1
+                    dict_reservations[reservation.date][reservation.IDunite] = 1
+                else:
+                    if dict_reservations[reservation.date][reservation.IDunite] == 1:
+                        dict_reservations[reservation.date][reservation.IDunite] = 0
+                    else:
+                        dict_reservations[reservation.date][reservation.IDunite] = 1
     else :
         dict_reservations = None
 

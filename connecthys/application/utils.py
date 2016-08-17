@@ -88,17 +88,16 @@ def utility_processor():
         return None
 
     def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
-        print >> open('log.txt', 'a'), dict_planning["dict_reservations"]
         dict_reservations = dict_planning["dict_reservations"]
         if dict_reservations != None :
         
             # Recherche dans le dictionnaire des réservations si la case est cochée
             if dict_reservations.has_key(date) :
-                print >> open("log.txt", 'a'), "has_key(date) = true"
-                print >> open("log.txt", 'a'), "unite = ", unite, " || unite.unites_principales = ", unite.unites_principales
-                print >> open("log.txt", 'a'), "dict_reservations[date] =", dict_reservations[date]
                 if dict_reservations[date].has_key(unite.IDunite) :
-                    return True
+                    if dict_reservations[date][unite.IDunite] == 1:
+                        return True
+                    else:
+                        return False
             
         # S'il n'y a aucune réservation sur cette ligne, on coche la conso
         #dict_consommations = dict_planning["dict_consommations"]
