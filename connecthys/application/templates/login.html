@@ -13,6 +13,8 @@
 	{% if config.IMAGE_FOND %}
 		<style type="text/css" media="screen">
 			html, body {
+				background-size: cover;
+				background: center fixed;
 				background-image:url({{ url_for('static', filename="fonds/" + config.IMAGE_FOND) }});
 			}
 			.login-page {

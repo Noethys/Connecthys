@@ -58,20 +58,20 @@ def upgrade(secret=0):
         if caract in "0123456789" :
             secret_key += caract
     secret_key = int(secret_key) 
-    
+
     if secret_key != secret :
         dict_resultat = {"resultat" : "erreur", "erreur" : u"Clé de sécurité erronée."}
-        
+
     else :
         try :
             models.UpgradeDB()
             dict_resultat = {"resultat" : "ok"}
         except Exception, err:
             dict_resultat = {"resultat" : "erreur", "erreur" : str(err), "trace" : traceback.format_exc()}
-        
+
         if dict_resultat["resultat"] != "ok" :
             app.logger.error("Erreur dans l'upgrade : %s" % traceback.format_exc())
-    
+
     reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
     return reponse
 
@@ -84,7 +84,7 @@ def get_version():
     reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
     return reponse
 
-    
+
 @login_manager.user_loader
 def load_user(id):
     return models.User.query.get(int(id))
@@ -96,12 +96,12 @@ def before_request():
     g.liste_pages = LISTE_PAGES
     g.dict_pages = DICT_PAGES
     g.date_jour = datetime.date.today()
-    
-    
+
+
 @app.route('/')
 def index():
     return redirect(url_for('accueil'))
-    
+
 
 #@app.route('/exemples')
 #def exemples():
@@ -115,7 +115,7 @@ def syncup(secret=0):
     import importation
     resultat = importation.Importation(secret=secret)
     return str(resultat)
-    
+
 @app.route('/syncdown/<int:secret>/<int:last>')
 def syncdown(secret=0, last=0):
     import exportation
@@ -126,7 +126,7 @@ def syncdown(secret=0, last=0):
 def internal_error(exception):
     trace = traceback.format_exc()
     return("<pre>" + trace + "</pre>"), 500
-    
+
 # ------------------------- LOGIN et LOGOUT ---------------------------------- 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -137,20 +137,20 @@ def login():
 
     # Génération du form de login
     form = forms.LoginForm()
-    
+
     # Affiche la page de login
     if request.method == 'GET':
         return render_template('login.html', form=form)
-    
+
     # Validation du form de login avec Flask-WTF
     if form.validate_on_submit():
-    
+
         # Recherche l'identifiant
         registered_user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
-        
+
         # Codes d'accès corrects
         if registered_user is not None:
-        
+
             # Vérification du mot de passe
             if registered_user.check_password(form.password.data) == False :
                 registered_user = None
@@ -159,26 +159,26 @@ def login():
 
             # Mémorisation du remember_me
             remember = form.remember.data
-            
+
             # Mémorisation du user
             login_user(registered_user, remember=remember)
             flash(u"Bienvenue dans le portail Famille")
-            
+
             return redirect(request.args.get('next') or url_for('accueil'))
 
     # Re-demande codes si incorrects
     flash(u"Codes d'accès incorrects" , 'error')
     return redirect(url_for('login'))
-                   
-        
+
+
 @app.route('/logout')
 def logout():
     logout_user()
     flash(u"Vous avez été déconnecté", "error")
     return redirect(url_for('login')) 
-    
-    
-    
+
+
+
 # ------------------------- ACCUEIL ---------------------------------- 
 
 @app.route('/accueil')
@@ -186,12 +186,12 @@ def logout():
 def accueil():    
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.nom).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
-    
+
     return render_template('accueil.html', active_page="accueil",\
                             liste_pieces_manquantes=liste_pieces_manquantes, \
                             liste_cotisations_manquantes=liste_cotisations_manquantes)
 
-    
+
 # ------------------------- FACTURES ---------------------------------- 
 
 @app.route('/factures')
@@ -199,7 +199,7 @@ def accueil():
 def factures():
     # Récupération de la liste des factures
     liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
-    
+
     # Recherche les factures impayées
     nbre_factures_impayees = 0
     montant_factures_impayees = 0.0
@@ -207,16 +207,16 @@ def factures():
         if facture.montant_solde > 0.0 :
             nbre_factures_impayees += 1
             montant_factures_impayees += facture.montant_solde
-    
+
     # Recherche l'historique des demandes liées aux factures
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures")
-    
+
     return render_template('factures.html', active_page="factures", liste_factures=liste_factures, \
                             nbre_factures_impayees=nbre_factures_impayees, \
                             montant_factures_impayees=montant_factures_impayees, \
                             historique=historique)
 
-                            
+
 @app.route('/envoyer_demande_facture')
 @login_required
 def envoyer_demande_facture():
@@ -225,7 +225,8 @@ def envoyer_demande_facture():
         numfacture = request.args.get("info", "", type=str)
         methode_envoi = request.args.get("methode_envoi", "", type=str)
         commentaire = request.args.get("commentaire", "", type=unicode)
-        
+
+
         # Enregistrement action
         parametres = u"IDfacture=%d#methode_envoi=%s" % (id, methode_envoi)
         if methode_envoi == "email" :
@@ -238,13 +239,13 @@ def envoyer_demande_facture():
         m = models.Action(IDfamille=current_user.IDfamille, categorie="factures", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
-        
+
         flash(u"Votre demande d'une facture a bien été enregistrée")
         return jsonify(success=1)
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
-                            
-                            
+
+
 # ------------------------- REGLEMENTS ---------------------------------- 
 
 @app.route('/reglements')
@@ -252,31 +253,31 @@ def envoyer_demande_facture():
 def reglements():
     # Récupération de la liste des règlements
     liste_reglements = models.Reglement.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Reglement.date.desc()).all()
-    
+
     # Paiement en ligne
     liste_factures = []
     nbre_factures_impayees = 0
     montant_factures_impayees = 0.0
     if app.config["PAIEMENT_EN_LIGNE_ACTIF"] == True :
-    
+
         # Récupération de la liste des factures pour paiement en ligne
         liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
-        
+
         # Recherche les factures impayées pour paiement en ligne
         for facture in liste_factures :
             if facture.montant_solde > 0.0 :
                 nbre_factures_impayees += 1
                 montant_factures_impayees += facture.montant_solde
-    
+
     # Recherche l'historique des demandes liées aux règlements
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reglements")
-    
+
     return render_template('reglements.html', active_page="reglements", liste_reglements=liste_reglements, \
                             liste_factures=liste_factures, nbre_factures_impayees=nbre_factures_impayees, \
                             montant_factures_impayees=montant_factures_impayees, \
                             historique=historique)
 
-                            
+
 @app.route('/envoyer_demande_recu')
 @login_required
 def envoyer_demande_recu():
@@ -285,7 +286,8 @@ def envoyer_demande_recu():
         info = request.args.get("info", "", type=str)
         methode_envoi = request.args.get("methode_envoi", "", type=str)
         commentaire = request.args.get("commentaire", "", type=unicode)
-        
+
+
         # Enregistrement action
         parametres = u"IDreglement=%d#methode_envoi=%s" % (id, methode_envoi)
         if methode_envoi == "email" :
@@ -298,14 +300,14 @@ def envoyer_demande_recu():
         m = models.Action(IDfamille=current_user.IDfamille, categorie="reglements", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
-        
+
         flash(u"Votre demande d'un reçu de règlement a bien été enregistrée")
         return jsonify(success=1)
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
-                          
-                            
-                            
+
+
+
 # ------------------------- HISTORIQUE ---------------------------------- 
 
 @app.route('/historique')
@@ -313,10 +315,10 @@ def envoyer_demande_recu():
 def historique():
     # Recherche l'historique général
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie=None)
-    
+
     return render_template('historique.html', active_page="historique", historique=historique)
-                            
-                            
+
+
 # ------------------------- PIECES ---------------------------------- 
 
 @app.route('/pieces')
@@ -327,7 +329,7 @@ def pieces():
 
     # Récupération de la liste des types de pièces
     liste_types_pieces = models.Type_piece.query.order_by(models.Type_piece.nom).all()
-    
+
     return render_template('pieces.html', active_page="pieces", \
                             liste_pieces_manquantes=liste_pieces_manquantes,\
                             liste_types_pieces=liste_types_pieces)
@@ -340,11 +342,11 @@ def pieces():
 def cotisations():
     # Récupération de la liste des cotisations manquantes
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
-    
+
     return render_template('cotisations.html', active_page="cotisations", \
                             liste_cotisations_manquantes=liste_cotisations_manquantes)
-    
-                            
+
+
 @app.route('/supprimer_demande')
 @login_required
 def supprimer_demande():
@@ -355,24 +357,24 @@ def supprimer_demande():
         action = models.Action.query.filter_by(IDaction=IDaction).first()
         action.etat = "suppression"
         db.session.commit()
-        
+
         flash(u"Votre suppression a bien été enregistrée")
         return jsonify(success=1)
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
-        
 
-        
+
+
 # ------------------------- RESERVATIONS ---------------------------------- 
- 
+
 @app.route('/reservations')
 @login_required
 def reservations():
-    
+
     # Récupération des individus
     liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.prenom).all()
-    
+
     liste_individus = []
     for individu in liste_individus_temp :
         if len(individu.inscriptions) > 0 :
@@ -381,47 +383,47 @@ def reservations():
             individu.index_couleur = index_couleur
             individu.couleur = COULEURS[index_couleur]
             liste_individus.append(individu)
-    
+
     # Recherche l'historique des demandes liées aux réservations
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reservations")
-    
+
     return render_template('reservations.html', active_page="reservations", \
                             liste_individus = liste_individus, \
                             historique = historique)
-    
+
 
 def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     # Couleur
     couleur = COULEURS[index_couleur]
-    
+
     # Période
     periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
 
     # Inscription
     inscription = models.Inscription.query.filter_by(IDindividu=IDindividu, IDactivite=periode.IDactivite).first() # .order_by(models.Activite.nom)
-    
+
     # Unités
     liste_unites = models.Unite.query.filter_by(IDactivite=periode.IDactivite).order_by(models.Unite.ordre).all()
-    
+
     # Ouvertures
     liste_ouvertures = models.Ouverture.query.filter(models.Ouverture.IDgroupe == inscription.IDgroupe, models.Ouverture.date >= periode.date_debut, models.Ouverture.date <= periode.date_fin).all()
-    
+
     # Dates
     liste_dates = []
     dict_ouvertures = {}
     for ouverture in liste_ouvertures :
-        
+
         # Mémorisation de la date
         if ouverture.date not in liste_dates :
             liste_dates.append(ouverture.date)
-        
+
         # Mémorisation de l'ouverture des unités
         if not dict_ouvertures.has_key(ouverture.date) :
             dict_ouvertures[ouverture.date] = []
         dict_ouvertures[ouverture.date].append(ouverture.IDunite)
-        
+
     liste_dates.sort() 
-    
+
     # Réservations
     action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
     if action != None :
@@ -430,10 +432,15 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         for reservation in liste_reservations :
             if not dict_reservations.has_key(reservation.date) :
                 dict_reservations[reservation.date] = {}
-            dict_reservations[reservation.date][reservation.IDunite] = 1
+                dict_reservations[reservation.date][reservation.IDunite] = 1
+            else:
+                if dict_reservations[reservation.date][reservation.IDunite] == 1:
+                    dict_reservations[reservation.date][reservation.IDunite] = 0
+                else:
+                    dict_reservations[reservation.date][reservation.IDunite] = 1
     else :
         dict_reservations = None
-        
+
     # Consommations
     liste_consommations = models.Consommation.query.filter_by(IDinscription=inscription.IDinscription).all()
     dict_consommations = {}
@@ -441,7 +448,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         if not dict_consommations.has_key(consommation.date) :
             dict_consommations[consommation.date] = {}
         dict_consommations[consommation.date][consommation.IDunite] = consommation.etat
-    
+
     # Attribution des consommations à chaque unité de réservation
     liste_unites_temp = []
     for unite in liste_unites :
@@ -463,25 +470,31 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
                     valide = False
             
             if valide :
-                
+
                 liste_etats = []
                 for IDunite_conso in liste_unites_principales :
                     if dict_consommations.has_key(date) :
                         if dict_consommations[date].has_key(IDunite_conso) :
                             liste_etats.append(dict_consommations[date][IDunite_conso])
-                    
+
                 if len(liste_etats) == nbre_unites_principales :
                     if not dict_conso_par_unite_resa.has_key(date) :
                         dict_conso_par_unite_resa[date] = {}
-                    
+                  
                     if "attente" in liste_etats :
                         dict_conso_par_unite_resa[date][unite] = "attente"
+                    elif "present" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "present"
+                    elif "absenti" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "absenti"
+                    elif "absentj" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "absentj"
                     else :
                         dict_conso_par_unite_resa[date][unite] = "reservation"
                     
                     for IDunite_conso in liste_unites_principales :
                         liste_unites_conso_utilisees.append(IDunite_conso)
-    
+
     # Mémorise toutes les données du planning
     dict_planning = {
         "periode" : periode,
@@ -494,13 +507,14 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         "dict_reservations" : dict_reservations,
         "couleur" : couleur,
         }
-        
+
     return dict_planning
-    
+
 @app.route('/planning/<int:IDindividu>/<int:IDperiode>/<int:index_couleur>')
 @login_required
 def planning(IDindividu=None, IDperiode=None, index_couleur=0):
     dict_planning = Get_dict_planning(IDindividu, IDperiode, index_couleur)
+    print >> open('log.txt', 'a'), dict_planning["inscription"]
     return render_template('planning.html', active_page="reservations", \
                             dict_planning = dict_planning)
 
@@ -510,10 +524,10 @@ def planning(IDindividu=None, IDperiode=None, index_couleur=0):
 def imprimer_reservations(IDindividu=None, IDperiode=None):
     dict_planning = Get_dict_planning(IDindividu, IDperiode)
     return render_template('imprimer_reservations.html', dict_planning=dict_planning)
-    
 
-    
-              
+
+
+
 @app.route('/envoyer_reservations')
 @login_required
 def envoyer_reservations():
@@ -527,16 +541,18 @@ def envoyer_reservations():
         date_debut_periode = request.args.get("date_debut_periode", "", type=str)
         date_fin_periode = request.args.get("date_fin_periode", "", type=str)
         commentaire = request.args.get("commentaire", None, type=unicode)
-        
+
         # Récupération de la période
         periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
-        
+
         # Inscription
         inscription = models.Inscription.query.filter_by(IDinscription=IDinscription).first()
 
         # Paramètres
+#        parametres = u"IDindividu=%d#IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDindividu, IDactivite, periode.date_debut, periode.date_fin)
+
         parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, periode.date_debut, periode.date_fin)
-        
+
         # Traitement des consommations
         liste_reservations = []
         liste_dates_uniques = []
@@ -545,43 +561,44 @@ def envoyer_reservations():
                 date = utils.CallFonction("DateEngEnDD", valeur.split("#")[0])
                 IDunite = int(valeur.split("#")[1])
                 liste_reservations.append((date, IDunite))
-                
+
                 if date not in liste_dates_uniques :
                     liste_dates_uniques.append(date)
-        
+
         # Description
         individu_prenom = inscription.individu.prenom
         date_debut_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_debut)
         date_fin_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_fin)
+
         description = u"Réservations %s pour %s sur la période du %s au %s (%d dates)" % (inscription.activite.nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
         
         # Enregistrement de l'action
         action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
         db.session.add(action)
         db.session.flush()
-        
+
         # Enregistrement des réservations
         for date, IDunite in liste_reservations :
             reservation = models.Reservation(date=date, IDinscription=IDinscription, IDunite=IDunite, IDaction=action.IDaction)
             db.session.add(reservation)
 
         db.session.commit()
-        
+
         flash(u"Votre demande de réservations a bien été enregistrée")
         return jsonify(success=1)
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
-        
+
 # ------------------------- INSCRIPTIONS ---------------------------------- 
 
 @app.route('/inscriptions')
 @login_required
 def inscriptions():
-    
+
     # Récupération des individus
     liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.prenom).all()
-    
+
     liste_individus = []
     for individu in liste_individus_temp :
         if len(individu.inscriptions) > 0 :
@@ -590,7 +607,7 @@ def inscriptions():
             individu.index_couleur = index_couleur
             individu.couleur = COULEURS[index_couleur]
             liste_individus.append(individu)
-    
+
     # Liste des activités
     liste_activites = models.Activite.query.filter_by().order_by(models.Activite.nom).all()
     liste_groupes = models.Groupe.query.filter_by().order_by(models.Groupe.ordre).all()
@@ -599,17 +616,17 @@ def inscriptions():
         if not dict_groupes.has_key(groupe.IDactivite) :
             dict_groupes[groupe.IDactivite] = []
         dict_groupes[groupe.IDactivite].append(groupe)
-    
+
     # Recherche l'historique des demandes liées aux réservations
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="inscriptions")
-    
+
     return render_template('inscriptions.html', active_page="inscriptions", \
                             liste_individus = liste_individus, \
                             liste_activites = liste_activites, \
                             dict_groupes = dict_groupes, \
                             historique = historique)
 
-                            
+
 @app.route('/envoyer_demande_inscription')
 @login_required
 def envoyer_demande_inscription():
@@ -619,44 +636,47 @@ def envoyer_demande_inscription():
         IDactivite = int(activite.split("-")[0])
         IDgroupe = int(activite.split("-")[1])
         commentaire = request.args.get("commentaire", "", type=unicode)
-        
+
         # Vérifie que l'individu n'est pas déjà inscrit
         inscription = models.Inscription.query.filter_by(IDindividu=IDindividu, IDactivite=IDactivite).first()
         if inscription != None :
             return jsonify(success=0, error_msg=u"%s est déjà inscrit(e) à l'activité sélectionnée !" % inscription.individu.prenom)
-                    
+
         # Enregistrement
         individu = models.Individu.query.filter_by(IDindividu=IDindividu).first()
         activite = models.Activite.query.filter_by(IDactivite=IDactivite).first()
+
+#        description = u"Inscrire de %s à l'activité %s" % (individu.prenom, activite.nom)
+#        parametres = u"IDindividu=%d#IDactivite=%d#IDgroupe=%d" % (IDindividu, IDactivite, IDgroupe)
         description = u"Inscription de %s à l'activité %s" % (individu.prenom, activite.nom)
         parametres = u"IDactivite=%d#IDgroupe=%d" % (IDactivite, IDgroupe)
 
         m = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
         db.session.commit()
-        
+
         flash(u"Votre demande d'inscription à une activité a bien été enregistrée")
         return jsonify(success=1)
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
-        
+
 # ------------------------- CONTACT ---------------------------------- 
 
 @app.route('/contact')
 @login_required
 def contact():    
     return render_template('contact.html', active_page="contact")
-    
-        
+
+
 # ------------------------- MENTIONS ---------------------------------- 
 
 @app.route('/mentions')
 @login_required
 def mentions():    
     return render_template('mentions.html', active_page="mentions")
-        
-      
+
+
 # ------------------------- AIDE ---------------------------------- 
 
 @app.route('/aide')
@@ -664,13 +684,13 @@ def mentions():
 def aide():    
     return render_template('aide.html', active_page="aide")
 
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
 def GetHistorique(IDfamille=None, categorie=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """
     """ Si categorie == None > Toutes les catégories sont affichées """
@@ -680,7 +700,7 @@ def GetHistorique(IDfamille=None, categorie=None):
         derniere_synchro = datetime.datetime.strptime(m.parametre, "%Y%m%d%H%M%S%f")
     else :
         derniere_synchro = None
-    
+
     # Récupération des actions
     date_limite = datetime.datetime.now() - datetime.timedelta(days=(app.config["HISTORIQUE_DELAI"]+1)*30)
     if categorie == None :
@@ -697,10 +717,10 @@ def GetHistorique(IDfamille=None, categorie=None):
         if not dict_actions.has_key(horodatage) :
             dict_actions[horodatage] = []
         dict_actions[horodatage].append(action)
-        
+
         if action.categorie == "reservations" :
             if not dict_dernieres_reservations.has_key(action.IDperiode) or (action.horodatage > dict_dernieres_reservations[action.IDperiode].horodatage and action.etat != "suppression") :
                 dict_dernieres_reservations[action.IDperiode] = action
-    
+
     return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro}
-    
+

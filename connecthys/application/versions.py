@@ -21,4 +21,3 @@ VERSIONS = [
 def GetVersion():
     """ Retourne le numéro de version actuel """
     return VERSIONS[-1]["version"]
-    

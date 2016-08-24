@@ -21,13 +21,12 @@ def CallFonction(fonction="", *args):
 @app.context_processor
 def utility_processor():
     """ Variables accessibles dans tous les templates """
-    
     def GetNow():
-        return datetime.datetime.now() 
-        
+        return datetime.datetime.now()
+
     def GetToday():
-        return datetime.date.today() 
-        
+        return datetime.date.today()
+
     def Formate_montant(montant, symbole=u'€'):
         return u"{0:.2f} {1}".format(montant, symbole)
 
@@ -45,7 +44,7 @@ def utility_processor():
         """ Transforme une date DD en date FR """
         if date == None : return ""
         jours = [u"Lundi", u"Mardi", u"Mercredi", u"Jeudi", u"Vendredi", u"Samedi", u"Dimanche"]
-        mois = ["janvier", u"février", "mars", "avril", "mai", "juin", "juillet", u"août", "Septembre", "Octobre", u"novembre", u"décembre"]
+        mois = ["Janvier", u"Février", "Mars", "Avril", "Mai", "Juin", "Juillet", u"Août", "Septembre", "Octobre", u"Novembre", u"Décembre"]
         return u"%s %d %s %d" % (jours[date.weekday()], date.day, mois[date.month-1], date.year)
 
     def DateEngEnDD(date):
@@ -63,13 +62,13 @@ def utility_processor():
         if type(textDate) == datetime.date : return DateDDEnFr(textDate)
         text = str(textDate[8:10]) + "/" + str(textDate[5:7]) + "/" + str(textDate[:4])
         return text
-    
+
     def IsUniteOuverte(unite=None, date=None, dict_planning={}):
         for IDunite_conso in unite.Get_unites_principales() :
-            if not IDunite_conso in dict_planning["dict_ouvertures"][date] :
-                return False
-        return True
-    
+            if unite.IDunite in dict_planning["dict_ouvertures"][date] :
+                return True
+        return False
+
     def GetEtatFondCase(unite=None, date=None, dict_planning={}):
         dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
         if dict_conso_par_unite_resa.has_key(date) :
@@ -77,7 +76,7 @@ def utility_processor():
                 etat = dict_conso_par_unite_resa[date][unite]
                 return etat
         return None
-        
+
     def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
         dict_reservations = dict_planning["dict_reservations"]
         if dict_reservations != None :
@@ -85,15 +84,17 @@ def utility_processor():
             # Recherche dans le dictionnaire des réservations si la case est cochée
             if dict_reservations.has_key(date) :
                 if dict_reservations[date].has_key(unite.IDunite) :
-                    return True
+                    if dict_reservations[date][unite.IDunite] == 1:
+                        return True
+                    else:
+                        return False
             
-        else :
-            # S'il n'y a aucune réservation sur cette ligne, on coche la conso
-            if GetEtatFondCase(unite, date, dict_planning) != None :
-                return True
+        # S'il n'y a aucune réservation sur cette ligne, on coche la conso
+        if GetEtatFondCase(unite, date, dict_planning) != None :
+            return True
         
         return False
-    
+
     def GetDictDatesAttente(dict_planning={}):
         dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
         dict_dates_attente = {}
@@ -107,7 +108,7 @@ def utility_processor():
     
     def GetNbreDatesAttente(dict_planning={}):
         return len(GetDictDatesAttente(dict_planning))
-    
+
     def GetNumSemaine(date):
         return date.isocalendar()[1]
         
