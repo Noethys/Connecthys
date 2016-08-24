@@ -17,7 +17,7 @@
 			
 			{% for date in dict_planning["liste_dates"] %}
 			<tr {% if date_precedente != None and GetNumSemaine(date) != GetNumSemaine(date_precedente) %}style="border-top-style: dashed;"{% endif %}>
-				<td><center>{{ DateDDEnFrComplet(date) }}</td>
+				<td><center>{{ DateDDEnFrComplet(date) }}</center></td>
 				{% for unite in dict_planning["liste_unites"] %}
 					{% if IsUniteOuverte(unite, date, dict_planning) == True %}
 						{% set modification_allowed = unite.activite.Is_modification_allowed(date) %}
@@ -161,8 +161,16 @@
 	</script>
 	
 	<script>
+		modified = [];
 		$('input#case').on('ifClicked', function(event){
 			// Coche une unité à la fois
+			var index = modified.indexOf($(this).attr('data-date'));
+			if (index > -1) {
+				modified.splice(index, 1);
+			}
+			else {
+				modified.push($(this).attr('data-date'));
+			}
 			if({{ dict_planning["periode"].activite.unites_multiples }} == 0) {
 					var date = $(this).attr('data-date');
 					var IDunite = $(this).attr('data-IDunite');
@@ -183,11 +191,15 @@
 		$('button#confirmation').bind('click', function() {
 			
 			var liste_resultats = [];
-			$("input#case:checked").each(function() {
+			$("input#case:not([disabled])").each(function() {
 				var date = $(this).attr('data-date');
 				var IDunite = $(this).attr('data-IDunite');
 				var valeur = date + "#" + IDunite.toString();
-				liste_resultats.push(valeur);
+				var index = modified.indexOf($(this).attr('data-date'));
+				if (index > -1) {
+					liste_resultats.push(valeur);
+					modified.splice(index, 1);
+				}
 			});
 			
 			$.ajax({

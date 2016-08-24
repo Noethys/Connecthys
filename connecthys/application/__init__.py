@@ -27,6 +27,11 @@ app.config.from_object(Config_application)
 app.config.from_object(Config_utilisateur)
 app.config["VERSION_APPLICATION"] = __version__
 
+# Flask compress
+from flask_compress import Compress
+compress = Compress()
+compress.init_app(app)
+
 # Connexion avec le journal d'évènements
 handler = RotatingFileHandler('journal.log', maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
