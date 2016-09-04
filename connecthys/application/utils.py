@@ -130,6 +130,13 @@ def utility_processor():
         else :
             return "fa-file-o"
 
+    def GetValeurConfig(key=""):
+        """ Retourne une valeur contenue dans le config """
+        if app.config.has_key(key) :
+            return app.config[key]
+        else :
+            return None
+        
         
     return dict(
         GetNow=GetNow,
@@ -148,6 +155,7 @@ def utility_processor():
         GetNbreDatesAttente=GetNbreDatesAttente,
         GetNumSemaine=GetNumSemaine,
         GetIconeFichier=GetIconeFichier,
+        GetValeurConfig=GetValeurConfig,
         )
 
         

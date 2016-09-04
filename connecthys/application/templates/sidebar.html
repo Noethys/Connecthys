@@ -31,19 +31,23 @@
 			<li class="header">{{ dict_menu["label"] }}</li>
 		
 		{% else %}
-		
-			{% set page = dict_menu["page"] %}
 			
-			{% if page == active_page %}
-				<li class="active">
-			{% else %}
-				<li>
+			{% if GetValeurConfig(dict_menu["affichage"]) == True %}
+			
+				{% set page = dict_menu["page"] %}
+				
+				{% if page == active_page %}
+					<li class="active">
+				{% else %}
+					<li>
+				{% endif %}
+					<a class="item_sidemenu" href="{{ url_for(page) }}">
+						<i class="fa {{ g.dict_pages[page]['icone'] }}"></i> {# Pour avoir la couleur, ajouter : text-{{ g.dict_pages[page]['couleur']  #}
+						<span>{{ g.dict_pages[page]['nom'] }}</span>
+					</a>
+				</li>
+			
 			{% endif %}
-				<a class="item_sidemenu" href="{{ url_for(page) }}">
-					<i class="fa {{ g.dict_pages[page]['icone'] }}"></i> {# Pour avoir la couleur, ajouter : text-{{ g.dict_pages[page]['couleur']  #}
-					<span>{{ g.dict_pages[page]['nom'] }}</span>
-				</a>
-			</li>
 				
 		{% endif %}
 		

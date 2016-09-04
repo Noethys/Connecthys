@@ -83,7 +83,7 @@
 
 	{% for dict_menu in g.liste_pages[2:] %}
 	
-		{%if dict_menu["type"] == "page" and dict_menu["raccourci"] == True %}
+		{%if dict_menu["type"] == "page" and dict_menu["raccourci"] == True and GetValeurConfig(dict_menu["affichage"]) == True %}
 		
 			{% set page = dict_menu["page"] %}
 			
