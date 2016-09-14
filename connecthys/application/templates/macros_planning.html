@@ -81,6 +81,10 @@
 			<div>Votre demande de réservations est prête à être envoyée.</div>
 			<br>
 			
+			<div class="form-group">
+				<textarea id="detail_reservations" class="form-control" rows="6" maxlength="300" placeholder="" readonly></textarea>
+			</div>
+			
 			<!-- Box commentaires -->
 			<h4>Vous pouvez ajouter un commentaire</h4>
 			<div class="form-group">
@@ -167,22 +171,14 @@
 	</script>
 	
 	<script>
-		modified = [];
 		$('input#case').on('ifClicked', function(event){
 			// Coche une unité à la fois
-			var index = modified.indexOf($(this).attr('data-date'));
-			if (index > -1) {
-				modified.splice(index, 1);
-			}
-			else {
-				modified.push($(this).attr('data-date'));
-			}
 			if({{ dict_planning["periode"].activite.unites_multiples }} == 0) {
-					var date = $(this).attr('data-date');
-					var IDunite = $(this).attr('data-IDunite');
-					$("input[data-date='" + date + "']:checked").each(function() {
-						$(this).iCheck('uncheck');
-						});
+				var date = $(this).attr('data-date');
+				var IDunite = $(this).attr('data-IDunite');
+				$("input[data-date='" + date + "']:checked").each(function() {
+					$(this).iCheck('uncheck');
+					});
 				};
 			// définit dirty
 			dirty = 1;
@@ -191,21 +187,54 @@
 	</script>
 	
 	<script>
+		// Reset des champs de saisie de la fenêtre modale
+		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		$('#modal_confirmation_envoi').on('show.bs.modal', function (event) {
+			var modal = $(this)
+			
+			// Reset de champs
+			$('#commentaire').text('')
+			$('#message_erreur').text('')
+			modal.find('#detail_reservations').val('')
+			
+			// Recherche les cases cochées
+			var liste_resultats = [];
+			$("input#case:checked").each(function() {
+				var date = $(this).attr('data-date');
+				var IDunite = $(this).attr('data-IDunite');
+				var valeur = date + "#" + IDunite.toString();
+				liste_resultats.push(valeur);
+			});
+
+			// Demande le détail au serveur
+			$.getJSON($SCRIPT_ROOT + '/detail_envoi_reservations', {
+				IDactivite: {{ dict_planning["inscription"].IDactivite }},
+				resultats: liste_resultats.join(","),
+				liste_reservations_initiale: '{{ dict_planning["liste_reservations_initiale"] }}',
+			}, function(data) {
+				if (data.success) {
+					modal.find('#detail_reservations').val(data.detail)
+				} else {
+					// Affiche un message d'erreur dans la fenêtre modale
+					$('#message_erreur').text('Erreur: ' + data.error_msg)
+				}
+			});			  
+				
+		})
+	</script>	
+
+	
+	<script>
 	// Validation de l'envoi des réservations
 	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 	$(function() {
 		$('button#confirmation').bind('click', function() {
-			
 			var liste_resultats = [];
-			$("input#case:not([disabled])").each(function() {
+			$("input#case:checked").each(function() {
 				var date = $(this).attr('data-date');
 				var IDunite = $(this).attr('data-IDunite');
 				var valeur = date + "#" + IDunite.toString();
-				var index = modified.indexOf($(this).attr('data-date'));
-				if (index > -1) {
-					liste_resultats.push(valeur);
-					modified.splice(index, 1);
-				}
+				liste_resultats.push(valeur);
 			});
 			
 			$.ajax({
@@ -218,20 +247,24 @@
 				IDinscription: {{ dict_planning["inscription"].IDinscription }},
 				IDperiode: {{ dict_planning["periode"].IDperiode }},
 				IDactivite: {{ dict_planning["inscription"].IDactivite }},
+				activite_nom: '{{ dict_planning["inscription"].activite.nom }}',
 				IDindividu: {{ dict_planning["inscription"].IDindividu }},
+				individu_prenom: '{{ dict_planning["inscription"].individu.prenom }}',
+				date_debut_periode: '{{ dict_planning["periode"].date_debut }}',
+				date_fin_periode: '{{ dict_planning["periode"].date_fin }}',
 				commentaire: $("#commentaire").val(),
+				liste_reservations_initiale: '{{ dict_planning["liste_reservations_initiale"] }}',
 				},
 			  success: function(data) {
-					// Cache la fenêtre modale
-					$('#modal_confirmation_envoi').modal('hide');
-					// Recharge la page
-					location.href = "{{ url_for('reservations') }}"
-					},
-			  error: function(data) {
-					// Affiche un message d'erreur dans la fenêtre modale
-					alert("erreur !");
-					//$('#message_erreur').text('Erreur: ' + data.error_msg);
+					if (data.success) {
+						// Cache la fenêtre modale
+						$('#modal_confirmation_envoi').modal('hide');
+						// Recharge la page
+						location.href = "{{ url_for('reservations') }}"
+					} else {
+						$('#message_erreur').text('Erreur : ' + data.error_msg)
 					}
+				}
 			});
 		});
 	});

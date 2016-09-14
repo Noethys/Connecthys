@@ -423,22 +423,25 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     liste_dates.sort() 
     
     # Réservations
-    action = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage.desc()).first()
-    if action != None :
-        liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
+    actions = models.Action.query.filter_by(categorie="reservations", IDfamille=current_user.IDfamille, IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, etat="attente").order_by(models.Action.horodatage).all()
+    if actions != None :
         dict_reservations = {}
-        for reservation in liste_reservations :
-            if not dict_reservations.has_key(reservation.date) :
-                dict_reservations[reservation.date] = {}
-                dict_reservations[reservation.date][reservation.IDunite] = 1
-            else :
-                if dict_reservations[reservation.date][reservation.IDunite] == 1:
-                    dict_reservations[reservation.date][reservation.IDunite] = 0
-                else :
-                    dict_reservations[reservation.date][reservation.IDunite] = 1
+        for action in actions :
+            liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
+            for reservation in liste_reservations :
+                if not dict_reservations.has_key(reservation.date) :
+                    dict_reservations[reservation.date] = {}
+                dict_reservations[reservation.date][reservation.IDunite] = reservation.etat
     else :
         dict_reservations = None
-        
+    
+    # Génération de la liste initiale des réservations actives
+    liste_reservations_initiale = []
+    for date, liste_unites_temp in dict_reservations.iteritems() :
+        for IDunite, etat in liste_unites_temp.iteritems() :
+            if etat == 1 :
+                liste_reservations_initiale.append("%s#%d" % (date, IDunite))
+    
     # Consommations
     liste_consommations = models.Consommation.query.filter_by(IDinscription=inscription.IDinscription).all()
     dict_consommations = {}
@@ -491,7 +494,21 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
                         dict_conso_par_unite_resa[date][unite] = "reservation"
                     
                     for IDunite_conso in liste_unites_principales :
-                        liste_unites_conso_utilisees.append(IDunite_conso)
+                        liste_unites_conso_utilisees.append(IDunite_conso)                    
+                    
+    # Recherche les réservations actives
+    liste_reservations_initiale = []
+    for date in liste_dates :
+        for unite in liste_unites :
+            coche = utils.GetEtatCocheCase(unite, date, {"dict_reservations" : dict_reservations, "dict_conso_par_unite_resa" : dict_conso_par_unite_resa} )
+                    
+            # Mémorisation dans la liste des réservations initiales
+            if coche :
+                unite_txt = "%s#%d" % (date, unite.IDunite)
+                if unite_txt not in liste_reservations_initiale :
+                    liste_reservations_initiale.append(unite_txt)
+                
+    liste_reservations_initiale = ";".join(liste_reservations_initiale)
     
     # Mémorise toutes les données du planning
     dict_planning = {
@@ -504,6 +521,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         "dict_conso_par_unite_resa" : dict_conso_par_unite_resa,
         "dict_reservations" : dict_reservations,
         "couleur" : couleur,
+        "liste_reservations_initiale" : liste_reservations_initiale,
         }
         
     return dict_planning
@@ -534,56 +552,130 @@ def envoyer_reservations():
         IDinscription = request.args.get("IDinscription", None, type=int)
         IDperiode = request.args.get("IDperiode", None, type=int)
         IDactivite = request.args.get("IDactivite", None, type=int)
+        activite_nom = request.args.get("activite_nom", None, type=unicode)
         IDindividu = request.args.get("IDindividu", None, type=int)
+        individu_prenom = request.args.get("individu_prenom", None, type=unicode)
         date_debut_periode = request.args.get("date_debut_periode", "", type=str)
         date_fin_periode = request.args.get("date_fin_periode", "", type=str)
         commentaire = request.args.get("commentaire", None, type=unicode)
+        liste_reservations_initiale = request.args.get("liste_reservations_initiale", "", type=str)
         
-        # Récupération de la période
-        periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
-        
-        # Inscription
-        inscription = models.Inscription.query.filter_by(IDinscription=IDinscription).first()
-
         # Paramètres
-        parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, periode.date_debut, periode.date_fin)
+        parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, date_debut_periode, date_fin_periode)
         
-        # Traitement des consommations
-        liste_reservations = []
-        liste_dates_uniques = []
-        if len(resultats) > 0 :
-            for valeur in resultats.split(",") :
-                date = utils.CallFonction("DateEngEnDD", valeur.split("#")[0])
-                IDunite = int(valeur.split("#")[1])
-                liste_reservations.append((date, IDunite))
-                
-                if date not in liste_dates_uniques :
-                    liste_dates_uniques.append(date)
+        liste_reservations_finale, nbre_ajouts, nbre_suppressions = GetModificationsReservations(liste_reservations_initiale, resultats)
         
-        # Description
-        individu_prenom = inscription.individu.prenom
-        date_debut_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_debut)
-        date_fin_periode_fr = utils.CallFonction("DateDDEnFr", periode.date_fin)
-        description = u"Réservations %s pour %s sur la période du %s au %s (%d dates)" % (inscription.activite.nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, len(liste_dates_uniques))
+        if nbre_ajouts == 0 and nbre_suppressions == 0 :
         
-        # Enregistrement de l'action
-        action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
-        db.session.add(action)
-        db.session.flush()
+            # Retourne un message d'erreur si aucune modification par rapport aux réservations initiales
+            return jsonify(success=0, error_msg=u"Vous n'avez effectué aucune modification dans vos réservations !")         
+            
+        else :
         
-        # Enregistrement des réservations
-        for date, IDunite in liste_reservations :
-            reservation = models.Reservation(date=date, IDinscription=IDinscription, IDunite=IDunite, IDaction=action.IDaction)
-            db.session.add(reservation)
+            # Description
+            date_debut_periode_fr = utils.DateEngFr(date_debut_periode)
+            date_fin_periode_fr = utils.DateEngFr(date_fin_periode)
+            temp = []
+            if nbre_ajouts == 1 : temp.append(u"1 ajout")
+            if nbre_ajouts > 1 : temp.append(u"%d ajouts" % nbre_ajouts)
+            if nbre_suppressions == 1 : temp.append(u"1 suppression")
+            if nbre_suppressions > 1 : temp.append(u"%d suppressions" % nbre_suppressions)
+            description = u"Réservations %s pour %s sur la période du %s au %s (%s)" % (activite_nom, individu_prenom, date_debut_periode_fr, date_fin_periode_fr, " et ".join(temp))
+            
+            # Enregistrement de l'action
+            action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="reservations", action="envoyer", description=description, etat="attente", IDperiode=IDperiode, commentaire=commentaire, parametres=parametres)
+            db.session.add(action)
+            db.session.flush()
+            
+            # Enregistrement des réservations
+            for date, IDunite, etat in liste_reservations_finale :
+                reservation = models.Reservation(date=date, IDinscription=IDinscription, IDunite=IDunite, IDaction=action.IDaction, etat=etat)
+                db.session.add(reservation)
 
-        db.session.commit()
-        
-        flash(u"Votre demande de réservations a bien été enregistrée")
-        return jsonify(success=1)
+            db.session.commit()
+            
+            flash(u"Votre demande de réservations a bien été enregistrée")
+            return jsonify(success=1)
+            
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
         
+        
+        
+def GetModificationsReservations(liste_reservations_initiale=[], resultats=[]):
+    # Formatage de la liste des réservations initiale txt en liste
+    if len(liste_reservations_initiale) > 0 :
+        liste_reservations_initiale = liste_reservations_initiale.split(";")
+    else :
+        liste_reservations_initiale = []
+    
+    # Formatage de la liste des réservations txt en liste
+    if len(resultats) > 0 :
+        liste_reservations = resultats.split(",")
+    else :
+        liste_reservations = []
+    
+    # Recherche les ajouts
+    liste_reservations_finale = []
+    nbre_ajouts = 0
+    for valeur in liste_reservations :
+        if valeur not in liste_reservations_initiale :
+            date = utils.CallFonction("DateEngEnDD", valeur.split("#")[0])
+            IDunite = int(valeur.split("#")[1])
+            liste_reservations_finale.append((date, IDunite, 1))
+            nbre_ajouts += 1
+            
+    # Recherche les suppressions
+    nbre_suppressions = 0
+    for valeur in liste_reservations_initiale :
+        if valeur not in liste_reservations :
+            date = utils.CallFonction("DateEngEnDD", valeur.split("#")[0])
+            IDunite = int(valeur.split("#")[1])
+            liste_reservations_finale.append((date, IDunite, 0))
+            nbre_suppressions += 1
+    
+    return liste_reservations_finale, nbre_ajouts, nbre_suppressions
+
+    
+    
+        
+@app.route('/detail_envoi_reservations')
+@login_required
+def detail_envoi_reservations():
+    try:
+        # Détail des réservations
+        IDactivite = request.args.get("IDactivite", None, type=int)
+        resultats = request.args.get("resultats", "", type=str)
+        liste_reservations_initiale = request.args.get("liste_reservations_initiale", "", type=str)
+        liste_reservations_finale, nbre_ajouts, nbre_suppressions = GetModificationsReservations(liste_reservations_initiale, resultats)
+        
+        # Liste des unités
+        liste_unites = models.Unite.query.filter_by(IDactivite=IDactivite).all()
+        dict_unites = {}
+        for unite in liste_unites :
+            dict_unites[unite.IDunite] = unite
+            
+        liste_lignes = []
+        for date, IDunite, etat in liste_reservations_finale :
+            if etat == 1 :
+                ligne = u"- Ajout"
+            else :
+                ligne = u"- Suppression"
+            ligne += u" de la réservation du %s (%s)\n" % (utils.DateEngFr(date), dict_unites[IDunite].nom)
+            liste_lignes.append(ligne)
+            
+        if len(liste_lignes) > 0 :
+            detail = "".join(liste_lignes)
+        else :
+            detail = u"Aucune modification demandée."        
+        
+        return jsonify(success=1, detail=detail)
+    except Exception, erreur:
+        return jsonify(success=0, error_msg=str(erreur))
+   
+
+   
 # ------------------------- INSCRIPTIONS ---------------------------------- 
 
 @app.route('/inscriptions')
@@ -651,7 +743,8 @@ def envoyer_demande_inscription():
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
-        
+   
+
 # ------------------------- CONTACT ---------------------------------- 
 
 @app.route('/contact')
@@ -678,7 +771,28 @@ def aide():
     
     
     
-    
+@app.route('/detail_demande')
+@login_required
+def detail_demande():
+    try:
+        # Détail des réservations
+        IDaction = request.args.get("idaction", 0, type=int)
+        liste_reservations = models.Reservation.query.filter_by(IDaction=IDaction).order_by(models.Reservation.date, models.Reservation.etat).all()
+        liste_lignes = []
+        for reservation in liste_reservations :
+            txt_date = utils.CallFonction("DateDDEnFrComplet", reservation.date)
+            if reservation.etat == 1 :
+                ligne = u"- Ajout"
+            else :
+                ligne = u"- Suppression"
+            ligne += u" de la réservation du %s (%s)\n" % (txt_date, reservation.unite.nom)
+            liste_lignes.append(ligne)
+        detail = "".join(liste_lignes)
+                    
+        return jsonify(success=1, detail=detail)
+    except Exception, erreur:
+        return jsonify(success=0, error_msg=str(erreur))
+
     
     
     
@@ -713,5 +827,5 @@ def GetHistorique(IDfamille=None, categorie=None):
             if not dict_dernieres_reservations.has_key(action.IDperiode) or (action.horodatage > dict_dernieres_reservations[action.IDperiode].horodatage and action.etat != "suppression") :
                 dict_dernieres_reservations[action.IDperiode] = action
     
-    return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro}
+    return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro, "categorie" : categorie}
     

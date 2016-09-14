@@ -201,11 +201,12 @@ class Action(Base):
     traitement_date = Column(Date)
     IDperiode = Column(Integer)
     ref_unique = Column(String(50), index=True)
+    reponse = Column(String(450))
     
     reservations = relationship("Reservation")
     
     def __init__(self, horodatage=None, IDfamille=None, IDindividu=None, categorie=None, action=None, description=None, \
-                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None):
+                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None, reponse=None):
         if horodatage == None :
             self.horodatage = datetime.datetime.now()
         else :
@@ -224,7 +225,8 @@ class Action(Base):
             self.ref_unique = self.GetRefUnique()
         else :
             self.ref_unique = ref_unique
-    
+        self.reponse = reponse
+        
     def GetRefUnique(self):
         horodatage = self.horodatage.strftime("%Y%m%d%H%M%S%f")
         ref_unique = "%s%06d" % (horodatage, self.IDfamille)
@@ -609,6 +611,7 @@ class Reservation(Base):
     __tablename__ = "portail_reservations"
     IDreservation = Column(Integer, primary_key=True)
     date = Column(Date)
+    etat = Column(Integer)
     
     IDinscription = Column(Integer, ForeignKey("portail_inscriptions.IDinscription"))
     inscription = relationship("Inscription")  
@@ -619,13 +622,14 @@ class Reservation(Base):
     IDaction = Column(Integer, ForeignKey("portail_actions.IDaction"))
     action = relationship("Action")  
     
-    def __init__(self , IDreservation=None, date=None, IDinscription=None, IDunite=None, IDaction=None):
+    def __init__(self , IDreservation=None, date=None, IDinscription=None, IDunite=None, IDaction=None, etat=None):
         if IDreservation != None :
             self.IDreservation = IDreservation
         self.date = date
         self.IDinscription = IDinscription
         self.IDunite = IDunite
         self.IDaction = IDaction
+        self.etat = etat
         
     def __repr__(self):
         return '<IDreservation %d>' % (self.IDreservation)
