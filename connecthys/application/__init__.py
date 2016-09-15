@@ -33,11 +33,20 @@ app.config["VERSION_APPLICATION"] = __version__
 #compress.init_app(app)
 
 # Connexion avec le journal d'évènements
-handler = RotatingFileHandler('journal.log', maxBytes=100000, backupCount=1)
+handler = RotatingFileHandler('journal.log', maxBytes=100000, backupCount=10)
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d] %(message)s')
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
+
+# Connexion avec le journal de debug
+handlerdebug = RotatingFileHandler('debug.log', maxBytes=204800, backupCount=30)
+handlerdebug.setLevel(logging.DEBUG)
+formatterdebug = logging.Formatter('[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d] %(message)s')
+handlerdebug.setFormatter(formatterdebug)
+app.logger.addHandler(handlerdebug)
+
+app.logger.setLevel(logging.DEBUG)
     
 # Debugtoolbar
 if Config_application.DEBUG == True :

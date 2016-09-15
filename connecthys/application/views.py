@@ -73,6 +73,7 @@ def upgrade(secret=0):
             app.logger.error("Erreur dans l'upgrade : %s" % traceback.format_exc())
     
     reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    app.logger.debug("Demande upgrade: secretkey(%s)", secret_key)
     return reponse
 
 
@@ -82,6 +83,7 @@ def get_version():
     version = app.config["VERSION_APPLICATION"]
     dict_resultat = {"version_str" : version, "version_tuple" : utils.GetVersionTuple(version)}
     reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    app.logger.debug("Demande version: version(%s)", dict_resultat)
     return reponse
 
     
@@ -122,12 +124,14 @@ def index():
 def syncup(secret=0):
     import importation
     resultat = importation.Importation(secret=secret)
+    app.logger.debug("Syncho depuis Noethys: secret(%s)", secret)
     return str(resultat)
     
 @app.route('/syncdown/<int:secret>/<int:last>')
 def syncdown(secret=0, last=0):
     import exportation
     resultat = exportation.Exportation(secret=secret, last=last)
+    app.logger.debug("Recuperation des demandes: secret(%s) - last(%s)", secret, last)
     return resultat
 
 @app.errorhandler(500)
@@ -158,9 +162,11 @@ def login():
         
         # Codes d'accès corrects
         if registered_user is not None:
-        
+            app.logger.debug('Connection de l utilisateur %s', form.identifiant.data)
+            
             # Vérification du mot de passe
             if registered_user.check_password(form.password.data) == False :
+                app.logger.debug("Mot de passe %s incorrect pour %s", form.password.data, form.identifiant.data)
                 registered_user = None
                 flash(u"Mot de passe incorrect" , 'error')
                 return redirect(url_for('login'))
@@ -171,6 +177,7 @@ def login():
             # Mémorisation du user
             login_user(registered_user, remember=remember)
             flash(u"Bienvenue dans le portail Famille")
+            app.logger.debug("Connection reussie de %s", form.identifiant.data)
             
             return redirect(request.args.get('next') or url_for('accueil'))
 
@@ -195,6 +202,7 @@ def accueil():
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.nom).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
     
+    app.logger.debug("Page ACCUEIL (%s): famille id(%s) %s", current_user.identifiant, current_user.IDfamille, current_user.nom )
     return render_template('accueil.html', active_page="accueil",\
                             liste_pieces_manquantes=liste_pieces_manquantes, \
                             liste_cotisations_manquantes=liste_cotisations_manquantes)
@@ -219,6 +227,7 @@ def factures():
     # Recherche l'historique des demandes liées aux factures
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures")
     
+    app.logger.debug("Page FACTURES (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('factures.html', active_page="factures", liste_factures=liste_factures, \
                             nbre_factures_impayees=nbre_factures_impayees, \
                             montant_factures_impayees=montant_factures_impayees, \
@@ -279,6 +288,7 @@ def reglements():
     # Recherche l'historique des demandes liées aux règlements
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reglements")
     
+    app.logger.debug("Page REGLEMENTS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('reglements.html', active_page="reglements", liste_reglements=liste_reglements, \
                             liste_factures=liste_factures, nbre_factures_impayees=nbre_factures_impayees, \
                             montant_factures_impayees=montant_factures_impayees, \
@@ -322,6 +332,7 @@ def historique():
     # Recherche l'historique général
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie=None)
     
+    app.logger.debug("Page HISTORIQUE (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('historique.html', active_page="historique", historique=historique)
                             
                             
@@ -336,6 +347,7 @@ def pieces():
     # Récupération de la liste des types de pièces
     liste_types_pieces = models.Type_piece.query.order_by(models.Type_piece.nom).all()
     
+    app.logger.debug("Page PIECES (%s): famille id(%s) liste_pieces_manquantes: %s", current_user.identifiant, current_user.IDfamille, liste_pieces_manquantes)
     return render_template('pieces.html', active_page="pieces", \
                             liste_pieces_manquantes=liste_pieces_manquantes,\
                             liste_types_pieces=liste_types_pieces)
@@ -349,6 +361,7 @@ def cotisations():
     # Récupération de la liste des cotisations manquantes
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
     
+    app.logger.debug("Page COTISATIONS (%s): famille id(%s) - liste_cotisations_manquante: %s", current_user.identifiant, current_user.IDfamille, liste_cotisations_manquantes)
     return render_template('cotisations.html', active_page="cotisations", \
                             liste_cotisations_manquantes=liste_cotisations_manquantes)
     
@@ -365,8 +378,10 @@ def supprimer_demande():
         db.session.commit()
         
         flash(u"Votre suppression a bien été enregistrée")
+        app.logger.debug("SUPPRESSION DEMANDE (%s): famille id(%s) - demande(%s)", current_user.identifiant, current_user.IDfamille, IDaction)
         return jsonify(success=1)
     except Exception, erreur:
+        app.logger.debug("[ERREUR] SUPPRESSION DEMANDE (%s): famille id(%s) - demande(%s)", current_user.identifiant, current_user.IDfamille, IDaction)
         return jsonify(success=0, error_msg=str(erreur))
 
         
@@ -393,6 +408,7 @@ def reservations():
     # Recherche l'historique des demandes liées aux réservations
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reservations")
     
+    app.logger.debug("Page RESERVATIONS (%s): famille id(%s) %s - liste_individus: %s", current_user.identifiant, current_user.IDfamille, current_user.nom, liste_individus)
     return render_template('reservations.html', active_page="reservations", \
                             liste_individus = liste_individus, \
                             historique = historique)
@@ -541,7 +557,8 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         "couleur" : couleur,
         "liste_reservations_initiale" : liste_reservations_initiale,
         }
-        
+    
+    app.logger.debug("Page PLANNING (%s): famille id(%s) Individu id(%s) pour la periode id(%s)\ndict_planning: %s", current_user.identifiant, current_user.IDfamille, IDindividu, IDperiode, dict_planning)
     return dict_planning
     
 # @app.route('/planning/<int:IDindividu>/<int:IDperiode>/<int:index_couleur>')
@@ -640,9 +657,11 @@ def envoyer_reservations():
             db.session.commit()
             
             flash(u"Votre demande de réservations a bien été enregistrée")
+            app.logger.debug("Demande de reservations (%s): famille id(%s) Individu id(%s) pour la periode id(%s)\nliste_reservations: %s", current_user.identifiant, current_user.IDfamille, IDindividu, IDperiode ,liste_reservations_finale)
             return jsonify(success=1)
             
     except Exception, erreur:
+        app.logger.debug("[ERREUR] Demande de reservations (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
         return jsonify(success=0, error_msg=str(erreur))
 
         
@@ -751,6 +770,7 @@ def inscriptions():
     # Recherche l'historique des demandes liées aux réservations
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="inscriptions")
     
+    app.logger.debug("Page INSCRIPTIONS (%s): famille id(%s) liste_individus: %s", current_user.identifiant, current_user.IDfamille, liste_individus)
     return render_template('inscriptions.html', active_page="inscriptions", \
                             liste_individus = liste_individus, \
                             liste_activites = liste_activites, \
