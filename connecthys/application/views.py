@@ -89,6 +89,7 @@ def get_version():
 def load_user(id):
     return models.User.query.get(int(id))
 
+    
 @app.before_request
 def before_request():
     # Mémorise l'utilisateur en cours
@@ -96,6 +97,13 @@ def before_request():
     g.liste_pages = LISTE_PAGES
     g.dict_pages = DICT_PAGES
     g.date_jour = datetime.date.today()
+    
+    
+@app.after_request
+def add_header(response):
+    response.cache_control.private = True
+    response.cache_control.public = False
+    return response
     
     
 @app.route('/')
@@ -392,13 +400,23 @@ def reservations():
 
 def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     # Couleur
+    if index_couleur > len(COULEURS)-1 :
+        return None
     couleur = COULEURS[index_couleur]
     
     # Période
     periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
-
+    if periode == None or not periode.Is_active_today() :
+        app.logger.warning(u"IDfamille %d : Tentative d'accéder à la période %s dans les réservations." % (current_user.IDfamille, IDperiode))
+        flash(u"Vous n'êtes pas autorisé à accéder à la période demandée !")
+        return None
+    
     # Inscription
-    inscription = models.Inscription.query.filter_by(IDindividu=IDindividu, IDactivite=periode.IDactivite).first() # .order_by(models.Activite.nom)
+    inscription = models.Inscription.query.filter_by(IDfamille=current_user.IDfamille, IDindividu=IDindividu, IDactivite=periode.IDactivite).first() # .order_by(models.Activite.nom)
+    if inscription == None :
+        app.logger.warning(u"IDfamille %d : Tentative d'accéder à l'individu %s dans les réservations." % (current_user.IDfamille, IDindividu))
+        flash(u"Vous n'êtes pas autorisé à accéder au planning de l'individu demandé !")
+        return None
     
     # Unités
     liste_unites = models.Unite.query.filter_by(IDactivite=periode.IDactivite).order_by(models.Unite.ordre).all()
@@ -526,21 +544,48 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
         
     return dict_planning
     
-@app.route('/planning/<int:IDindividu>/<int:IDperiode>/<int:index_couleur>')
+# @app.route('/planning/<int:IDindividu>/<int:IDperiode>/<int:index_couleur>')
+# @login_required
+# def planning(IDindividu=None, IDperiode=None, index_couleur=0):
+    # dict_planning = Get_dict_planning(IDindividu, IDperiode, index_couleur)
+    # return render_template('planning.html', active_page="reservations", \
+                            # dict_planning = dict_planning)
+
+@app.route('/planning')
 @login_required
-def planning(IDindividu=None, IDperiode=None, index_couleur=0):
+def planning():
+    IDindividu = request.args.get("IDindividu", None, type=int)
+    IDperiode = request.args.get("IDperiode", None, type=int)
+    index_couleur = request.args.get("index_couleur", None, type=int)
+    
     dict_planning = Get_dict_planning(IDindividu, IDperiode, index_couleur)
+    if dict_planning == None :
+        return redirect(url_for('reservations'))
+        
     return render_template('planning.html', active_page="reservations", \
                             dict_planning = dict_planning)
 
 
-@app.route('/imprimer_reservations/<int:IDindividu>/<int:IDperiode>')
-@login_required
-def imprimer_reservations(IDindividu=None, IDperiode=None):
-    dict_planning = Get_dict_planning(IDindividu, IDperiode)
-    return render_template('imprimer_reservations.html', dict_planning=dict_planning)
+# @app.route('/imprimer_reservations/<int:IDindividu>/<int:IDperiode>')
+# @login_required
+# def imprimer_reservations(IDindividu=None, IDperiode=None):
+    # dict_planning = Get_dict_planning(IDindividu, IDperiode)
+    # if dict_planning == None :
+        # return redirect(url_for('reservations'))
+        
+    # return render_template('imprimer_reservations.html', dict_planning=dict_planning)
     
+@app.route('/imprimer_reservations')
+@login_required
+def imprimer_reservations():
+    IDindividu = request.args.get("IDindividu", None, type=int)
+    IDperiode = request.args.get("IDperiode", None, type=int)
 
+    dict_planning = Get_dict_planning(IDindividu, IDperiode)
+    if dict_planning == None :
+        return redirect(url_for('reservations'))
+        
+    return render_template('imprimer_reservations.html', dict_planning=dict_planning)
     
               
 @app.route('/envoyer_reservations')
