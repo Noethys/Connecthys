@@ -32,9 +32,9 @@
 		
 		{% else %}
 			
-			{% if GetValeurConfig(dict_menu["affichage"]) == True %}
+			{% set page = dict_menu["page"] %}
 			
-				{% set page = dict_menu["page"] %}
+			{% if page == "accueil" or GetValeurConfig(dict_menu["affichage"]) == True %}
 				
 				{% if page == active_page %}
 					<li class="active">
