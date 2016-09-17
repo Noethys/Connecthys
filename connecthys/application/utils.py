@@ -60,6 +60,19 @@ def IsUniteOuverte(unite=None, date=None, dict_planning={}):
             return False
     return True
 
+def IsUniteModifiable(unite=None, date=None, dict_planning={}):
+    # Recherche si l'activité autorise la modification
+    modification_allowed = unite.activite.Is_modification_allowed(date)
+    
+    # Si coche multiple désactivée, recherche si des unités de la ligne sont pointées
+    if modification_allowed == True and dict_planning["periode"].activite.unites_multiples == 0 :
+        for unite_temp in dict_planning["liste_unites"] :
+            etat_case = GetEtatFondCase(unite_temp, date, dict_planning)
+            if etat_case in ("present", "absenti", "absentj") :
+                modification_allowed = False
+    
+    return modification_allowed
+
 def GetEtatFondCase(unite=None, date=None, dict_planning={}):
     dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
     if dict_conso_par_unite_resa.has_key(date) :
@@ -83,21 +96,6 @@ def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
     # S'il n'y a aucune réservation sur cette ligne, on coche la conso
     if GetEtatFondCase(unite, date, dict_planning) != None :
         return True
-
-    # if dict_reservations not in (None, {}) :
-        
-        # Recherche dans le dictionnaire des réservations si la case est cochée
-        # if dict_reservations.has_key(date) :
-            # if dict_reservations[date].has_key(unite.IDunite) :
-                # if dict_reservations[date][unite.IDunite] == 1:
-                    # return True
-                # else :
-                    # return False
-        
-    # else :
-        # S'il n'y a aucune réservation sur cette ligne, on coche la conso
-        # if GetEtatFondCase(unite, date, dict_planning) != None :
-            # return True
     
     return False
 
@@ -148,9 +146,6 @@ def GetVersionTuple(version=""):
     return tuple(temp)
 
 
-               
-        
-        
         
         
 def CallFonction(fonction="", *args):
@@ -169,6 +164,7 @@ def utility_processor():
         DateDDEnFrComplet=DateDDEnFrComplet,
         DateDTEnHeureFr=DateDTEnHeureFr,
         IsUniteOuverte=IsUniteOuverte,
+        IsUniteModifiable=IsUniteModifiable,
         GetEtatFondCase=GetEtatFondCase,
         GetEtatCocheCase=GetEtatCocheCase,
         DateDDEnEng=DateDDEnEng,

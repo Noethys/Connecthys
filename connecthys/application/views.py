@@ -534,8 +534,15 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     liste_reservations_initiale = []
     for date in liste_dates :
         for unite in liste_unites :
-            coche = utils.GetEtatCocheCase(unite, date, {"dict_reservations" : dict_reservations, "dict_conso_par_unite_resa" : dict_conso_par_unite_resa} )
-                    
+            dict_planning_temp = {"dict_reservations" : dict_reservations, "dict_conso_par_unite_resa" : dict_conso_par_unite_resa}
+            
+            # Vérifie si la case est cochée
+            coche = utils.GetEtatCocheCase(unite, date, dict_planning_temp )
+            
+            # Vérifie si c'est un unité modifiable
+            if utils.GetEtatFondCase(unite, date, dict_planning_temp) not in ("reservation", "attente") :
+                coche = False
+                
             # Mémorisation dans la liste des réservations initiales
             if coche :
                 unite_txt = "%s#%d" % (date, unite.IDunite)
