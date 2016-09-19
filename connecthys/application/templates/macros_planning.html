@@ -1,6 +1,5 @@
 {% macro planning_body(dict_planning={}, impression=False) %}
 
-	
 	<table class="table table-bordered">
 		<tbody>
 			
@@ -40,14 +39,19 @@
 								{% if impression == False %}
 									<center><input type="checkbox" id="case" class="flat-black" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} {% if etat_coche == True %} checked {% endif %} {% if modification_allowed == False %} disabled {% endif %}></center>
 								{% else %}
-									{% if etat_case == "reservation" %} 
-										<center><span class="badge bg-green">Réservé</span></center>
+									{% if etat_case == "reservation" and etat_coche == True %} 
+										<center><span class="badge bg-green">Réservation validée</span></center>
+									{% endif %}
+									{% if etat_case == "reservation" and etat_coche == False %} 
+										<center><span class="badge bg-green">Réservation</span></center>
+										<center><span>[Annulation non traitée]</span></center>
 									{% endif %}
 									{% if etat_case == None and etat_coche == True %} 
-										<center><span class="badge bg-black">Demande non traitée</span></center>
+										<center><span class="badge bg-green">Réservation</span></center>
+										<center><span>[Demande non traitée]</span></center>
 									{% endif %}
 									{% if etat_case == "attente" %} 
-										<center><span class="badge bg-red">Refusé</span></center>
+										<center><span class="badge bg-red">Réservation refusée</span></center>
 									{% endif %}
 								{% endif %}
 							{% endif %}
@@ -230,6 +234,30 @@
 				
 		})
 	</script>	
+
+	
+	<script>
+	// Impression réservations
+	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+	$(function() {
+		$('a#imprimer').bind('click', function() {
+			var liste_resultats = [];
+			$("input#case:checked").each(function() {
+				var date = $(this).attr('data-date');
+				var IDunite = $(this).attr('data-IDunite');
+				var valeur = date + "A" + IDunite.toString();
+				liste_resultats.push(valeur);
+			});
+			var IDindividu = {{ dict_planning['inscription'].IDindividu }};
+			var IDperiode = {{ dict_planning['periode'].IDperiode }};
+			var resultats = liste_resultats.join(",");
+			window.open(
+				$SCRIPT_ROOT + '/imprimer_reservations?IDindividu=' + IDindividu + "&IDperiode=" + IDperiode + "&resultats=" + resultats,
+				'_blank'
+				);
+		});
+	});
+	</script>
 
 	
 	<script>

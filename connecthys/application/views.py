@@ -414,7 +414,7 @@ def reservations():
                             historique = historique)
     
 
-def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
+def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=None):
     # Couleur
     if index_couleur > len(COULEURS)-1 :
         return None
@@ -469,12 +469,37 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
     else :
         dict_reservations = None
     
+    # Pour version imprimable
+    if coches != None :
+        liste_coches = []
+        if len(coches) > 0 :
+            for coche in coches.split(",") :
+                date, IDunite = utils.DateEngEnDD(coche.split("A")[0]), int(coche.split("A")[1])
+                liste_coches.append((date, IDunite))
+                
+                # Coche les nouvelles réservations
+                if dict_reservations != None :
+                    if not dict_reservations.has_key(date) :
+                        dict_reservations[date] = {}
+                    dict_reservations[date][IDunite] = 1
+            
+            # Décoche les anciennes réservations
+            for date, dict_unites_temp in dict_reservations.iteritems() :
+                for IDunite, etat in dict_unites_temp.iteritems() :
+                    if (date, IDunite) not in liste_coches :
+                        dict_reservations[date][IDunite] = 0
+
+                    
     # Génération de la liste initiale des réservations actives
-    liste_reservations_initiale = []
-    for date, liste_unites_temp in dict_reservations.iteritems() :
-        for IDunite, etat in liste_unites_temp.iteritems() :
-            if etat == 1 :
-                liste_reservations_initiale.append("%s#%d" % (date, IDunite))
+    # liste_reservations_initiale = []
+    # for date, liste_unites_temp in dict_reservations.iteritems() :
+        # for IDunite, etat in liste_unites_temp.iteritems() :
+            # if etat == 1 :
+                # liste_reservations_initiale.append("%s#%d" % (date, IDunite))
+    
+            
+    
+    
     
     # Consommations
     liste_consommations = models.Consommation.query.filter_by(IDinscription=inscription.IDinscription).all()
@@ -537,12 +562,15 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0):
             dict_planning_temp = {"dict_reservations" : dict_reservations, "dict_conso_par_unite_resa" : dict_conso_par_unite_resa}
             
             # Vérifie si la case est cochée
-            coche = utils.GetEtatCocheCase(unite, date, dict_planning_temp )
+            coche = utils.GetEtatCocheCase(unite, date, dict_planning_temp)
             
-            # Vérifie si c'est un unité modifiable
-            if utils.GetEtatFondCase(unite, date, dict_planning_temp) not in ("reservation", "attente") :
+            print date, unite.nom, utils.GetEtatFondCase(unite, date, dict_planning_temp), coche
+            
+            # Vérifie si c'est une unité modifiable
+            etat = utils.GetEtatFondCase(unite, date, dict_planning_temp)
+            if etat != None and etat not in ("reservation", "attente") :
                 coche = False
-                
+            
             # Mémorisation dans la liste des réservations initiales
             if coche :
                 unite_txt = "%s#%d" % (date, unite.IDunite)
@@ -589,23 +617,15 @@ def planning():
     return render_template('planning.html', active_page="reservations", \
                             dict_planning = dict_planning)
 
-
-# @app.route('/imprimer_reservations/<int:IDindividu>/<int:IDperiode>')
-# @login_required
-# def imprimer_reservations(IDindividu=None, IDperiode=None):
-    # dict_planning = Get_dict_planning(IDindividu, IDperiode)
-    # if dict_planning == None :
-        # return redirect(url_for('reservations'))
-        
-    # return render_template('imprimer_reservations.html', dict_planning=dict_planning)
     
 @app.route('/imprimer_reservations')
 @login_required
 def imprimer_reservations():
     IDindividu = request.args.get("IDindividu", None, type=int)
     IDperiode = request.args.get("IDperiode", None, type=int)
-
-    dict_planning = Get_dict_planning(IDindividu, IDperiode)
+    resultats = request.args.get("resultats", "", type=str)
+    
+    dict_planning = Get_dict_planning(IDindividu=IDindividu, IDperiode=IDperiode, coches=resultats)
     if dict_planning == None :
         return redirect(url_for('reservations'))
         
