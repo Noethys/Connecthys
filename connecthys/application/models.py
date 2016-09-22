@@ -613,11 +613,16 @@ class Reservation(Base):
     date = Column(Date)
     etat = Column(Integer)
     
-    IDinscription = Column(Integer, ForeignKey("portail_inscriptions.IDinscription"))
-    inscription = relationship("Inscription")  
+    #IDinscription = Column(Integer, ForeignKey("portail_inscriptions.IDinscription"))
+    #inscription = relationship("Inscription")  
     
-    IDunite = Column(Integer, ForeignKey("portail_unites.IDunite"))
-    unite = relationship("Unite")  
+    #IDunite = Column(Integer, ForeignKey("portail_unites.IDunite"))
+    #unite = relationship("Unite")  
+    
+    IDinscription = Column(Integer)
+    inscription = relationship("Inscription", primaryjoin="Inscription.IDinscription == foreign(Reservation.IDinscription)")  
+    IDunite = Column(Integer)
+    unite= relationship("Unite", primaryjoin=('Unite.IDunite==foreign(Reservation.IDunite)'))
 
     IDaction = Column(Integer, ForeignKey("portail_actions.IDaction"))
     action = relationship("Action")  

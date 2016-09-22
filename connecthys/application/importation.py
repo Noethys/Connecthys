@@ -77,9 +77,9 @@ def Importation(secret=0):
     
     # Liste des tables à transférer
     tables = [
-        "activites", "consommations", "cotisations_manquantes", "factures", "groupes", 
-        "individus", "inscriptions", "ouvertures", "periodes", "pieces_manquantes", 
-        "reglements", "types_pieces", "unites", "users",
+         "cotisations_manquantes", "factures", "types_pieces", "users", "pieces_manquantes",
+         "reglements", "consommations", "periodes", "ouvertures", "unites","inscriptions",
+         "groupes", "activites", "individus"
         ]
     
     # Recherche si des actions sont présentes
