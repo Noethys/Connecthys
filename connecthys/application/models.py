@@ -620,7 +620,9 @@ class Reservation(Base):
     #unite = relationship("Unite")  
     
     IDinscription = Column(Integer)
+    inscription = relationship("Inscription", primaryjoin="Inscription.IDinscription == foreign(Reservation.IDinscription)")  
     IDunite = Column(Integer)
+    unite= relationship("Unite", primaryjoin=('Unite.IDunite==foreign(Reservation.IDunite)'))
 
     IDaction = Column(Integer, ForeignKey("portail_actions.IDaction"))
     action = relationship("Action")  
