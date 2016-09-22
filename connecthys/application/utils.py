@@ -61,6 +61,9 @@ def IsUniteOuverte(unite=None, date=None, dict_planning={}):
     return True
 
 def IsUniteModifiable(unite=None, date=None, dict_planning={}):
+
+    if date < datetime.date.today() : return False
+
     # Recherche si l'activité autorise la modification
     modification_allowed = unite.activite.Is_modification_allowed(date)
     
