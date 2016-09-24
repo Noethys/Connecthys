@@ -13,8 +13,14 @@ import os
 import os.path
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-from application import app, models
+from application import db, app, models
 
+if app.config["PREFIXE_TABLES"] == "" :
+    PREFIXE_TABLES = ""
+else :
+    PREFIXE_TABLES = app.config["PREFIXE_TABLES"] + "_"
+
+        
 from sqlalchemy import create_engine, MetaData, Table, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -77,9 +83,9 @@ def Importation(secret=0):
     
     # Liste des tables à transférer
     tables = [
-        "activites", "consommations", "cotisations_manquantes", "factures", "groupes", 
-        "individus", "inscriptions", "ouvertures", "periodes", "pieces_manquantes", 
-        "reglements", "types_pieces", "unites", "users",
+        "cotisations_manquantes", "factures", "types_pieces", "users", "pieces_manquantes",
+        "reglements", "consommations", "periodes", "ouvertures", "unites", "inscriptions",
+        "groupes", "activites", "individus",
         ]
     
     # Recherche si des actions sont présentes
@@ -95,7 +101,7 @@ def Importation(secret=0):
         for action in liste_actions_source :
             
             # Update
-            table_actions_destination = Table('portail_actions', dmeta, autoload=True)
+            table_actions_destination = Table('%sportail_actions' % PREFIXE_TABLES, dmeta, autoload=True)
             u = table_actions_destination.update()
             u = u.values({"etat" : action.etat, "traitement_date" : action.traitement_date})
             u = u.where(table_actions_destination.c.ref_unique == action.ref_unique)
@@ -103,25 +109,41 @@ def Importation(secret=0):
         
         destination.commit()
     
-    # Parcours les tables
+    # Suppression des tables
     for nom_table in tables:
-        nom_table = "portail_" + nom_table
-        table = Table(nom_table, smeta, autoload=True)
-        table.drop(dengine)
-        table.metadata.create_all(dengine)
-        NewRecord = quick_mapper(table)
-        columns = table.columns.keys()
-        data = source.query(table).all()
+        dengine.execute("DROP TABLE %s" % "%sportail_%s" % (PREFIXE_TABLES, nom_table))
+    
+    # Création des tables
+    db.create_all()
+
+    # Remplissage des tables (ordre spécial)
+    tables = [
+        "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "users", "pieces_manquantes",
+        "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", 
+        ]
+    
+    if "mysql" in to_db :
+        dengine.execute("SET foreign_key_checks = 0;")
+    
+    for nom_table in tables:
+        dtable = Table("%sportail_%s" % (PREFIXE_TABLES, nom_table), dmeta, autoload=True)
+        stable = Table("portail_%s" % nom_table, smeta, autoload=True)
+        NewRecord = quick_mapper(stable)
+        columns = stable.columns.keys()
+        data = source.query(stable).all()
         listeDonnees = []
         for record in data :
             data = dict([(str(column), getattr(record, column)) for column in columns])
             listeDonnees.append(data) 
             
-        dengine.execute(table.insert(), listeDonnees)
+        dengine.execute(dtable.insert(), listeDonnees)
     
     # Commit de l'importation des tables
     destination.commit()
-        
+    
+    if "mysql" in to_db :
+        dengine.execute("SET foreign_key_checks = 1;")
+    
     # Fermeture et suppression de la base d'import
     source.close()
     os.remove(os.path.join(basedir, "data/" + os.path.basename(nomFichierDB)))

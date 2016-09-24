@@ -564,8 +564,6 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
             # Vérifie si la case est cochée
             coche = utils.GetEtatCocheCase(unite, date, dict_planning_temp)
             
-            print date, unite.nom, utils.GetEtatFondCase(unite, date, dict_planning_temp), coche
-            
             # Vérifie si c'est une unité modifiable
             etat = utils.GetEtatFondCase(unite, date, dict_planning_temp)
             if etat != None and etat not in ("reservation", "attente") :
@@ -870,6 +868,12 @@ def detail_demande():
         # Détail des réservations
         IDaction = request.args.get("idaction", 0, type=int)
         liste_reservations = models.Reservation.query.filter_by(IDaction=IDaction).order_by(models.Reservation.date, models.Reservation.etat).all()
+        
+        liste_unites = models.Unite.query.all()
+        dict_unites = {}
+        for unite in liste_unites :
+            dict_unites[unite.IDunite] = unite        
+        
         liste_lignes = []
         for reservation in liste_reservations :
             txt_date = utils.CallFonction("DateDDEnFrComplet", reservation.date)
@@ -877,7 +881,7 @@ def detail_demande():
                 ligne = u"- Ajout"
             else :
                 ligne = u"- Suppression"
-            ligne += u" de la réservation du %s (%s)\n" % (txt_date, reservation.unite.nom)
+            ligne += u" de la réservation du %s (%s)\n" % (txt_date, dict_unites[reservation.IDunite].nom)
             liste_lignes.append(ligne)
         detail = "".join(liste_lignes)
                     

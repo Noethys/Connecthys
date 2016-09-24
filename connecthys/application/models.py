@@ -11,10 +11,18 @@
 import datetime
 #from passlib.hash import sha256_crypt
 from Crypto.Hash import SHA256
+import shutil
+import os.path
+basedir = os.path.abspath(os.path.dirname(__file__))
+
 
 try :
     # Imports Sqlalchemy_flask pour Connecthys
     from application import db, app, utils
+    if app.config["PREFIXE_TABLES"] == "" :
+        PREFIXE_TABLES = ""
+    else :
+        PREFIXE_TABLES = app.config["PREFIXE_TABLES"] + "_"
     Base = db.Model
     ForeignKey = db.ForeignKey
     Column = db.Column
@@ -26,12 +34,13 @@ try :
     relationship = db.relationship
     import flask_migrate
     
-except :
+except Exception, err:
     # Imports Sqlalchemy pour Noethys
     from sqlalchemy import create_engine, ForeignKey, Column, Date, Integer, String, Float, DateTime
     from sqlalchemy.orm import relationship, sessionmaker
     from sqlalchemy.ext.declarative import declarative_base
     Base = declarative_base()
+    PREFIXE_TABLES = ""
 
     
 def GetVersionDB():
@@ -44,9 +53,29 @@ def GetVersionDB():
 def CreationDB():
     """ Création de la DB """
     with app.app_context():
-        app.logger.info("Creation de la base de donnees...")
+        if "mysql" in app.config["SQLALCHEMY_DATABASE_URI"] :
+            
+            # Création d'une base MySQL
+            app.logger.info("Creation de la base de donnees MySQL si besoin...")
+            import sqlalchemy
+            temp = app.config["SQLALCHEMY_DATABASE_URI"].split("/")
+            url = temp[0] + "//" + temp[2]
+            nom_db = temp[3]
+            engine = sqlalchemy.create_engine(url)
+            engine.execute("CREATE DATABASE IF NOT EXISTS %s;" % nom_db)
+            engine.execute("USE %s;" % nom_db) 
+            engine.dispose()
+
+        app.logger.info("Creation des tables des donnees...")
         db.create_all()
         app.logger.info("Creation ok.")
+        
+        rep_connecthys = os.path.dirname(basedir)
+        rep_migrations = os.path.join(rep_connecthys, "migrations")
+        if os.path.isdir(rep_migrations) :
+            app.logger.info("Suppression du repertoire migrations...")
+            shutil.rmtree(rep_migrations)
+        
         app.logger.info("Initialisation de la migration de sqlalchemy...")
         flask_migrate.init()
         app.logger.info("Initialisation ok.")
@@ -80,7 +109,7 @@ def UpgradeDB():
 
       
 class Parametre(Base):
-    __tablename__ = "portail_parametres"
+    __tablename__ = "%sportail_parametres" % PREFIXE_TABLES
     IDparametre = Column(Integer, primary_key=True)
     nom = Column(String(200))
     parametre = Column(String(400))
@@ -97,7 +126,7 @@ class Parametre(Base):
         
     
 class User(Base):
-    __tablename__ = "portail_users"
+    __tablename__ = "%sportail_users" % PREFIXE_TABLES
     IDuser = Column(Integer, primary_key=True)
     identifiant = Column(String(20), unique=True, index=True)
     password = Column(String(200))
@@ -155,7 +184,7 @@ class User(Base):
         
         
 class Facture(Base):
-    __tablename__ = "portail_factures"
+    __tablename__ = "%sportail_factures" % PREFIXE_TABLES
     IDfacture = Column(Integer, primary_key=True)
     IDfamille = Column(Integer, index=True)
     numero = Column(String(50))
@@ -187,7 +216,7 @@ class Facture(Base):
     
    
 class Action(Base):
-    __tablename__ = "portail_actions"
+    __tablename__ = "%sportail_actions" % PREFIXE_TABLES
     IDaction = Column(Integer, primary_key=True)
     horodatage = Column(DateTime)
     IDfamille = Column(Integer, index=True)
@@ -250,7 +279,7 @@ class Action(Base):
         
        
 class Reglement(Base):
-    __tablename__ = "portail_reglements"
+    __tablename__ = "%sportail_reglements" % PREFIXE_TABLES
     IDreglement = Column(Integer, primary_key=True)
     IDfamille = Column(Integer, index=True)
     date = Column(Date)
@@ -282,7 +311,7 @@ class Reglement(Base):
         
         
 class Piece_manquante(Base):
-    __tablename__ = "portail_pieces_manquantes"
+    __tablename__ = "%sportail_pieces_manquantes" % PREFIXE_TABLES
     IDpiece_manquante = Column(Integer, primary_key=True)
     IDfamille = Column(Integer, index=True)
     IDtype_piece = Column(Integer)
@@ -302,7 +331,7 @@ class Piece_manquante(Base):
 
    
 class Type_piece(Base):
-    __tablename__ = "portail_types_pieces"
+    __tablename__ = "%sportail_types_pieces" % PREFIXE_TABLES
     IDtype_piece = Column(Integer, primary_key=True)
     nom = Column(String(200))
     public = Column(String(50))
@@ -330,7 +359,7 @@ class Type_piece(Base):
             
             
 class Cotisation_manquante(Base):
-    __tablename__ = "portail_cotisations_manquantes"
+    __tablename__ = "%sportail_cotisations_manquantes" % PREFIXE_TABLES
     IDcotisation_manquante = Column(Integer, primary_key=True)
     IDfamille = Column(Integer, index=True)
     IDindividu = Column(Integer)
@@ -350,7 +379,7 @@ class Cotisation_manquante(Base):
 
         
 class Activite(Base):
-    __tablename__ = "portail_activites"
+    __tablename__ = "%sportail_activites" % PREFIXE_TABLES
     IDactivite = Column(Integer, primary_key=True)
     nom = Column(String(300))
     inscriptions_affichage = Column(Integer)
@@ -400,7 +429,7 @@ class Activite(Base):
         
         
 class Individu(Base):
-    __tablename__ = "portail_individus"
+    __tablename__ = "%sportail_individus" % PREFIXE_TABLES
     IDrattachement = Column(Integer, primary_key=True)
     IDindividu = Column(Integer, index=True)
     IDfamille = Column(Integer)
@@ -438,17 +467,17 @@ class Individu(Base):
         
         
 class Inscription(Base):
-    __tablename__ = "portail_inscriptions"
+    __tablename__ = "%sportail_inscriptions" % PREFIXE_TABLES
     IDinscription = Column(Integer, primary_key=True)
     IDfamille = Column(Integer, index=True)
 
-    IDindividu = Column(Integer, ForeignKey("portail_individus.IDindividu"))
+    IDindividu = Column(Integer, ForeignKey("%sportail_individus.IDindividu" % PREFIXE_TABLES))
     individu = relationship("Individu")  
 
-    IDactivite = Column(Integer, ForeignKey("portail_activites.IDactivite"))
+    IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
 
-    IDgroupe = Column(Integer, ForeignKey("portail_groupes.IDgroupe"))
+    IDgroupe = Column(Integer, ForeignKey("%sportail_groupes.IDgroupe" % PREFIXE_TABLES))
     groupe = relationship("Groupe")  
     
     def __init__(self , IDinscription=None, IDindividu=None, IDfamille=None, IDactivite=None, IDgroupe=None):
@@ -464,7 +493,7 @@ class Inscription(Base):
 
         
 class Periode(Base):
-    __tablename__ = "portail_periodes"
+    __tablename__ = "%sportail_periodes" % PREFIXE_TABLES
     IDperiode = Column(Integer, primary_key=True)
     nom = Column(String(300))
     date_debut = Column(Date)
@@ -472,7 +501,7 @@ class Periode(Base):
     affichage_date_debut = Column(DateTime)
     affichage_date_fin = Column(DateTime)
     
-    IDactivite = Column(Integer, ForeignKey("portail_activites.IDactivite"))
+    IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
     
     def __init__(self , IDperiode=None, IDactivite=None, nom=None, date_debut=None, date_fin=None, \
@@ -502,12 +531,12 @@ class Periode(Base):
         
 
 class Groupe(Base):
-    __tablename__ = "portail_groupes"
+    __tablename__ = "%sportail_groupes" % PREFIXE_TABLES
     IDgroupe = Column(Integer, primary_key=True)
     nom = Column(String(300))
     ordre = Column(Integer)
     
-    IDactivite = Column(Integer, ForeignKey("portail_activites.IDactivite"))
+    IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
 
     def __init__(self , IDgroupe=None, nom=None, IDactivite=None, ordre=None):
@@ -522,14 +551,14 @@ class Groupe(Base):
 
         
 class Unite(Base):
-    __tablename__ = "portail_unites"
+    __tablename__ = "%sportail_unites" % PREFIXE_TABLES
     IDunite = Column(Integer, primary_key=True)
     nom = Column(String(300))
     unites_principales = Column(String(300))
     unites_secondaires = Column(String(300))
     ordre = Column(Integer)
     
-    IDactivite = Column(Integer, ForeignKey("portail_activites.IDactivite"))
+    IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
    
     def __init__(self , IDunite=None, IDactivite=None, nom=None, \
@@ -562,14 +591,14 @@ class Unite(Base):
     
     
 class Ouverture(Base):
-    __tablename__ = "portail_ouvertures"
+    __tablename__ = "%sportail_ouvertures" % PREFIXE_TABLES
     IDouverture = Column(Integer, primary_key=True)
     date = Column(Date)
 
-    IDunite = Column(Integer, ForeignKey("portail_unites.IDunite"))
+    IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
     unite = relationship("Unite")  
     
-    IDgroupe = Column(Integer, ForeignKey("portail_groupes.IDgroupe"))
+    IDgroupe = Column(Integer, ForeignKey("%sportail_groupes.IDgroupe" % PREFIXE_TABLES))
     groupe = relationship("Groupe")  
     
     def __init__(self , IDouverture=None, date=None, IDunite=None, IDgroupe=None):
@@ -584,17 +613,17 @@ class Ouverture(Base):
         
 
 class Consommation(Base):
-    __tablename__ = "portail_consommations"
+    __tablename__ = "%sportail_consommations" % PREFIXE_TABLES
     IDconsommation = Column(Integer, primary_key=True)
     date = Column(Date)
     etat = Column(String(20))
-    
-    IDunite = Column(Integer, ForeignKey("portail_unites.IDunite"))
+
+    IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
     unite = relationship("Unite")  
     
-    IDinscription = Column(Integer, ForeignKey("portail_inscriptions.IDinscription"))
+    IDinscription = Column(Integer, ForeignKey("%sportail_inscriptions.IDinscription" % PREFIXE_TABLES))
     inscription = relationship("Inscription")  
-    
+
     def __init__(self , IDconsommation=None, date=None, IDunite=None, IDinscription=None, etat=None):
         if IDconsommation != None :
             self.IDconsommation = IDconsommation
@@ -608,18 +637,21 @@ class Consommation(Base):
         
 
 class Reservation(Base):
-    __tablename__ = "portail_reservations"
+    __tablename__ = "%sportail_reservations" % PREFIXE_TABLES
     IDreservation = Column(Integer, primary_key=True)
     date = Column(Date)
     etat = Column(Integer)
     
-    IDinscription = Column(Integer, ForeignKey("portail_inscriptions.IDinscription"))
-    inscription = relationship("Inscription")  
+    #IDinscription = Column(Integer, ForeignKey("%sportail_inscriptions.IDinscription" % PREFIXE_TABLES))
+    #inscription = relationship("Inscription")  
     
-    IDunite = Column(Integer, ForeignKey("portail_unites.IDunite"))
-    unite = relationship("Unite")  
-
-    IDaction = Column(Integer, ForeignKey("portail_actions.IDaction"))
+    #IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
+    #unite = relationship("Unite")  
+    
+    IDinscription = Column(Integer)
+    IDunite = Column(Integer)
+    
+    IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
     action = relationship("Action")  
     
     def __init__(self , IDreservation=None, date=None, IDinscription=None, IDunite=None, IDaction=None, etat=None):
