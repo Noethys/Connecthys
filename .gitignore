@@ -2,6 +2,7 @@
 Travaux/
 migrations/
 journal.log
+*.crypt
 Connecthys.egg-info/
 SQLiteSpy.exe
 SQLiteSpy.db3
