@@ -64,6 +64,10 @@ def IsUniteModifiable(unite=None, date=None, dict_planning={}):
     # Recherche si l'activité autorise la modification
     modification_allowed = unite.activite.Is_modification_allowed(date)
     
+    # Recherche si la date est passée
+    if date < datetime.date.today() : 
+        modification_allowed = False
+    
     # Si coche multiple désactivée, recherche si des unités de la ligne sont pointées
     if modification_allowed == True and dict_planning["periode"].activite.unites_multiples == 0 :
         for unite_temp in dict_planning["liste_unites"] :
