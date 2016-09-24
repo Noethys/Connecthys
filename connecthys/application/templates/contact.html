@@ -3,51 +3,52 @@
   
 {% block content -%}
   
-	<!-- Google maps -->
-	<style>
-		#map-canvas {
-			height: 300px;
-			margin: 0px;
-			padding: 0px
-		  }
-	</style>
-	
-	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-	<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
-	<script type="text/javascript">
-		$(document).ready(function(){
+	{% if config['CONTACT_CARTE_AFFICHER'] == True %}
+		
+		<!-- Google maps -->
+		<style>
+			#map-canvas {
+				height: 300px;
+				margin: 0px;
+				padding: 0px
+			  }
+		</style>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
 
-			var myOptions = {
-				center: new google.maps.LatLng(47.041693, 2.501802),
-				zoom: 4,
-				mapTypeId: google.maps.MapTypeId.ROADMAP,
-				maxZoom: 15
-			};
+				var myOptions = {
+					center: new google.maps.LatLng(47.041693, 2.501802),
+					zoom: 4,
+					mapTypeId: google.maps.MapTypeId.ROADMAP,
+					maxZoom: 15
+				};
 
-			var map = new google.maps.Map(document.getElementById("map-canvas"), myOptions);
-					
-			var adresse = "{{ config['ORGANISATEUR_RUE'] }} {{ config['ORGANISATEUR_CP'] }} {{ config['ORGANISATEUR_VILLE'] }}";
-			var geocoder = new google.maps.Geocoder();
+				var map = new google.maps.Map(document.getElementById("map-canvas"), myOptions);
+						
+				var adresse = "{{ config['ORGANISATEUR_RUE'] }} {{ config['ORGANISATEUR_CP'] }} {{ config['ORGANISATEUR_VILLE'] }}";
+				var geocoder = new google.maps.Geocoder();
 
-			var markerBounds = new google.maps.LatLngBounds();
+				var markerBounds = new google.maps.LatLngBounds();
 
-			geocoder.geocode( { 'address': adresse}, function(results, status) {
-			if (status == google.maps.GeocoderStatus.OK) {
-				var marker = new google.maps.Marker({
-					map: map,
-					position: results[0].geometry.location
+				geocoder.geocode( { 'address': adresse}, function(results, status) {
+				if (status == google.maps.GeocoderStatus.OK) {
+					var marker = new google.maps.Marker({
+						map: map,
+						position: results[0].geometry.location
+					});
+					markerBounds.extend(results[0].geometry.location);
+					map.fitBounds(markerBounds);
+				} else {
+					alert("Geocode was not successful for the following reason: " + status);
+				}
 				});
-				markerBounds.extend(results[0].geometry.location);
-				map.fitBounds(markerBounds);
-			} else {
-				alert("Geocode was not successful for the following reason: " + status);
-			}
+								
 			});
-							
-		});
-	</script>
-
-	
+		</script>
+	{% endif %}
 	
 	<div class="box box-danger">
 	
@@ -57,8 +58,11 @@
 		
 		<div class="box-body">
 			
-			<div id="map-canvas"></div>
-			<br>
+			{% if config['CONTACT_CARTE_AFFICHER'] == True %}
+				<div id="map-canvas"></div>
+				<br>
+			{% endif %}
+			
 			{% if config['ORGANISATEUR_NOM'] not in ('', None) %}<p><strong>{{config['ORGANISATEUR_NOM']}}</strong></p>{% endif %}
 			
 			<div>
