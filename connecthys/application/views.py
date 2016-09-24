@@ -179,7 +179,8 @@ def login():
             flash(u"Bienvenue dans le portail Famille")
             app.logger.debug("Connection reussie de %s", form.identifiant.data)
             
-            return redirect(request.args.get('next') or url_for('accueil'))
+            return redirect(url_for('accueil'))
+            #return redirect(request.args.get('next') or url_for('accueil'))
 
     # Re-demande codes si incorrects
     flash(u"Codes d'accès incorrects" , 'error')
