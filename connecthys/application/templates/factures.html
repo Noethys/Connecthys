@@ -23,36 +23,42 @@
 					<h3 class="box-title">Liste des dernières factures</h3>
 				</div>
 			<!-- /.box-header -->
-				<div class="box-body table-responsive">
-					<table class="table table-bordered table-striped">
-						<tbody>
-							<tr>
-								<th><center>Du</center></th>
-								<th><center>Au</center></th>
-								<th><center>N°</center></th>
-								<th><center>Montant</center></th>
-								<th><center>Déjà réglé</center></th>
-								<th><center>Reste à régler</center></th>
-								<th><center>Recevoir</center></th>
-							</tr>
-					
-							{% for facture in liste_factures %}
-							<tr>
-								<td><center>{{ DateDDEnFr(facture.date_debut) }}</center></td>
-								<td><center>{{ DateDDEnFr(facture.date_fin) }}</center></td>
-								<td><center>{{ facture.numero }}</center></td>
-								<td><center>{{ Formate_montant(facture.montant) }}</center></td>
-								<td><center>{{ Formate_montant(facture.montant_regle) }}</center></td>
-								<td><center><span class="badge bg-{% if facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
-								<td><center>
-									<button type="button" class="btn btn-box-tool" data-toggle="modal" data-target="#modal_recevoir_document" data-id="{{ facture.IDfacture }}" data-info="{{ facture.numero }}" title="Recevoir un exemplaire de cette facture par Email ou par la Poste">
-									<i class="fa fa-download"></i></button>
-								</center></td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-				</div>
+				{% if liste_factures|length == 0 %}
+					<div class="box-body">		
+						Aucune facture à afficher
+					</div>
+				{% else %}
+					<div class="box-body table-responsive">
+						<table class="table table-bordered table-striped">
+							<tbody>
+								<tr>
+									<th><center>Du</center></th>
+									<th><center>Au</center></th>
+									<th><center>N°</center></th>
+									<th><center>Montant</center></th>
+									<th><center>Déjà réglé</center></th>
+									<th><center>Reste à régler</center></th>
+									<th><center>Recevoir</center></th>
+								</tr>
+						
+								{% for facture in liste_factures %}
+								<tr>
+									<td><center>{{ DateDDEnFr(facture.date_debut) }}</center></td>
+									<td><center>{{ DateDDEnFr(facture.date_fin) }}</center></td>
+									<td><center>{{ facture.numero }}</center></td>
+									<td><center>{{ Formate_montant(facture.montant) }}</center></td>
+									<td><center>{{ Formate_montant(facture.montant_regle) }}</center></td>
+									<td><center><span class="badge bg-{% if facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
+									<td><center>
+										<button type="button" class="btn btn-box-tool" data-toggle="modal" data-target="#modal_recevoir_document" data-id="{{ facture.IDfacture }}" data-info="{{ facture.numero }}" title="Recevoir un exemplaire de cette facture par Email ou par la Poste">
+										<i class="fa fa-download"></i></button>
+									</center></td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				{% endif %}
 			<!-- /.box-body -->
 			</div>
 			<!-- /.box -->

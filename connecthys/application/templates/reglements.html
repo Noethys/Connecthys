@@ -17,41 +17,46 @@
 					<h3 class="box-title">Liste des derniers règlements</h3>
 				</div>
 			<!-- /.box-header -->
-				<div class="box-body table-responsive">
-					<table class="table table-bordered table-striped">
-						<tbody>
-							<tr>
-								<th><center>N°</center></th>
-								<th><center>Date</center></th>
-								<th><center>Mode</center></th>
-								<th><center>N°</center></th>
-								<th><center>Montant</center></th>
-								<th><center>Encaissé</center></th>
-								<th><center>Recevoir un reçu</center></th>
-							</tr>
-					
-							{% for reglement in liste_reglements %}
-							<tr>
-								<td><center>{{ reglement.IDreglement }}</center></td>
-								<td><center>{{ DateDDEnFr(reglement.date) }}</center></td>
-								<td><center>{{ reglement.mode }}</center></td>
-								<td><center>{{ reglement.numero }}</center></td>
-								<td><center>{{ Formate_montant(reglement.montant) }}</center></td>
-								{% if reglement.date_encaissement == None %}
-									<td><center><span class="badge bg-red">Non</span></center></td>
-								{% else %}
-									<td><center><span class="badge bg-green">{{ DateDDEnFr(reglement.date_encaissement) }}</span></center></td>
-									{% endif %}
-								<td><center>
-									<button type="button" class="btn btn-box-tool" data-toggle="modal" data-target="#modal_recevoir_document" data-id="{{ reglement.IDreglement }}" data-info="" title="Recevoir un reçu pour ce règlement par Email ou par la Poste">
-									<i class="fa fa-download"></i></button>
-								</center></td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-					
-				</div>
+				{% if liste_reglements|length == 0 %}
+					<div class="box-body">		
+						Aucun règlement à afficher
+					</div>
+				{% else %}
+					<div class="box-body table-responsive">
+						<table class="table table-bordered table-striped">
+							<tbody>
+								<tr>
+									<th><center>N°</center></th>
+									<th><center>Date</center></th>
+									<th><center>Mode</center></th>
+									<th><center>N°</center></th>
+									<th><center>Montant</center></th>
+									<th><center>Encaissé</center></th>
+									<th><center>Recevoir un reçu</center></th>
+								</tr>
+						
+								{% for reglement in liste_reglements %}
+								<tr>
+									<td><center>{{ reglement.IDreglement }}</center></td>
+									<td><center>{{ DateDDEnFr(reglement.date) }}</center></td>
+									<td><center>{{ reglement.mode }}</center></td>
+									<td><center>{{ reglement.numero }}</center></td>
+									<td><center>{{ Formate_montant(reglement.montant) }}</center></td>
+									{% if reglement.date_encaissement == None %}
+										<td><center><span class="badge bg-red">Non</span></center></td>
+									{% else %}
+										<td><center><span class="badge bg-green">{{ DateDDEnFr(reglement.date_encaissement) }}</span></center></td>
+										{% endif %}
+									<td><center>
+										<button type="button" class="btn btn-box-tool" data-toggle="modal" data-target="#modal_recevoir_document" data-id="{{ reglement.IDreglement }}" data-info="" title="Recevoir un reçu pour ce règlement par Email ou par la Poste">
+										<i class="fa fa-download"></i></button>
+									</center></td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				{% endif %}
 			<!-- /.box-body -->
 			</div>
 			<!-- /.box -->
