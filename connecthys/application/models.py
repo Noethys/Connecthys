@@ -60,7 +60,7 @@ def CreationDB():
             import sqlalchemy
             temp = app.config["SQLALCHEMY_DATABASE_URI"].split("/")
             url = temp[0] + "//" + temp[2]
-            nom_db = temp[3]
+            nom_db = temp[3].split("?")[0]
             engine = sqlalchemy.create_engine(url)
             engine.execute("CREATE DATABASE IF NOT EXISTS %s;" % nom_db)
             engine.execute("USE %s;" % nom_db) 
