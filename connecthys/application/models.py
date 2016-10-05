@@ -19,7 +19,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 try :
     # Imports Sqlalchemy_flask pour Connecthys
     from application import db, app, utils
-    if app.config["PREFIXE_TABLES"] == "" :
+    if app.config.get("PREFIXE_TABLES","") == "" :
         PREFIXE_TABLES = ""
     else :
         PREFIXE_TABLES = app.config["PREFIXE_TABLES"] + "_"
