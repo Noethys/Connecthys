@@ -111,8 +111,11 @@ def Importation(secret=0):
     
     # Suppression des tables
     for nom_table in tables:
-        dengine.execute("DROP TABLE %s" % "%sportail_%s" % (PREFIXE_TABLES, nom_table))
-    
+        try :
+            dengine.execute("DROP TABLE %s" % "%sportail_%s" % (PREFIXE_TABLES, nom_table))
+        except :
+            pass
+        
     # Création des tables
     db.create_all()
 
