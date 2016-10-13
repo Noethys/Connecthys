@@ -459,7 +459,7 @@ class Individu(Base):
         return 'img/homme.png'
 
     def get_date_naiss(self):
-        if self.date_naiss == None :
+        if self.date_naiss in (None, "") :
             return ""
         today = datetime.date.today()
         age = today.year - self.date_naiss.year - ((today.month, today.day) < (self.date_naiss.month, self.date_naiss.day))
@@ -491,7 +491,8 @@ class Inscription(Base):
     def __repr__(self):
         return '<IDinscription %d>' % (self.IDinscription)
 
-        
+
+                    
 class Periode(Base):
     __tablename__ = "%sportail_periodes" % PREFIXE_TABLES
     IDperiode = Column(Integer, primary_key=True)

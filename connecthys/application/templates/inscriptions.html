@@ -23,7 +23,7 @@
 			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
 		</div>
 		<h3 class="widget-user-username">{{ individu.prenom }}</h3>
-		<h5 class="widget-user-desc">{% if individu.age != None %}{{ individu.get_date_naiss() }}{% else %}Age inconnu{% endif %}</h5>
+		<h5 class="widget-user-desc">{{ individu.get_date_naiss() }}&nbsp;</h5>
 	</div>
 	
 	<!-- Liste des inscriptions -->

@@ -149,8 +149,20 @@ def GetVersionTuple(version=""):
         temp.append(int(caract))
     return tuple(temp)
 
+def GetNbrePeriodesActives(individu):
+    nbre_periodes_actives = 0
+    for inscription in individu.inscriptions :
+        if inscription.activite.Get_nbre_periodes_actives() > 0 :
+            nbre_periodes_actives += 1
+    return nbre_periodes_actives
 
-        
+  
+
+
+
+
+
+  
         
 def CallFonction(fonction="", *args):
     """ Pour appeller directement une fonction Utils depuis Python """
@@ -179,5 +191,6 @@ def utility_processor():
         GetNumSemaine=GetNumSemaine,
         GetIconeFichier=GetIconeFichier,
         GetValeurConfig=GetValeurConfig,
+        GetNbrePeriodesActives=GetNbrePeriodesActives,
         )
     

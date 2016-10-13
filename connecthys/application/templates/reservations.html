@@ -35,55 +35,61 @@
 			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
 		</div>
 		<h3 class="widget-user-username">{{ individu.prenom }}</h3>
-		<h5 class="widget-user-desc">{% if individu.age != None %}{{ individu.get_date_naiss() }}{% else %}Age inconnu{% endif %}</h5>
+		<h5 class="widget-user-desc">{{ individu.get_date_naiss() }}&nbsp;</h5>
 	</div>
 	
-	<!-- Liste des périodes -->
-	<div class="box-footer no-padding">
-	
-		<div class="nav-tabs-custom no-margin">
+	{% if GetNbrePeriodesActives(individu) == 0 %}
+		<div class="box-footer">
+			<p>Aucune période d'inscription disponible</p>
+		</div>
+	{% else %}
+		<!-- Liste des périodes -->
+		<div class="box-footer no-padding">
 		
-			<ul class="nav nav-tabs">
-				{% set index = 1 %}
-				{% for inscription in individu.inscriptions %}
-					{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
-						<li {% if index == 1 %}class="active"{% endif %}>
-							<a class="text-{{ couleur }}" href="#tab_{{ inscription.IDinscription }}_{{ index }}" data-toggle="tab">{{ inscription.activite.nom }}</a>
-						</li>
-						{% set index = index + 1 %}
-					{% endif %}
+			<div class="nav-tabs-custom no-margin">
+			
+				<ul class="nav nav-tabs">
+					{% set index = 1 %}
+					{% for inscription in individu.inscriptions %}
+						{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
+							<li {% if index == 1 %}class="active"{% endif %}>
+								<a class="text-{{ couleur }}" href="#tab_{{ inscription.IDinscription }}_{{ index }}" data-toggle="tab">{{ inscription.activite.nom }}</a>
+							</li>
+							{% set index = index + 1 %}
+						{% endif %}
+					{% endfor %}
+				</ul>
+							
+				<div class="tab-content no-padding">
 					
-				{% endfor %}
-            </ul>
-						
-			<div class="tab-content no-padding">
-				
-				{% set index = 1 %}
-				{% for inscription in individu.inscriptions %}
-					{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
-						<div class="tab-pane {% if index == 1 %}active{% endif %}" id="tab_{{ inscription.IDinscription }}_{{ index }}">
-							<ul class="nav nav-stacked">
-								{% for periode in inscription.activite.periodes %}
-									{% if periode.Is_active_today() == True %}
-										<li>
-											<a href="{{ url_for('planning', IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, index_couleur=individu.index_couleur) }}">
-												<i class="fa fa-calendar text-{{ couleur }}"></i> 
-												{{ periode.nom }} 
-												<small class="pull-right">Du {{ DateDDEnFr(periode.date_debut) }} au {{ DateDDEnFr(periode.date_fin) }}</small>
-											</a>
-										</li>
-									{% endif %}
-								{% endfor %}
-							</ul>
-						</div>
-						{% set index = index + 1 %}
-					{% endif %}
-				{% endfor %}
+					{% set index = 1 %}
+					{% for inscription in individu.inscriptions %}
+						{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
+							<div class="tab-pane {% if index == 1 %}active{% endif %}" id="tab_{{ inscription.IDinscription }}_{{ index }}">
+								<ul class="nav nav-stacked">
+									{% for periode in inscription.activite.periodes %}
+										{% if periode.Is_active_today() == True %}
+											<li>
+												<a href="{{ url_for('planning', IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, index_couleur=individu.index_couleur) }}">
+													<i class="fa fa-calendar text-{{ couleur }}"></i> 
+													{{ periode.nom }} 
+													<small class="pull-right">Du {{ DateDDEnFr(periode.date_debut) }} au {{ DateDDEnFr(periode.date_fin) }}</small>
+												</a>
+											</li>
+										{% endif %}
+									{% endfor %}
+								</ul>
+							</div>
+							{% set index = index + 1 %}
+						{% endif %}
+					{% endfor %}
+					
+				</div>
 				
 			</div>
-			
 		</div>
-	</div>
+	{% endif %}
+		
 </div>
 {% endfor %}
 		  	
