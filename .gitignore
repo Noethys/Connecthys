@@ -2,6 +2,7 @@
 Travaux/
 migrations/
 journal.log
+config.py
 *.crypt
 Connecthys.egg-info/
 SQLiteSpy.exe
