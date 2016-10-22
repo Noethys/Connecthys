@@ -9,11 +9,9 @@
 #--------------------------------------------------------------
 
 import datetime
-#from passlib.hash import sha256_crypt
 from Crypto.Hash import SHA256
 import shutil
 import os.path
-basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 try :
@@ -34,6 +32,10 @@ try :
     relationship = db.relationship
     import flask_migrate
     
+    REP_APPLICATION = os.path.abspath(os.path.dirname(__file__))
+    REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
+    REP_MIGRATIONS = os.path.join(REP_CONNECTHYS, "migrations")
+    
 except Exception, err:
     # Imports Sqlalchemy pour Noethys
     from sqlalchemy import create_engine, ForeignKey, Column, Date, Integer, String, Float, DateTime
@@ -50,6 +52,7 @@ def GetVersionDB():
         return None
     return version
     
+
 def CreationDB():
     """ Création de la DB """
     with app.app_context():
@@ -70,14 +73,12 @@ def CreationDB():
         db.create_all()
         app.logger.info("Creation ok.")
         
-        rep_connecthys = os.path.dirname(basedir)
-        rep_migrations = os.path.join(rep_connecthys, "migrations")
-        if os.path.isdir(rep_migrations) :
+        if os.path.isdir(REP_MIGRATIONS) :
             app.logger.info("Suppression du repertoire migrations...")
-            shutil.rmtree(rep_migrations)
+            shutil.rmtree(REP_MIGRATIONS)
         
         app.logger.info("Initialisation de la migration de sqlalchemy...")
-        flask_migrate.init()
+        flask_migrate.init(directory=REP_MIGRATIONS)
         app.logger.info("Initialisation ok.")
     
     # Mémorisation du numéro de version dans la DB
@@ -90,16 +91,16 @@ def UpgradeDB():
     with app.app_context():
         app.logger.info("Migration de la base de donnees...")
         try :
-            flask_migrate.migrate()
+            flask_migrate.migrate(directory=REP_MIGRATIONS)
         except Exception, err :
             if "Path doesn't exist" in str(err) :
                 app.logger.info("Repertoire Migrations manquant -> Initialisation de flask_migrate maintenant...")
-                flask_migrate.init()
+                flask_migrate.init(directory=REP_MIGRATIONS)
                 flask_migrate.migrate()
             
         app.logger.info("Migration ok.")
         app.logger.info("Upgrade de la base de donnees...")
-        flask_migrate.upgrade()
+        flask_migrate.upgrade(directory=REP_MIGRATIONS)
         app.logger.info("Upgrade ok.")
             
     # Mémorisation du nouveau numéro de version dans la DB
