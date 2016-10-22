@@ -86,7 +86,7 @@ csrf = CsrfProtect()
 csrf.init_app(app)
 
 # Import des views et des models
-from application import views, models, utils
+import views, models, utils
 
 # Recherche la version de la base de données
 versionDB = models.GetVersionDB()
