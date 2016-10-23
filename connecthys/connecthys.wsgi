@@ -12,7 +12,10 @@ import os, sys
 REP_CONNECTHYS = os.path.abspath(os.path.dirname(__file__))
 if not REP_CONNECTHYS in sys.path:
 	sys.path.insert(0, REP_CONNECTHYS)
-
+REP_APPLICATION = os.path.join(REP_CONNECTHYS, "application")
+if not REP_APPLICATION in sys.path:
+	sys.path.insert(1, REP_APPLICATION)
+	
 # Initialisation du log
 import logging, sys
 logging.basicConfig(stream=sys.stderr)
