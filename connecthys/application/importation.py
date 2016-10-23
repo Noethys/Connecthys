@@ -30,7 +30,7 @@ from cryptage import IMPORT_AES, DecrypterFichier
 
 def make_session(connection_string):
     engine = create_engine(connection_string, echo=False, convert_unicode=True)
-    Session = sessionmaker(bind=engine)
+    Session = sessionmaker(bind=engine,autocommit=False)
     return Session(), engine
 
 def quick_mapper(table):
@@ -78,7 +78,8 @@ def Importation(secret=0):
     # Ouvertures des bases
     source, sengine = make_session(from_db)
     smeta = MetaData(bind=sengine)
-    destination, dengine = make_session(to_db)
+    destination = db.session
+    dengine = db.engine
     dmeta = MetaData(bind=dengine)
     
     # Liste des tables à transférer
@@ -107,7 +108,7 @@ def Importation(secret=0):
             u = u.where(table_actions_destination.c.ref_unique == action.ref_unique)
             dengine.execute(u)
         
-        destination.commit()
+    destination.commit()
     
     # Suppression des tables
     for nom_table in tables:
