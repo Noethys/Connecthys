@@ -4,9 +4,11 @@
 	
 {% block content -%}
 
-	<h4 class="page-header">
-		<small><i class="fa fa-info-circle"></i> Cliquez dans les cases pour ajouter ou supprimer des consommations avant de valider l'envoi des données.</small>
-	</h4>
+	{% if GetParametre("PLANNING_INTRO", dict_parametres) != '' %}
+		<h4 class="page-header">
+			<small><i class="fa fa-info-circle"></i> {{ GetParametre("PLANNING_INTRO", dict_parametres) }}</small>
+		</h4>
+	{% endif %}
 	  
 	<p>	
 	<a id="retour_reservations" href="{{ url_for('reservations') }}"><i class="fa fa-arrow-circle-o-left"></i> Revenir à la liste des périodes</a>

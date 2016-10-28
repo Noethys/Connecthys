@@ -27,9 +27,8 @@ __version__ = versions.GetVersion()
 app = Flask(__name__)
 
 # Configuration de flask
-from data.config import Config_application, Config_utilisateur
+from data.config import Config_application
 app.config.from_object(Config_application)
-app.config.from_object(Config_utilisateur)
 app.config["VERSION_APPLICATION"] = __version__
 
 # Flask compress

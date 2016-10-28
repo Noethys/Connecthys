@@ -1,6 +1,6 @@
 {% macro paiement_ligne_body() %}
 		
-	{% if config.PAIEMENT_EN_LIGNE_ACTIF == True %}
+	{% if GetParametre('PAIEMENT_EN_LIGNE_ACTIF', dict_parametres) == 'True' %}
 	<div class="box box-success ">
 		<div class="box-header with-border">
 			<h3 class="box-title">Payer en ligne</h3>
@@ -75,7 +75,7 @@
 
 {%  macro paiement_ligne_scripts(liste_dates_actions=[]) %}
 
-{% if config.PAIEMENT_EN_LIGNE_ACTIF == True %}
+{% if GetParametre('PAIEMENT_EN_LIGNE_ACTIF', dict_parametres) == 'True' %}
 
 	<script>
 		// Mise à jour du montant total du règlement

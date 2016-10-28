@@ -82,7 +82,25 @@ def Importation(secret=0):
     dengine = db.engine
     dmeta = MetaData(bind=dengine)
     
-    # Liste des tables à transférer
+    # Lecture de la table des paramètres
+    liste_parametres_destination = destination.query(models.Parametre).all()
+    dict_parametres_destination = {}
+    for parametre in liste_parametres_destination :
+        dict_parametres_destination[parametre.nom] = parametre
+    
+    liste_parametres_source = source.query(models.Parametre).all()
+    for parametre in liste_parametres_source :
+        if dict_parametres_destination.has_key(parametre.nom) :
+            # Modification si besoin d'un paramètre existant
+            if dict_parametres_destination[parametre.nom].parametre != parametre.parametre :
+                dict_parametres_destination[parametre.nom].parametre = parametre.parametre
+        else :
+            # Saisie d'un nouveau paramètre
+            destination.add(models.Parametre(nom=parametre.nom, parametre=parametre.parametre))
+    
+    destination.commit()    
+            
+    # Liste des autres tables à transférer
     tables = [
         "cotisations_manquantes", "factures", "types_pieces", "users", "pieces_manquantes",
         "reglements", "consommations", "periodes", "ouvertures", "unites", "inscriptions",

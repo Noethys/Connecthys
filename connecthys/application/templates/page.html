@@ -74,7 +74,7 @@
     {%- endblock head %}
 </head>
 
-<body class="{% block skin %}{{ config.SKIN }}{% endblock %} sidebar-mini">
+<body class="{% block skin %}{{ GetParametre('SKIN', dict_parametres, 'skin-blue') }}{% endblock %} sidebar-mini">
 
 <noscript>
 {% with messages = get_flashed_messages(with_categories=true) %}

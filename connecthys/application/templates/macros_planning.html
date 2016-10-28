@@ -15,7 +15,7 @@
 			{% set date_precedente = None %}
 			
 			{% for date in dict_planning["liste_dates"] %}
-			<tr {% if date_precedente != None and GetNumSemaine(date) != GetNumSemaine(date_precedente) %}style="border-top-style: dashed;"{% endif %}>
+			<tr {% if date_precedente != None and GetNumSemaine(date) != GetNumSemaine(date_precedente) %}style="border-top-style: dashed;border-top-color: rgb(244, 244, 244);"{% endif %}>
 				<td><center>{{ DateDDEnFrComplet(date) }}</center></td>
 				{% for unite in dict_planning["liste_unites"] %}
 					{% if IsUniteOuverte(unite, date, dict_planning) == True %}

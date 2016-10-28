@@ -4,6 +4,12 @@
 
 {% block content -%}
 
+	{% if GetParametre("HISTORIQUE_INTRO", dict_parametres) != '' %}
+		<h4 class="page-header">
+			<small><i class="fa fa-info-circle"></i> {{ GetParametre("HISTORIQUE_INTRO", dict_parametres) }}</small>
+		</h4>
+	{% endif %}
+
 	{# Historique des demandes #}
 	
 	{% if historique["liste_dates"]|length > 0 %}

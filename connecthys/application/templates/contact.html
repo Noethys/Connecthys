@@ -3,7 +3,13 @@
   
 {% block content -%}
   
-	{% if config['CONTACT_CARTE_AFFICHER'] == True %}
+	{% if GetParametre("CONTACT_INTRO", dict_parametres) != '' %}
+		<h4 class="page-header">
+			<small><i class="fa fa-info-circle"></i> {{ GetParametre("CONTACT_INTRO", dict_parametres) }}</small>
+		</h4>
+	{% endif %}
+
+	{% if GetParametre("CONTACT_CARTE_AFFICHER", dict_parametres) == "True" %}
 		
 		<!-- Google maps -->
 		<style>
@@ -28,7 +34,7 @@
 
 				var map = new google.maps.Map(document.getElementById("map-canvas"), myOptions);
 						
-				var adresse = "{{ config['ORGANISATEUR_RUE'] }} {{ config['ORGANISATEUR_CP'] }} {{ config['ORGANISATEUR_VILLE'] }}";
+				var adresse = "{{ GetParametre('ORGANISATEUR_RUE', dict_parametres) }} {{ GetParametre('ORGANISATEUR_CP', dict_parametres) }} {{ GetParametre('ORGANISATEUR_VILLE', dict_parametres) }}";
 				var geocoder = new google.maps.Geocoder();
 
 				var markerBounds = new google.maps.LatLngBounds();
@@ -58,19 +64,20 @@
 		
 		<div class="box-body">
 			
-			{% if config['CONTACT_CARTE_AFFICHER'] == True %}
+			{% if GetParametre('CONTACT_CARTE_AFFICHER', dict_parametres) == 'True' %}
 				<div id="map-canvas"></div>
 				<br>
 			{% endif %}
 			
-			{% if config['ORGANISATEUR_NOM'] not in ('', None) %}<p><strong>{{config['ORGANISATEUR_NOM']}}</strong></p>{% endif %}
+			
+			{% if GetParametre('ORGANISATEUR_NOM', dict_parametres) != '' %}<p><strong>{{ GetParametre('ORGANISATEUR_NOM', dict_parametres) }}</strong></p>{% endif %}
 			
 			<div>
 				<ul class="list-unstyled">
-					{% if config['ORGANISATEUR_RUE'] not in ('', None) %}<li>{{config['ORGANISATEUR_RUE']}}</li>{% endif %}
-					{% if config['ORGANISATEUR_CP'] not in ('', None) %}<li>{{config['ORGANISATEUR_CP']}} {{config['ORGANISATEUR_VILLE']}}</li>{% endif %}
-					{% if config['ORGANISATEUR_TEL'] not in ('', None) %}<li><i class="fa fa-phone"></i> {{config['ORGANISATEUR_TEL']}}</li>{% endif %}
-					{% if config['ORGANISATEUR_FAX'] not in ('', None) %}<li><i class="fa fa-fax"></i> {{config['ORGANISATEUR_FAX']}}</li>{% endif %}
+					{% if GetParametre('ORGANISATEUR_RUE', dict_parametres) != '' %}<li>{{ GetParametre('ORGANISATEUR_RUE', dict_parametres) }}</li>{% endif %}
+					{% if GetParametre('ORGANISATEUR_CP', dict_parametres) != '' %}<li>{{ GetParametre('ORGANISATEUR_CP', dict_parametres) }} {{ GetParametre('ORGANISATEUR_VILLE', dict_parametres) }}</li>{% endif %}
+					{% if GetParametre('ORGANISATEUR_TEL', dict_parametres) != '' %}<li><i class="fa fa-phone"></i> {{ GetParametre('ORGANISATEUR_TEL', dict_parametres) }}</li>{% endif %}
+					{% if GetParametre('ORGANISATEUR_FAX', dict_parametres) != '' %}<li><i class="fa fa-fax"></i> {{ GetParametre('ORGANISATEUR_FAX', dict_parametres) }}</li>{% endif %}
 				</ul>
 			</div>
 	
@@ -84,9 +91,9 @@
 			<h3 class="box-title">Envoyer un email</h3>
 		</div>
 		
-		{% if config['ORGANISATEUR_EMAIL'] not in ('', None) %}
+		{% if GetParametre('ORGANISATEUR_EMAIL', dict_parametres) != '' %}
 		<div class="box-body">		
-			Cliquez sur le lien suivant pour nous envoyer un email : <a href="mailto:{{ config['ORGANISATEUR_EMAIL'] }}" target="_blank">{{ config['ORGANISATEUR_EMAIL'] }}</a> 
+			Cliquez sur le lien suivant pour nous envoyer un email : <a href="mailto:{{ GetParametre('ORGANISATEUR_EMAIL', dict_parametres) }}" target="_blank">{{ GetParametre('ORGANISATEUR_EMAIL', dict_parametres) }}</a> 
 		</div>
 		{% endif %}
 		

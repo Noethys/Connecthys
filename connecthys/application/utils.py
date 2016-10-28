@@ -135,12 +135,6 @@ def GetIconeFichier(nomFichier=""):
     else :
         return "fa-file-o"
 
-def GetValeurConfig(key=""):
-    """ Retourne une valeur contenue dans le config """
-    if app.config.has_key(key) :
-        return app.config[key]
-    else :
-        return None
 
 def GetVersionTuple(version=""):
     """ Renvoie un numéro de version donné au format tuple """
@@ -156,14 +150,23 @@ def GetNbrePeriodesActives(individu):
             nbre_periodes_actives += 1
     return nbre_periodes_actives
 
-  
+def GetParametre(nom="", dict_parametres=None, defaut=""):
+    parametre = None
+    # Si un dict_parametre est donné
+    if dict_parametres != None :
+        if dict_parametres.has_key(nom) :
+            parametre = dict_parametres[nom]
+    if parametre == None :
+        return defaut
+    else :
+        return parametre
+
+    
+    
 
 
 
-
-
-  
-        
+    
 def CallFonction(fonction="", *args):
     """ Pour appeller directement une fonction Utils depuis Python """
     return utility_processor()[fonction](*args)
@@ -190,7 +193,7 @@ def utility_processor():
         GetNbreDatesAttente=GetNbreDatesAttente,
         GetNumSemaine=GetNumSemaine,
         GetIconeFichier=GetIconeFichier,
-        GetValeurConfig=GetValeurConfig,
         GetNbrePeriodesActives=GetNbrePeriodesActives,
+        GetParametre=GetParametre,
         )
     

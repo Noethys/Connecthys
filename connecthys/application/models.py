@@ -673,3 +673,27 @@ class Reservation(Base):
         for c in self.__table__.columns :
             dict_temp[c.name] = getattr(self, c.name)
         return dict_temp
+
+
+def GetParametre(nom="", dict_parametres=None, defaut=""):
+    parametre = None
+    # Si un dict_parametre est donné
+    if dict_parametres != None :
+        if dict_parametres.has_key(nom) :
+            parametre = dict_parametres[nom]
+    else :
+        # Sinon on cherche directement dans la base
+        m = Parametre.query.filter_by(nom=nom).first()
+        if m != None :
+            parametre = m.parametre
+    if parametre == None :
+        return defaut
+    else :
+        return parametre
+
+def GetDictParametres():
+    liste_parametres = Parametre.query.all()
+    dict_parametres = {}
+    for parametre in liste_parametres :
+        dict_parametres[parametre.nom] = parametre.parametre
+    return dict_parametres

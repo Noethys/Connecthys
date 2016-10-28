@@ -20,22 +20,22 @@
 			<h4>Comment souhaitez-vous recevoir ce document ?</h4>
 			<div class="form-group">
 			<table class="table table-condensed">
-				{% if config.RECEVOIR_DOCUMENT_EMAIL == True %}
+				{% if GetParametre('RECEVOIR_DOCUMENT_EMAIL', dict_parametres) == 'True' %}
 				<tr>
 					<td><input type="radio" name="methode_envoi" value="email" class="minimal" checked></td>
 					<td>Recevoir par email</td>
 				</tr>
 				{% endif %}
-				{% if config.RECEVOIR_DOCUMENT_POSTE == True %}
+				{% if GetParametre('RECEVOIR_DOCUMENT_POSTE', dict_parametres) == 'True' %}
 				<tr>
 					<td><input type="radio" name="methode_envoi" value="courrier" class="minimal"></td>
 					<td>Recevoir à mon domicile par voie postale</td>
 				</tr>
 				{% endif %}
-				{% if config.RECEVOIR_DOCUMENT_RETIRER == True %}
+				{% if GetParametre('RECEVOIR_DOCUMENT_RETIRER', dict_parametres) == 'True' %}
 				<tr>
 					<td><input type="radio" name="methode_envoi" value="retirer" class="minimal"></td>
-					<td>Retirer directement {{ config.RECEVOIR_DOCUMENT_RETIRER_LIEU }}</td>
+					<td>Retirer directement {{ GetParametre('RECEVOIR_DOCUMENT_RETIRER_LIEU', dict_parametres) }}</td>
 				</tr>
 				{% endif %}
 			</table>

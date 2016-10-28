@@ -16,6 +16,7 @@ VERSIONS = [
     {"version" : "0.0.4",  "exclusions" : ["flask_adminlte", "lib"]},
     {"version" : "0.0.5",  "exclusions" : ["flask_adminlte", "lib"]},
     {"version" : "0.1.0",  "exclusions" : ["flask_adminlte", "lib"]},
+    {"version" : "0.1.1",  "exclusions" : ["flask_adminlte", "lib"]},
     ]
 
     

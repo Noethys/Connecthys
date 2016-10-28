@@ -20,11 +20,12 @@
 {% block content -%}
 
 	<h4 class="page-header">
-		Bienvenue sur le portail Famille
+		{{ GetParametre("ACCUEIL_BIENVENUE", dict_parametres) }}
 	</h4>
   
   
 	<!-- Liste informations importantes -->
+	{% if GetParametre("ACCUEIL_ETAT_DOSSIER_AFFICHER", dict_parametres) == 'True' %}
 	<div class="row">
 		<div class="col-xs-12">
 										  
@@ -70,7 +71,7 @@
 			<!-- /.box -->
 		</div>
 	</div>
-	
+	{% endif %}
 	
 	<h4 class="page-header">
 		Accès rapide
@@ -83,7 +84,7 @@
 
 	{% for dict_menu in g.liste_pages[2:] %}
 	
-		{%if dict_menu["type"] == "page" and dict_menu["raccourci"] == True and GetValeurConfig(dict_menu["affichage"]) == True %}
+		{%if dict_menu["type"] == "page" and dict_menu["raccourci"] == True and GetParametre(dict_menu["affichage"], dict_parametres) == 'True' %}
 		
 			{% set page = dict_menu["page"] %}
 			

@@ -14,12 +14,13 @@
 {%- endblock styles %}
 
 	
-	
-	
 {% block content -%}
-<h4 class="page-header">
-	<small><i class="fa fa-info-circle"></i> Sélectionnez une activité puis cliquez sur une des périodes disponibles pour accéder au calendrier des réservations correspondant.</small>
-</h4>
+
+{% if GetParametre("RESERVATIONS_INTRO", dict_parametres) != '' %}
+	<h4 class="page-header">
+		<small><i class="fa fa-info-circle"></i> {{ GetParametre("RESERVATIONS_INTRO", dict_parametres) }}</small>
+	</h4>
+{% endif %}
   
   
 

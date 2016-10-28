@@ -10,12 +10,13 @@
 	<link href="{{ adminlte_find_resource('plugins/iCheck/all.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">
 	
 	{# Affichage de l'image de fond #}
-	{% if config.IMAGE_FOND %}
+	{% set IMAGE_FOND = GetParametre("IMAGE_FOND", dict_parametres) %}
+	{% if IMAGE_FOND != "" %}
 		<style type="text/css" media="screen">
 			html, body {
 				background-size: cover;
 				background: center fixed;
-				background-image:url({{ url_for('static', filename="fonds/" + config.IMAGE_FOND) }});
+				background-image:url({{ url_for('static', filename="fonds/" + IMAGE_FOND) }});
 			}
 			.login-page {
 				background-color:transparent;

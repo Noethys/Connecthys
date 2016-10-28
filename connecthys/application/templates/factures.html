@@ -6,6 +6,12 @@
 
 {% block content -%}
 
+{% if GetParametre("FACTURES_INTRO", dict_parametres) != '' %}
+	<h4 class="page-header">
+		<small><i class="fa fa-info-circle"></i> {{ GetParametre("FACTURES_INTRO", dict_parametres) }}</small>
+	</h4>
+{% endif %}
+
 	<div class="row">
 		<div class="col-xs-12">
 			

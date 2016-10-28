@@ -152,7 +152,8 @@ def login():
     
     # Affiche la page de login
     if request.method == 'GET':
-        return render_template('login.html', form=form)
+        dict_parametres = models.GetDictParametres()
+        return render_template('login.html', form=form, dict_parametres=dict_parametres)
     
     # Validation du form de login avec Flask-WTF
     if form.validate_on_submit():
@@ -176,7 +177,8 @@ def login():
             
             # Mémorisation du user
             login_user(registered_user, remember=remember)
-            flash(u"Bienvenue dans le portail Famille")
+            texte_bienvenue = models.GetParametre(nom="ACCUEIL_BIENVENUE")
+            flash(texte_bienvenue)
             app.logger.debug("Connection reussie de %s", form.identifiant.data)
             
             return redirect(url_for('accueil'))
@@ -202,11 +204,12 @@ def logout():
 def accueil():    
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.nom).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
-    
+    dict_parametres = models.GetDictParametres()
     app.logger.debug("Page ACCUEIL (%s): famille id(%s) %s", current_user.identifiant, current_user.IDfamille, current_user.nom )
     return render_template('accueil.html', active_page="accueil",\
                             liste_pieces_manquantes=liste_pieces_manquantes, \
-                            liste_cotisations_manquantes=liste_cotisations_manquantes)
+                            liste_cotisations_manquantes=liste_cotisations_manquantes, \
+                            dict_parametres=dict_parametres)
 
     
 # ------------------------- FACTURES ---------------------------------- 
@@ -228,11 +231,12 @@ def factures():
     # Recherche l'historique des demandes liées aux factures
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures")
     
+    dict_parametres = models.GetDictParametres()
     app.logger.debug("Page FACTURES (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('factures.html', active_page="factures", liste_factures=liste_factures, \
                             nbre_factures_impayees=nbre_factures_impayees, \
                             montant_factures_impayees=montant_factures_impayees, \
-                            historique=historique)
+                            historique=historique, dict_parametres=dict_parametres)
 
                             
 @app.route('/envoyer_demande_facture')
@@ -251,7 +255,8 @@ def envoyer_demande_facture():
         if methode_envoi == "courrier" :
             description = u"Recevoir la facture n°%s par courrier" % numfacture
         if methode_envoi == "retirer" :
-            description = u"Retirer la facture n°%s %s" % (numfacture, app.config["RECEVOIR_DOCUMENT_RETIRER_LIEU"])
+            texte_lieu = models.GetParametre(nom="RECEVOIR_DOCUMENT_RETIRER_LIEU")
+            description = u"Retirer la facture n°%s %s" % (numfacture, texte_lieu)
 
         m = models.Action(IDfamille=current_user.IDfamille, categorie="factures", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
@@ -275,7 +280,7 @@ def reglements():
     liste_factures = []
     nbre_factures_impayees = 0
     montant_factures_impayees = 0.0
-    if app.config["PAIEMENT_EN_LIGNE_ACTIF"] == True :
+    if models.GetParametre(nom="PAIEMENT_EN_LIGNE_ACTIF") == "True" :
     
         # Récupération de la liste des factures pour paiement en ligne
         liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
@@ -288,12 +293,13 @@ def reglements():
     
     # Recherche l'historique des demandes liées aux règlements
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reglements")
+    dict_parametres = models.GetDictParametres()
     
     app.logger.debug("Page REGLEMENTS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('reglements.html', active_page="reglements", liste_reglements=liste_reglements, \
                             liste_factures=liste_factures, nbre_factures_impayees=nbre_factures_impayees, \
                             montant_factures_impayees=montant_factures_impayees, \
-                            historique=historique)
+                            historique=historique, dict_parametres=dict_parametres)
 
                             
 @app.route('/envoyer_demande_recu')
@@ -312,7 +318,8 @@ def envoyer_demande_recu():
         if methode_envoi == "courrier" :
             description = u"Recevoir le reçu du règlement n°%d par courrier" % id
         if methode_envoi == "retirer" :
-            description = u"Retirer le reçu du règlement n°%d %s" % (id, app.config["RECEVOIR_DOCUMENT_RETIRER_LIEU"])
+            texte_lieu = models.GetParametre(nom="RECEVOIR_DOCUMENT_RETIRER_LIEU")
+            description = u"Retirer le reçu du règlement n°%d %s" % (id, texte_lieu)
 
         m = models.Action(IDfamille=current_user.IDfamille, categorie="reglements", action="recevoir", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
         db.session.add(m)
@@ -332,9 +339,9 @@ def envoyer_demande_recu():
 def historique():
     # Recherche l'historique général
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie=None)
-    
+    dict_parametres = models.GetDictParametres()
     app.logger.debug("Page HISTORIQUE (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
-    return render_template('historique.html', active_page="historique", historique=historique)
+    return render_template('historique.html', active_page="historique", historique=historique, dict_parametres=dict_parametres)
                             
                             
 # ------------------------- PIECES ---------------------------------- 
@@ -347,11 +354,11 @@ def pieces():
 
     # Récupération de la liste des types de pièces
     liste_types_pieces = models.Type_piece.query.order_by(models.Type_piece.nom).all()
-    
+    dict_parametres = models.GetDictParametres()
     app.logger.debug("Page PIECES (%s): famille id(%s) liste_pieces_manquantes: %s", current_user.identifiant, current_user.IDfamille, liste_pieces_manquantes)
     return render_template('pieces.html', active_page="pieces", \
                             liste_pieces_manquantes=liste_pieces_manquantes,\
-                            liste_types_pieces=liste_types_pieces)
+                            liste_types_pieces=liste_types_pieces, dict_parametres=dict_parametres)
 
 
 # ------------------------- COTISATIONS ---------------------------------- 
@@ -361,10 +368,10 @@ def pieces():
 def cotisations():
     # Récupération de la liste des cotisations manquantes
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
-    
+    dict_parametres = models.GetDictParametres()
     app.logger.debug("Page COTISATIONS (%s): famille id(%s) - liste_cotisations_manquante: %s", current_user.identifiant, current_user.IDfamille, liste_cotisations_manquantes)
     return render_template('cotisations.html', active_page="cotisations", \
-                            liste_cotisations_manquantes=liste_cotisations_manquantes)
+                            liste_cotisations_manquantes=liste_cotisations_manquantes, dict_parametres=dict_parametres)
     
                             
 @app.route('/supprimer_demande')
@@ -408,11 +415,11 @@ def reservations():
     
     # Recherche l'historique des demandes liées aux réservations
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reservations")
-    
+    dict_parametres = models.GetDictParametres()
     app.logger.debug("Page RESERVATIONS (%s): famille id(%s) %s - liste_individus: %s", current_user.identifiant, current_user.IDfamille, current_user.nom, liste_individus)
     return render_template('reservations.html', active_page="reservations", \
                             liste_individus = liste_individus, \
-                            historique = historique)
+                            historique = historique, dict_parametres=dict_parametres)
     
 
 def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=None):
@@ -612,9 +619,10 @@ def planning():
     dict_planning = Get_dict_planning(IDindividu, IDperiode, index_couleur)
     if dict_planning == None :
         return redirect(url_for('reservations'))
-        
+    
+    dict_parametres = models.GetDictParametres()
     return render_template('planning.html', active_page="reservations", \
-                            dict_planning = dict_planning)
+                            dict_planning = dict_planning, dict_parametres=dict_parametres)
 
     
 @app.route('/imprimer_reservations')
@@ -627,8 +635,9 @@ def imprimer_reservations():
     dict_planning = Get_dict_planning(IDindividu=IDindividu, IDperiode=IDperiode, coches=resultats)
     if dict_planning == None :
         return redirect(url_for('reservations'))
-        
-    return render_template('imprimer_reservations.html', dict_planning=dict_planning)
+    
+    dict_parametres = models.GetDictParametres()
+    return render_template('imprimer_reservations.html', dict_planning=dict_planning, dict_parametres=dict_parametres)
     
               
 @app.route('/envoyer_reservations')
@@ -795,13 +804,13 @@ def inscriptions():
     
     # Recherche l'historique des demandes liées aux réservations
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="inscriptions")
-    
+    dict_parametres = models.GetDictParametres()
     app.logger.debug("Page INSCRIPTIONS (%s): famille id(%s) liste_individus: %s", current_user.identifiant, current_user.IDfamille, liste_individus)
     return render_template('inscriptions.html', active_page="inscriptions", \
                             liste_individus = liste_individus, \
                             liste_activites = liste_activites, \
                             dict_groupes = dict_groupes, \
-                            historique = historique)
+                            historique = historique, dict_parametres=dict_parametres)
 
                             
 @app.route('/envoyer_demande_inscription')
@@ -841,15 +850,17 @@ def envoyer_demande_inscription():
 @app.route('/contact')
 @login_required
 def contact():    
-    return render_template('contact.html', active_page="contact")
+    dict_parametres = models.GetDictParametres()
+    return render_template('contact.html', active_page="contact", dict_parametres=dict_parametres)
     
         
 # ------------------------- MENTIONS ---------------------------------- 
 
 @app.route('/mentions')
 @login_required
-def mentions():    
-    return render_template('mentions.html', active_page="mentions")
+def mentions():   
+    dict_parametres = models.GetDictParametres()
+    return render_template('mentions.html', active_page="mentions", dict_parametres=dict_parametres)
         
       
 # ------------------------- AIDE ---------------------------------- 
@@ -857,7 +868,8 @@ def mentions():
 @app.route('/aide')
 @login_required
 def aide():    
-    return render_template('aide.html', active_page="aide")
+    dict_parametres = models.GetDictParametres()
+    return render_template('aide.html', active_page="aide", dict_parametres=dict_parametres)
 
     
     
@@ -904,7 +916,8 @@ def GetHistorique(IDfamille=None, categorie=None):
         derniere_synchro = None
     
     # Récupération des actions
-    date_limite = datetime.datetime.now() - datetime.timedelta(days=(app.config["HISTORIQUE_DELAI"]+1)*30)
+    historique_delai = int(models.GetParametre(nom="HISTORIQUE_DELAI", defaut=0))
+    date_limite = datetime.datetime.now() - datetime.timedelta(days=(historique_delai+1)*30)
     if categorie == None :
         liste_actions = models.Action.query.filter(models.Action.IDfamille==IDfamille, models.Action.horodatage>=date_limite).order_by(models.Action.horodatage.desc()).all()
     else :

@@ -5,10 +5,12 @@
 	
 	
 {% block content -%}
-<h4 class="page-header">
-	<small><i class="fa fa-info-circle"></i> Vous pouvez consulter ici la liste des inscriptions et demander des inscriptions à d'autres activités.</small>
-</h4>
-  
+
+{% if GetParametre("ACTIVITES_INTRO", dict_parametres) != '' %}
+	<h4 class="page-header">
+		<small><i class="fa fa-info-circle"></i> {{ GetParametre("ACTIVITES_INTRO", dict_parametres) }}</small>
+	</h4>
+{% endif %}
   
 
 {% for individu in liste_individus %}

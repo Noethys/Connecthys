@@ -3,6 +3,12 @@
 
 {% block content -%}
 	
+	{% if GetParametre("PIECES_INTRO", dict_parametres) != '' %}
+		<h4 class="page-header">
+			<small><i class="fa fa-info-circle"></i> {{ GetParametre("PIECES_INTRO", dict_parametres) }}</small>
+		</h4>
+	{% endif %}
+
 	<!-- Liste des pièces manquantes -->
 	<div class="row">
 		<div class="col-xs-12">
