@@ -22,3 +22,6 @@ logging.basicConfig(stream=sys.stderr)
 
 # Initialisation de l'application
 from application import app as application
+
+# Date de la dernière update pour l'auto reload wsgi
+# lastupdate
