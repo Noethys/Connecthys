@@ -95,8 +95,13 @@ def Recherche_update(version_noethys=[], mode="", app=None):
     app.logger.debug("Version actuelle de connecthys: %s" % GetVersionStr(version_connecthys))
     
     # Recherche la liste des version en ligne sur Github
-    liste_versions_online = GetListeVersionOnline()
-    
+    try :
+        liste_versions_online = GetListeVersionOnline()
+    except Exception, err :
+        app.logger.debug("La liste des versions n'a pas pu etre telechargee sur Github.")
+        app.logger.debug(err)
+        return False
+        
     # Analyse la liste pour trouver la version la plus adaptée
     version_ideale = [0, 0, 0]
     for ligne in liste_versions_online :
@@ -117,11 +122,16 @@ def Update(version=[], mode="", app=None):
     """ Procédure de mise à jour de Connecthys """
     
     # Téléchargement
-    app.logger.debug("Telechargement de la version %s sur Github..." % GetVersionStr(version))
-    url_telechargement = "https://github.com/Noethys/Connecthys/archive/%s.zip" % GetVersionStr(version)
-    fichier_zip = os.path.join(REP_CONNECTHYS, "connecthys.zip")
-    urllib.urlretrieve(url_telechargement, fichier_zip)
-    
+    try :
+        app.logger.debug("Telechargement de la version %s sur Github..." % GetVersionStr(version))
+        url_telechargement = "https://github.com/Noethys/Connecthys/archive/%s.zip" % GetVersionStr(version)
+        fichier_zip = os.path.join(REP_CONNECTHYS, "connecthys.zip")
+        urllib.urlretrieve(url_telechargement, fichier_zip)
+    except Exception, err :
+        app.logger.debug("La nouvelle version '%s' n'a pas pu etre telechargee." % GetVersionStr(version))
+        app.logger.debug(err)
+        return False
+
     # Dezippage
     app.logger.debug("Dezippage du zip...")
     zfile = zipfile.ZipFile(fichier_zip, 'r')
