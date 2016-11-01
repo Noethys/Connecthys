@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+Ôªø#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #--------------------------------------------------------------
 # Application :    Connecthys, le portail internet de Noethys
@@ -28,14 +28,14 @@ def GetVersionFromInt(version_int):
     return tuple(version_liste)
     
 def GetVersionTuple(version=""):
-    """ Renvoie un numÈro de version donnÈ au format tuple """
+    """ Renvoie un num√©ro de version donn√© au format tuple """
     temp = []
     for caract in version.split(".") :
         temp.append(int(caract))
     return tuple(temp)
 
 def GetVersionStr(version=()):
-    """ Convertit un numÈro de version tuple en str """
+    """ Convertit un num√©ro de version tuple en str """
     return ".".join([str(x) for x in version]) 
     
 def LectureFichierVersion(liste_lignes=[]):
@@ -53,7 +53,7 @@ def LectureFichierVersion(liste_lignes=[]):
     return liste_versions
 
 def GetLastVersionFromListe(liste_versions=[], format_version=tuple):
-    """ Retourne le dernier numÈro de version de la liste. Format_version = tuple ou str """
+    """ Retourne le dernier num√©ro de version de la liste. Format_version = tuple ou str """
     version = liste_versions[-1]["version"]
     if format_version == str :
         return version
@@ -98,9 +98,9 @@ def Recherche_update(version_noethys=[], mode="", app=None):
     except Exception, err :
         app.logger.debug("La liste des versions n'a pas pu etre telechargee sur Github.")
         app.logger.debug(err)
-        return False
+        return u"La liste des versions n'a pas pu √™tre t√©l√©charg√©e."
         
-    # Analyse la liste pour trouver la version la plus adaptÈe
+    # Analyse la liste pour trouver la version la plus adapt√©e
     version_ideale = [0, 0, 0]
     for ligne in liste_versions_online :
         if ligne.has_key("version") and ligne.has_key("version_min_noethys") :
@@ -114,12 +114,12 @@ def Recherche_update(version_noethys=[], mode="", app=None):
         return Update(version_ideale, mode, app)
     else :
         app.logger.debug("Pas de nouvelle version disponible.")
-        return False
+        return u"Pas de nouvelle version disponible."
             
 def Update(version=[], mode="", app=None):
-    """ ProcÈdure de mise ‡ jour de Connecthys """
+    """ Proc√©dure de mise √† jour de Connecthys """
     
-    # TÈlÈchargement
+    # T√©l√©chargement
     try :
         app.logger.debug("Telechargement de la version %s sur Github..." % GetVersionStr(version))
         url_telechargement = "https://github.com/Noethys/Connecthys/archive/%s.zip" % GetVersionStr(version)
@@ -128,7 +128,7 @@ def Update(version=[], mode="", app=None):
     except Exception, err :
         app.logger.debug("La nouvelle version '%s' n'a pas pu etre telechargee." % GetVersionStr(version))
         app.logger.debug(err)
-        return False
+        return "La nouvelle version %s n'a pas pu etre t√©l√©charg√©e." % GetVersionStr(version)
 
     # Dezippage
     app.logger.debug("Dezippage du zip...")
@@ -142,7 +142,7 @@ def Update(version=[], mode="", app=None):
         liste_exceptions = []
         
     prefixe = "Connecthys-%s/connecthys/" % GetVersionStr(version)
-    chemin_dest = os.path.join(REP_CONNECTHYS, "") # Remplacer "" pour "temp" pour installer la mise ‡ jour dans un rÈpertoire temp
+    chemin_dest = os.path.join(REP_CONNECTHYS, "")
     
     for i in liste_fichiers:
         
@@ -172,5 +172,5 @@ def Update(version=[], mode="", app=None):
     os.remove(fichier_zip)
     
     app.logger.debug("Mise a jour effectuee.")
-    return True
+    return u"Mise √† jour vers la version %s effectu√©e avec succ√®s." % GetVersionStr(version)
     
