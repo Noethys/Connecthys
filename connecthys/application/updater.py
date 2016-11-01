@@ -60,7 +60,7 @@ def GetLastVersionFromListe(liste_versions=[], format_version=tuple):
     if format_version == tuple :
         return GetVersionTuple(version)
 
-def GetVersionActuelle(format_version=tuple):
+def GetVersionActuelle(format_version=str):
     # Lecture du fichier des versions
     cheminFichier = os.path.join(REP_CONNECTHYS, "versions.txt")
     fichier = open(cheminFichier, mode='r')
@@ -89,7 +89,7 @@ def Recherche_update(version_noethys=[], mode="", app=None):
     app.logger.debug("Version de Noethys : %s (Mode : %s)" % (GetVersionStr(version_noethys), mode))
     
     # Recherche version actuelle de Connecthys
-    version_connecthys = GetVersionActuelle()
+    version_connecthys = GetVersionActuelle(format_version=tuple)
     app.logger.debug("Version actuelle de connecthys: %s" % GetVersionStr(version_connecthys))
     
     # Recherche la liste des version en ligne sur Github
