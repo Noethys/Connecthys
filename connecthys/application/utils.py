@@ -133,16 +133,8 @@ def GetIconeFichier(nomFichier=""):
     elif nomFichier.endswith(".jpg") or nomFichier.endswith(".png"):
         return "fa-file-image-o"
     else :
-        return "fa-file-o"
-
-
-def GetVersionTuple(version=""):
-    """ Renvoie un numéro de version donné au format tuple """
-    temp = []
-    for caract in version.split(".") :
-        temp.append(int(caract))
-    return tuple(temp)
-
+        return "fa-file-o"   
+    
 def GetNbrePeriodesActives(individu):
     nbre_periodes_actives = 0
     for inscription in individu.inscriptions :
@@ -161,7 +153,7 @@ def GetParametre(nom="", dict_parametres=None, defaut=""):
     else :
         return parametre
 
-    
+  
     
 
 

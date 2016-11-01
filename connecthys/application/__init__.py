@@ -20,8 +20,8 @@ REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
 
 
 # Récupération du numéro de version de l'application
-import versions
-__version__ = versions.GetVersion()
+import updater
+__version__ = updater.GetVersionActuelle()
 
 # Init application
 app = Flask(__name__)
@@ -96,6 +96,6 @@ if versionDB == None :
 
 # Vérifie que la DB est à jour
 if versionDB != None :
-    if utils.GetVersionTuple(__version__) > utils.GetVersionTuple(versionDB) :
+    if updater.GetVersionTuple(__version__) > updater.GetVersionTuple(versionDB) :
         models.UpgradeDB()
 

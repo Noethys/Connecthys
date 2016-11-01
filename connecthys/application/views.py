@@ -12,7 +12,7 @@ import random, datetime, traceback
 from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from application import app, login_manager, db
-from application import models, forms, utils, exemples
+from application import models, forms, utils, updater, exemples
 from sqlalchemy import func
 
 
@@ -50,6 +50,40 @@ DICT_PAGES = {
 COULEURS = ["green", "blue", "yellow", "red", "light-blue"]
 
 
+@app.route('/update/<int:secret>/<int:version_noethys>/<int:mode>')
+def update(secret=0, version_noethys=0, mode=0):
+    # Codage et vérification de la clé de sécurité
+    secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
+    for caract in app.config['SECRET_KEY'] :
+        if caract in "0123456789" :
+            secret_key += caract
+    secret_key = int(secret_key) 
+    if secret_key != secret :
+        dict_resultat = {"resultat" : "erreur", "erreur" : u"Cle de securite erronee."}
+        app.logger.debug("Demande update: secretkey=%s - Mauvaise cle de securite !" % secret_key)
+        return Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    
+    # Recherche le mode
+    if mode == 0 :
+        mode = "local"
+    elif mode == 1 :
+        mode = "cgi"
+    elif mode == 2 :
+        mode = "wsgi"
+    else :
+        dict_resultat = {"resultat" : "erreur", "erreur" : u"Mode inconnu"}
+        app.logger.debug("Demande update: secretkey=%s - Mode inconnu : %s" % (secret_key, mode))
+        return Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    
+    # Décode le numéro de version de Noethys
+    version_noethys = updater.GetVersionFromInt(version_noethys)
+    app.logger.debug("Demande update: secretkey=%s - Version Noethys=%s" % (secret_key, version_noethys))
+    resultat = updater.Recherche_update(version_noethys, mode, app)
+    
+    dict_resultat = {"resultat" : resultat}
+    return Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    
+
 @app.route('/upgrade/<int:secret>')
 def upgrade(secret=0):
     # Codage et vérification de la clé de sécurité
@@ -81,7 +115,7 @@ def upgrade(secret=0):
 def get_version():
     # Renvoie le numéro de la version de l'application
     version = app.config["VERSION_APPLICATION"]
-    dict_resultat = {"version_str" : version, "version_tuple" : utils.GetVersionTuple(version)}
+    dict_resultat = {"version_str" : version, "version_tuple" : updater.GetVersionTuple(version)}
     reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
     app.logger.debug("Demande version: version(%s)", dict_resultat)
     return reponse
