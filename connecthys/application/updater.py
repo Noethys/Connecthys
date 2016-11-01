@@ -16,6 +16,8 @@ REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
 import urllib
 import urllib2
 import zipfile
+import codecs
+import datetime
 
 
 def GetVersionFromInt(version_int):
@@ -171,6 +173,26 @@ def Update(version=[], mode="", app=None):
     app.logger.debug("Suppression du zip...")
     os.remove(fichier_zip)
     
+    # AutoReload WSGI
+    if mode == "wsgi" :
+        app.logger.debug("AutoReload WSGI...")
+        AutoReloadWSGI()
+    
     app.logger.debug("Mise a jour effectuee.")
     return u"Mise à jour vers la version %s effectuée avec succès." % GetVersionStr(version)
+
+def AutoReloadWSGI():
+    nom_fichier = os.path.join(REP_CONNECTHYS, "connecthys.wsgi")
     
+    # Ouverture du fichier
+    fichier_wsgi = open(nom_fichier, "r")
+    liste_lignes_wsgi = fichier_wsgi.readlines()
+    fichier_wsgi.close()
+       
+    # Modification du fichier
+    fichier_wsgi = codecs.open(nom_fichier, 'w')
+    for ligne in liste_lignes_wsgi :
+        if "lastupdate" in ligne :
+            ligne = "# lastupdate = %s" % datetime.datetime.now()
+        fichier_wsgi.write(ligne)
+    fichier_wsgi.close()
