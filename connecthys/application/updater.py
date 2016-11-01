@@ -110,7 +110,7 @@ def Recherche_update(version_noethys=[], mode="", app=None):
                 version_ideale = version_ligne
     
     if version_ideale > version_connecthys :
-        app.logger.debug("Nouvelle version trouvee : %s" % GetVersionStr(version))
+        app.logger.debug("Nouvelle version trouvee : %s" % GetVersionStr(version_ideale))
         return Update(version_ideale, mode, app)
     else :
         app.logger.debug("Pas de nouvelle version disponible.")
