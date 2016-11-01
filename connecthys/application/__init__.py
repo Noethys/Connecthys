@@ -21,7 +21,7 @@ REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
 
 # Récupération du numéro de version de l'application
 import updater
-__version__ = updater.GetVersionActuelle()
+__version__ = updater.GetVersionActuelle(format_version=str)
 
 # Init application
 app = Flask(__name__)

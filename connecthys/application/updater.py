@@ -29,8 +29,6 @@ def GetVersionFromInt(version_int):
     
 def GetVersionTuple(version=""):
     """ Renvoie un numéro de version donné au format tuple """
-    if type(version) == tuple :
-        return version
     temp = []
     for caract in version.split(".") :
         temp.append(int(caract))
@@ -62,7 +60,7 @@ def GetLastVersionFromListe(liste_versions=[], format_version=tuple):
     if format_version == tuple :
         return GetVersionTuple(version)
 
-def GetVersionActuelle():
+def GetVersionActuelle(format_version=tuple):
     # Lecture du fichier des versions
     cheminFichier = os.path.join(REP_CONNECTHYS, "versions.txt")
     fichier = open(cheminFichier, mode='r')
@@ -73,7 +71,7 @@ def GetVersionActuelle():
     liste_versions = LectureFichierVersion(liste_lignes)
     
     # Recherche la version locale de Connecthys
-    version_connecthys = GetLastVersionFromListe(liste_versions)
+    version_connecthys = GetLastVersionFromListe(liste_versions, format_version)
     return version_connecthys
     
 def GetListeVersionOnline():
