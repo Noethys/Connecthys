@@ -139,6 +139,9 @@ def before_request():
 def add_header(response):
     response.cache_control.private = True
     response.cache_control.public = False
+    #response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    #response.headers['Pragma'] = 'no-cache'
+    #response.headers['Expires'] = '-1'  
     return response
     
     
@@ -238,11 +241,13 @@ def logout():
 def accueil():    
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.nom).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
+    liste_messages = models.Message.query.order_by(models.Message.texte).all()
     dict_parametres = models.GetDictParametres()
     app.logger.debug("Page ACCUEIL (%s): famille id(%s) %s", current_user.identifiant, current_user.IDfamille, current_user.nom )
     return render_template('accueil.html', active_page="accueil",\
                             liste_pieces_manquantes=liste_pieces_manquantes, \
                             liste_cotisations_manquantes=liste_cotisations_manquantes, \
+                            liste_messages=liste_messages, \
                             dict_parametres=dict_parametres)
 
     

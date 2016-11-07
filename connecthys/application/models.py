@@ -675,6 +675,30 @@ class Reservation(Base):
         return dict_temp
 
 
+class Message(Base):
+    __tablename__ = "%sportail_messages" % PREFIXE_TABLES
+    IDmessage = Column(Integer, primary_key=True)
+    titre = Column(String(255))
+    texte = Column(String(1000))
+    IDfamille = Column(Integer, index=True)
+    
+    def __init__(self, IDmessage=None, titre=None, texte=None, IDfamille=None):
+        if IDmessage != None :
+            self.IDmessage = IDmessage
+        self.titre = titre
+        self.texte = texte
+        self.IDfamille = IDfamille
+ 
+    def __repr__(self):
+        return '<IDmessage %d>' % (self.IDmessage)
+
+        
+        
+        
+        
+        
+        
+        
 def GetParametre(nom="", dict_parametres=None, defaut=""):
     parametre = None
     # Si un dict_parametre est donné

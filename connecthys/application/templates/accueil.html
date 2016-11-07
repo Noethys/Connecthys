@@ -23,8 +23,37 @@
 		{{ GetParametre("ACCUEIL_BIENVENUE", dict_parametres) }}
 	</h4>
   
+	<!-- Liste des messages -->
+	{% if GetParametre("ACCUEIL_MESSAGES_AFFICHER", dict_parametres) == 'True' and liste_messages|length > 0 %}
+	<div class="row">
+		<div class="col-xs-12">
+										  
+			<div class="box box-primary">
+				<div class="box-header with-border">
+					<h3 class="box-title">Messages</h3>
+				</div>
+			<!-- /.box-header -->
+				
+				<div class="box-body">
+					
+					<ul>
+					
+					{% for message in liste_messages %}
+						<li>{{ message.texte }}</li>
+					{% endfor %}
+					
+					</ul>
+				
+				</div>
+			<!-- /.box-body -->
+			</div>
+			<!-- /.box -->
+		</div>
+	</div>
+	{% endif %}
   
-	<!-- Liste informations importantes -->
+  
+	<!-- Liste etat du dossier -->
 	{% if GetParametre("ACCUEIL_ETAT_DOSSIER_AFFICHER", dict_parametres) == 'True' %}
 	<div class="row">
 		<div class="col-xs-12">
