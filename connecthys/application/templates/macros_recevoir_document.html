@@ -71,11 +71,13 @@
 	<script>
 		// Affichage de la fenêtre modale 'Recevoir un document'
 		$('#modal_recevoir_document').on('show.bs.modal', function (event) {
-		  var button = $(event.relatedTarget)
-		  var modal = $(this)
-		  // Remplissage des champs
-		  modal.find('#id').val(button.data('id'))
-		  modal.find('#info').val(button.data('info'))
+			var button = $(event.relatedTarget)
+			var modal = $(this)
+			// Remplissage des champs
+			$('#commentaire').text('')
+			$('#message_erreur').text('')
+			modal.find('#id').val(button.data('id'))
+			modal.find('#info').val(button.data('info'))
 		})
 	</script>
 

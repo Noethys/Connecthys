@@ -858,6 +858,8 @@ def envoyer_demande_inscription():
     try:
         IDindividu = request.args.get("idindividu", 0, type=int)
         activite = request.args.get("activite", "", type=str)
+        if activite == "" :
+            return jsonify(success=0, error_msg=u"Aucune activité n'a été sélectionnée")
         IDactivite = int(activite.split("-")[0])
         IDgroupe = int(activite.split("-")[1])
         commentaire = request.args.get("commentaire", "", type=unicode)
