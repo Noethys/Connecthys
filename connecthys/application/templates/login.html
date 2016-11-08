@@ -6,6 +6,7 @@
 
 {% block head %}
 	{{ super() }}
+	<link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 	<!-- iCheck -->
 	<link href="{{ adminlte_find_resource('plugins/iCheck/all.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">
 	
