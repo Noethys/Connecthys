@@ -122,7 +122,7 @@ def Importation(secret=0):
             # Update
             table_actions_destination = Table('%sportail_actions' % PREFIXE_TABLES, dmeta, autoload=True)
             u = table_actions_destination.update()
-            u = u.values({"etat" : action.etat, "traitement_date" : action.traitement_date})
+            u = u.values({"etat" : action.etat, "traitement_date" : action.traitement_date, "reponse" : action.reponse})
             u = u.where(table_actions_destination.c.ref_unique == action.ref_unique)
             dengine.execute(u)
         

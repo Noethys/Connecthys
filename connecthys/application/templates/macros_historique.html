@@ -53,7 +53,7 @@
 								<span class="text-red">Vous avez supprimé cette demande.</span>
 							{% endif %}
 							{% if action.etat == "validation" %}
-								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_date) }}. {% if action.reponse != None %}Réponse : {{ action.reponse }}{% endif %}</span>
+								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_date) }}. {% if action.reponse != None and action.reponse != '' %}Réponse : {{ action.reponse }}{% endif %}</span>
 							{% endif %}
 							
 							
