@@ -9,7 +9,7 @@
 #--------------------------------------------------------------
 
 import random, datetime, traceback
-from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response
+from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response, send_from_directory
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from application import app, login_manager, db
 from application import models, forms, utils, updater, exemples
@@ -50,6 +50,11 @@ DICT_PAGES = {
 COULEURS = ["green", "blue", "yellow", "red", "light-blue"]
 
 
+@app.route('/robots.txt')
+def static_from_root():
+    return send_from_directory(app.static_folder, request.path[1:])
+    
+    
 @app.route('/update/<int:secret>/<int:version_noethys>/<int:mode>')
 def update(secret=0, version_noethys=0, mode=0):
     # Codage et vérification de la clé de sécurité
