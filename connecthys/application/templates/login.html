@@ -12,22 +12,24 @@
 	
 	{# Affichage de l'image de fond #}
 	{% set IMAGE_FOND = GetParametre("IMAGE_FOND", dict_parametres) %}
-	{% if IMAGE_FOND != "" %}
-		<style type="text/css" media="screen">
-			html, body {
-				background-size: cover;
-				background: center fixed;
-				background-image:url({{ url_for('static', filename="fonds/" + IMAGE_FOND) }});
-			}
-			.login-page {
-				background-color:transparent;
-			}
-			.login-box-body
-			{
-			  background:rgba(255, 255, 255, 0.8);	
-			}
-		</style>
+	{% if IMAGE_FOND == "" %}
+		{% set IMAGE_FOND = "bleu.jpg" %}
 	{% endif %}
+	<style type="text/css" media="screen">
+		html, body {
+			background-size: cover;
+			background: center fixed;
+			background-image:url({{ url_for('static', filename="fonds/" + IMAGE_FOND) }});
+		}
+		.login-page {
+			background-color:transparent;
+		}
+		.login-box-body
+		{
+		  background:rgba(255, 255, 255, 0.8);	
+		}
+	</style>
+	
 	
 {% endblock %}
 
