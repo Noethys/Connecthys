@@ -157,8 +157,9 @@ def Importation(secret=0):
         for record in data :
             data = dict([(str(column), getattr(record, column)) for column in columns])
             listeDonnees.append(data) 
-            
-        dengine.execute(dtable.insert(), listeDonnees)
+        
+        if len(listeDonnees) > 0 :
+            dengine.execute(dtable.insert(), listeDonnees)
     
     # Commit de l'importation des tables
     destination.commit()
