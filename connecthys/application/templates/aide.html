@@ -2,17 +2,99 @@
   
   
 {% block content -%}
-  
+
+	{%if GetParametre("ACTIVITES_AFFICHER", dict_parametres) == 'True' %}
 	<div class="box box-primary">
-	
 		<div class="box-header with-border">
-			<h3 class="box-title">Aide</h3>
+			<h3 class="box-title">Activités</h3>
 		</div>
-		
 		<div class="box-body">		
-			L'aide n'est pas disponible dans la version Beta de Connecthys...
+			La page <i>Activités</i> liste les inscriptions de chaque membre de la famille. 
+			Il est possible de demander l'inscription à une activité en cliquant sur le bouton <i>Inscrire à une activité</i>.
+			Vous devrez alors attendre que votre demande soit traitée et validée par l'administrateur du portail.
 		</div>
-		
 	</div>
-		
+	{% endif %}
+
+	{%if GetParametre("RESERVATIONS_AFFICHER", dict_parametres) == 'True' %}
+	<div class="box box-primary">
+		<div class="box-header with-border">
+			<h3 class="box-title">Réservations</h3>
+		</div>
+		<div class="box-body">		
+			La page <i>Réservations</i> liste les périodes de réservations disponibles pour chaque membre de la famille inscrit à une activité.
+			Si vous souhaitez saisir, modifier ou supprimer des réservations, cliquez sur l'activités puis sur la période désirée.
+			Le calendrier de la période apparaît pour vous permettre de cocher ou décocher des réservations. 
+			Cliquez sur le bouton <i>Envoyer la demande</i> puis patientez jusqu'au traitement de votre demande par l'administrateur du portail.
+			Cliquez sur le lien <i>Revenir à la liste des périodes</i> pour accéder au calendrier d'une autre période ou d'un autre membre de la famille.
+			Après traitement, vos réservations validées sont colorées en vert alors que les réservations refusées (pour manque de place par exemple) seront colorées en rouge.
+		</div>
+	</div>
+	{% endif %}
+	
+	{%if GetParametre("FACTURES_AFFICHER", dict_parametres) == 'True' %}
+	<div class="box box-primary">
+		<div class="box-header with-border">
+			<h3 class="box-title">Factures</h3>
+		</div>
+		<div class="box-body">		
+			La page <i>Factures</i> liste les dernières factures de la famille et permet d'identifier rapidement les éventuelles factures impayées. 
+			Si vous souhaitez recevoir un duplicata, cliquez sur l'image <i class="fa fa-download"></i> sur la ligne correspondante puis sélectionnez le moyen de transmission souhaité. 
+			Vous devrez alors attendre que votre demande soit traitée et validée par l'administrateur du portail.
+		</div>
+	</div>
+	{% endif %}
+	
+	{%if GetParametre("REGLEMENTS_AFFICHER", dict_parametres) == 'True' %}
+	<div class="box box-primary">
+		<div class="box-header with-border">
+			<h3 class="box-title">Règlements</h3>
+		</div>
+		<div class="box-body">		
+			La page <i>Règlements</i> liste les derniers règlements de la famille et propose de visualiser ceux qui n'ont pas encore été encaissés.
+			Si vous souhaitez recevoir un reçu de règlement, cliquez sur l'image <i class="fa fa-download"></i> sur la ligne correspondante puis sélectionnez le moyen de transmission souhaité. 
+			Vous devrez alors attendre que votre demande soit traitée et validée par l'administrateur du portail.
+		</div>
+	</div>
+	{% endif %}
+	
+	{%if GetParametre("PIECES_AFFICHER", dict_parametres) == 'True' %}
+	<div class="box box-primary">
+		<div class="box-header with-border">
+			<h3 class="box-title">Pièces</h3>
+		</div>
+		<div class="box-body">		
+			La page <i>Pièces</i> liste les pièces manquantes à votre dossier. 
+			Si l'option <i>Téléchargement de pièces</i> est activée, vous pouvez cliquer sur le bouton d'une pièce pour la télécharger ou l'imprimer afin de la remplir avant de la remettre à l'administrateur du portail.
+		</div>
+	</div>
+	{% endif %}
+
+	{%if GetParametre("COTISATIONS_AFFICHER", dict_parametres) == 'True' %}
+	<div class="box box-primary">
+		<div class="box-header with-border">
+			<h3 class="box-title">Cotisations</h3>
+		</div>
+		<div class="box-body">		
+			La page <i>Cotisations</i> liste la ou les cotisations manquantes à votre dossier. 
+			Vous devez alors contacter l'administrateur du portail afin de régulariser votre dossier.
+		</div>
+	</div>
+	{% endif %}
+
+	{%if GetParametre("HISTORIQUE_AFFICHER", dict_parametres) == 'True' %}
+	<div class="box box-primary">
+		<div class="box-header with-border">
+			<h3 class="box-title">Historique</h3>
+		</div>
+		<div class="box-body">		
+			La page <i>Historique</i> liste les dernières demandes que vous avez effectué sur le portail. 
+			L'historique vous permet de suivre le traitement de chaque demande.
+			Pour certaines demandes, il est possible de cliquer sur le bouton <i>Détail</i> pour accéder aux détails de la demande.
+			Si une demande n'a toujours pas été transmise à l'administrateur du portail, il est possible de la supprimer en cliquant sur le bouton <i>Supprimer</i>.
+		</div>
+	</div>
+	{% endif %}
+	
+	
 {%- endblock content %}
