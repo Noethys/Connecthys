@@ -37,11 +37,9 @@
 				<div class="box-body">
 					
 					<ul>
-					
 					{% for message in liste_messages %}
-						<li>{{ message.texte }}</li>
+						<li>{{ message.texte }} {% if message.Is_nouveau() == True %}<small class="label bg-green">Nouveau</small>{% endif %}</li>
 					{% endfor %}
-					
 					</ul>
 				
 				</div>

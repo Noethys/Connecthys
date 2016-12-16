@@ -707,6 +707,13 @@ class Message(Base):
         else :
             return False
 
+    def Is_nouveau(self):
+        """ Retourne si le message est nouveau ou non """
+        if self.affichage_date_debut != None :
+            now = datetime.datetime.now()
+            if now >= self.affichage_date_debut and now <= (self.affichage_date_debut + datetime.timedelta(days=3)) :
+                return True
+        return False
         
         
         
