@@ -502,12 +502,13 @@ class Periode(Base):
     date_fin = Column(Date)
     affichage_date_debut = Column(DateTime)
     affichage_date_fin = Column(DateTime)
+    introduction = Column(String(1000))
     
     IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
     
     def __init__(self , IDperiode=None, IDactivite=None, nom=None, date_debut=None, date_fin=None, \
-                        affichage_date_debut=None, affichage_date_fin=None):
+                        affichage_date_debut=None, affichage_date_fin=None, introduction=None):
         if IDperiode != None :
             self.IDperiode = IDperiode
         self.IDactivite = IDactivite
@@ -516,6 +517,7 @@ class Periode(Base):
         self.date_fin = date_fin
         self.affichage_date_debut = affichage_date_debut
         self.affichage_date_fin = affichage_date_fin
+        self.introduction = introduction
         
     def __repr__(self):
         return '<IDperiode %d>' % (self.IDperiode)
@@ -681,20 +683,30 @@ class Message(Base):
     titre = Column(String(255))
     texte = Column(String(1000))
     IDfamille = Column(Integer, index=True)
-    
-    def __init__(self, IDmessage=None, titre=None, texte=None, IDfamille=None):
+    affichage_date_debut = Column(DateTime)
+    affichage_date_fin = Column(DateTime)
+
+    def __init__(self, IDmessage=None, titre=None, texte=None, IDfamille=None, \
+                        affichage_date_debut=affichage_date_debut, affichage_date_fin=affichage_date_fin):
         if IDmessage != None :
             self.IDmessage = IDmessage
         self.titre = titre
         self.texte = texte
         self.IDfamille = IDfamille
+        self.affichage_date_debut = affichage_date_debut
+        self.affichage_date_fin = affichage_date_fin
  
     def __repr__(self):
         return '<IDmessage %d>' % (self.IDmessage)
+    
+    def Is_actif_today(self):
+        """ Vérifie si le message est actif ce jour """
+        now = datetime.datetime.now()
+        if self.affichage_date_debut == None or (now >= self.affichage_date_debut and now <= self.affichage_date_fin) :
+            return True
+        else :
+            return False
 
-        
-        
-        
         
         
         

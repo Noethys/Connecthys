@@ -71,6 +71,13 @@
 		
 	<!-- Planning -->
 	<div class="box box-solid">
+		
+		{% if dict_planning["periode"].introduction not in (None, "") %}
+		<div class="box-header with-border">
+			<h4 class="box-title"><small><i class="fa fa-info-circle"></i> {{ dict_planning["periode"].introduction }}</small></h4>
+		</div>
+		{% endif %}
+		
 		<div class="box-body no-padding">
 			{{ macros_planning.planning_body(dict_planning=dict_planning) }}
 		</div>

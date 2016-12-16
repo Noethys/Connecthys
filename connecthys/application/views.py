@@ -243,10 +243,18 @@ def logout():
 
 @app.route('/accueil')
 @login_required
-def accueil():    
+def accueil():  
+    # Récupération des éléments manquants
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.nom).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
-    liste_messages = models.Message.query.order_by(models.Message.texte).all()
+    
+    # Récupération des messages
+    liste_messages_temp = models.Message.query.order_by(models.Message.texte).all()
+    liste_messages = []
+    for message in liste_messages_temp :
+        if message.Is_actif_today() :
+            liste_messages.append(message)
+            
     dict_parametres = models.GetDictParametres()
     app.logger.debug("Page ACCUEIL (%s): famille id(%s) %s", current_user.identifiant, current_user.IDfamille, current_user.nom )
     return render_template('accueil.html', active_page="accueil",\
