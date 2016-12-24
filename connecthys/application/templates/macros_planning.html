@@ -73,6 +73,37 @@
 
 
 
+{% macro planning_semaine_type(dict_planning={}, num_semaine=0) %}
+
+	<!-- Tableau de la semaine-type -->
+	<table id='tableau_semaine_type' class='table table-bordered no-margin'>
+		<tbody>
+			<tr>
+				<th></th>
+				{% for unite in dict_planning['liste_unites'] %}
+				<th><center>{{ unite.nom }}</center></th>
+				{% endfor %}
+			</tr>	
+			{% set num_jour = 0 %}
+			{% for jour in ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] %}
+				{% if num_jour in GetJoursOuverts(dict_planning) %}
+					<tr>
+						<td><center>{{ jour }}</center></td>
+						{% for unite in dict_planning['liste_unites'] %}
+							<td>
+								<center><input type='checkbox' id='case_type' class='flat-black' data-semaine='{{ num_semaine }}' data-jour='{{ num_jour }}' data-IDunite={{ unite.IDunite }}></center>
+							</td>
+						{% endfor %}
+					</tr>
+				{% endif %}
+				{% set num_jour = num_jour + 1 %}
+			{% endfor %}
+		</tbody>
+	</table>
+
+{% endmacro %}
+
+
 {% macro planning_modals(dict_planning={}) %}
 
 	<!-- Modal : Confirmation de l'envoi -->
@@ -111,7 +142,7 @@
 		  </div><!-- Fin modal body -->
 		  
 		  <div class="modal-footer">
-			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal">Annuler</button>
 			<button type="button" class="btn btn-primary" id="confirmation">Valider</button>
 		  </div>
 
@@ -151,16 +182,231 @@
 	  </div>
 	</div>
 
+	
+	
+	<!-- Modal : Appliquer une semaine-type -->
+	<div class="modal fade" id="modal_appliquer_semaine_type" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  <div class="modal-dialog" role="document">
+		<div class="modal-content">
+			
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="myModalLabel"><strong>Appliquer une semaine-type</strong></h4>
+		  </div>
+		  
+		  <div class="modal-body">
+			
+			<form action={{ action }} method="post">
+			
+			<div class="row">
+				
+				<div class="col-md-6">
+					<!-- Période d'application -->
+					<div class="form-group">
+						<label>Période d'application</label>
+						<div class="input-group">
+							<div class="input-group-addon">
+								<i class="fa fa-calendar"></i>
+							</div>
+							<input type="text" class="form-control pull-right" id="periode_application">
+						</div>
+					</div>
+				</div>
+				
+				<div class="col-md-6">
+					<!-- Sélection de la fréquence -->
+					<div class="form-group">
+						<label>Fréquence</label>
+						<select id="choix_frequence" class="form-control">
+							<option value="0">Toutes les semaines</option>
+							<option value="1">Une semaine sur deux</option>
+							<option value="2">Semaines paires/impaires</option>
+						</select>
+					</div>
+				</div>
+			
+			</div>
+			
+			<!-- Tableau de la semaine-type -->
+			<label>Semaine-type</label>
+			
+			<!-- Toutes les semaines -->
+			<div id='tableau_semaine_type_0'>
+				{{ planning_semaine_type(dict_planning=dict_planning, num_semaine=0) }}
+			</div>
+			
+			<!-- Une semaine sur deux -->
+			<div id='tableau_semaine_type_1'>
+				<div class="nav-tabs-custom no-margin">
+					<ul class="nav nav-tabs">
+						{% for num_semaine in [1, 2] %}
+						<li {% if num_semaine == 1 %}class="active"{% endif %}>
+							<a id="tab_sem_{{ num_semaine }}" class="text-primary" href="#tab_{{ num_semaine }}" data-toggle="tab">Semaine {{ num_semaine }}</a>
+						</li>
+						{% endfor %}
+					</ul>
+					<div class="tab-content no-padding">
+						{% for num_semaine in [1, 2] %}
+						<div class="tab-pane {% if num_semaine == 1 %}active{% endif %}" id="tab_{{ num_semaine }}">
+							{{ planning_semaine_type(dict_planning=dict_planning, num_semaine=num_semaine) }}
+						</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+
+			<!-- Semaines paires_/impaires -->
+			<div id='tableau_semaine_type_2'>
+				<div class="nav-tabs-custom no-margin">
+					<ul class="nav nav-tabs">
+						<li class="active">
+							<a id="tab_sem_4" class="text-primary" href="#tab_4" data-toggle="tab">Semaine paire</a>
+						</li>
+						<li>
+							<a id="tab_sem_5" class="text-primary" href="#tab_5" data-toggle="tab">Semaine impaire</a>
+						</li>
+					</ul>
+					<div class="tab-content no-padding">
+						<div class="tab-pane active" id="tab_4">
+							{{ planning_semaine_type(dict_planning=dict_planning, num_semaine=4) }}
+						</div>
+						<div class="tab-pane" id="tab_5">
+							{{ planning_semaine_type(dict_planning=dict_planning, num_semaine=5) }}
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			
+			<!-- Div pour affiche erreur éventuelle de validation du form -->
+			<div id="message_erreur" class="text-red"></div>
+			
+		  </form>
+		  
+		  </div><!-- Fin modal body -->
+		  
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+			<button type="button" class="btn btn-primary" id="confirmation_appliquer_semaine_type">Appliquer</button>
+		  </div>
+
+		</div>
+	  </div>
+	</div>
+
+	
 {% endmacro %}
 
 
 {%  macro planning_scripts(dict_planning={}) %}
+
+	<script>
+		// Affichage de la fenêtre modale 'Appliquer une semaine-type'
+		$('#modal_appliquer_semaine_type').on('show.bs.modal', function (event) {
+			$("#choix_frequence").val(0);
+			$("#tableau_semaine_type_0").show();
+			$("#tableau_semaine_type_1").hide();
+			$("#tableau_semaine_type_2").hide();
+		})
+	</script>
+
+	
+	<script>
+		$('#choix_frequence').on("change", function(e) { 
+			if ( $("#choix_frequence").val() == 0 ) {
+				$("#tableau_semaine_type_0").show();
+				$("#tableau_semaine_type_1").hide();
+				$("#tableau_semaine_type_2").hide();
+				}
+			if ( $("#choix_frequence").val() == 1 ) {
+				$("#tableau_semaine_type_0").hide();
+				$("#tableau_semaine_type_1").show();
+				$("#tableau_semaine_type_2").hide();
+				}
+			if ( $("#choix_frequence").val() == 2 ) {
+				$("#tableau_semaine_type_0").hide();
+				$("#tableau_semaine_type_1").hide();
+				$("#tableau_semaine_type_2").show();
+				}
+		});
+	</script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+	<script src="{{ adminlte_find_resource('plugins/daterangepicker/daterangepicker.js', cdn='local', use_minified=False)}}"></script>
+	<script>
+	// Préparation de la modal Appliquer une semaine-type
+	$('#modal_appliquer_semaine_type').on('shown.bs.modal', function() {
+		// Préparation du datepicker
+		$('#periode_application').daterangepicker({
+				showDropdowns: false,
+				parentEl: '#modal_appliquer_semaine_type',
+				opens: "right",
+				alwaysShowCalendars: true,
+				showWeekNumbers: false,
+				startDate: '{{ DateEngFr(dict_planning["liste_dates"][0]) }}',
+				endDate: '{{ DateEngFr(dict_planning["liste_dates"][-1]) }}',
+				minDate: '{{ DateEngFr(dict_planning["liste_dates"][0]) }}',
+				maxDate: '{{ DateEngFr(dict_planning["liste_dates"][-1]) }}',
+				locale: {
+					"format": "DD/MM/YYYY",
+					"separator": " - ",
+					"applyLabel": "Valider",
+					"cancelLabel": "Annuler",
+					"fromLabel": "De",
+					"toLabel": "à",
+					"weekLabel": "N°",
+					"daysOfWeek": [
+						"Dim",
+						"Lun",
+						"Mar",
+						"Mer",
+						"Jeu",
+						"Ven",
+						"Sam"
+					],
+					"monthNames": [
+						"Janvier",
+						"Février",
+						"Mars",
+						"Avril",
+						"Mai",
+						"Juin",
+						"Juillet",
+						"Août",
+						"Septembre",
+						"Octobre",
+						"Novembre",
+						"Décembre"
+					],
+					"firstDay": 1
+					}
+				});
+		});
+	</script>
+
+	
+	<script>
+		$('input#case_type').on('ifClicked', function(event){
+			// Coche une unité à la fois
+			if({{ dict_planning["periode"].activite.unites_multiples }} == 0) {
+				var semaine = $(this).attr('data-semaine');
+				var jour = $(this).attr('data-jour');
+				var IDunite = $(this).attr('data-IDunite');
+				$("input[data-semaine='" + semaine + "'][data-jour='" + jour + "']:checked").each(function() {
+					$(this).iCheck('uncheck');
+					});
+				};
+			});
+
+	</script>
+
+
 	
 	<script>
 	// Annulation des modifications ?
 	dirty = 0;
 	$(function() {
-		$('a#retour_reservations,button#annuler,a[id!="imprimer"]').bind('click', function(event) {
+		$('a#retour_reservations,button#annuler,a[id!="imprimer"][id!="tab_sem_1"][id!="tab_sem_2"][id!="tab_sem_4"][id!="tab_sem_5"]').bind('click', function(event) {
 			var href = $(this).attr('href');
 			if(dirty == 1) {
 				$('#modal_annulation').modal('show');
@@ -183,17 +429,21 @@
 	</script>
 	
 	<script>
-		$('input#case').on('ifClicked', function(event){
-			// Coche une unité à la fois
+	
+		function VerifieCocheUnique(ctrl){
 			if({{ dict_planning["periode"].activite.unites_multiples }} == 0) {
-				var date = $(this).attr('data-date');
-				var IDunite = $(this).attr('data-IDunite');
+				var date = ctrl.attr('data-date');
+				var IDunite = ctrl.attr('data-IDunite');
 				$("input[data-date='" + date + "']:checked").each(function() {
 					$(this).iCheck('uncheck');
 					});
 				};
 			// définit dirty
 			dirty = 1;
+			};
+
+		$('input#case').on('ifClicked', function(event){
+			VerifieCocheUnique($(this));
 			});
 
 	</script>
@@ -258,7 +508,8 @@
 		});
 	});
 	</script>
-
+	
+	
 	
 	<script>
 	// Validation de l'envoi des réservations
@@ -305,5 +556,80 @@
 		});
 	});
 	</script>
+	
+	
+	
+	<script>
+	// Fonction Pair/Impair
+	function isPair(chiffre){
+		chiffre=parseInt(chiffre);
+		return ((chiffre & 1)=='0')?true:false;
+	};
+
+	// Confirmation de l'application de la semaine-type
+	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+	$(function() {
+		$('button#confirmation_appliquer_semaine_type').bind('click', function() {
+			
+			// Récupération de la période d'application
+			var date_debut = $('#periode_application').data('daterangepicker').startDate.format('YYYY-MM-DD');
+			var num_semaine_debut = moment(date_debut, 'YYYY-MM-DD').isoWeek();
+			var date_fin = $('#periode_application').data('daterangepicker').endDate.format('YYYY-MM-DD');
+			
+			// Récupération de la fréquence
+			var frequence = $("#choix_frequence").val();
+			
+			// Récupération des jours de la semaine-type
+			var liste_resultats = [];
+			$("input#case_type:checked").each(function() {
+				var semaine = parseInt($(this).attr('data-semaine'));
+				var jour = parseInt($(this).attr('data-jour'));
+				var IDunite = parseInt($(this).attr('data-IDunite'));
+				if ( (frequence == 0 && semaine == 0) || (frequence == 1 && (semaine == 1 || semaine == 2) ) || (frequence == 2 && (semaine == 4 || semaine == 5) ) ){
+					liste_resultats.push({semaine: semaine, jour: jour, IDunite:IDunite});
+					};
+			});
+			
+			// Coche les cases du planning
+			$("input#case:enabled").each(function() {
+			
+				var dateeng = $(this).attr('data-date');
+				var datejs = moment(dateeng, 'YYYY-MM-DD');
+				var num_jour = datejs.weekday()-1;
+				var num_semaine = datejs.isoWeek();
+				var IDunite = $(this).attr('data-IDunite');
+				
+				$(this).iCheck('uncheck');
+				
+				for (var i=0; i < liste_resultats.length; i++){
+					if (dateeng >= date_debut && dateeng <= date_fin && liste_resultats[i].jour == num_jour && liste_resultats[i].IDunite == IDunite){
+						var valide = false;
+						// Toutes les semaines
+						if (frequence == 0){
+							var valide = true;
+							}
+						// 1 semaine sur 2
+						if (frequence == 1 && ((isPair(liste_resultats[i].semaine) != isPair(num_semaine)) == isPair(num_semaine_debut))){
+							var valide = true;
+							}
+						// Semaines paires/impaires
+						if (frequence == 2 && isPair(liste_resultats[i].semaine) == isPair(num_semaine)){
+							var valide = true;
+							}
+						// Application réservation
+						if (valide == true){
+							VerifieCocheUnique($(this));
+							$(this).iCheck('check');
+							}
+						}
+					}
+				});
+			
+			// Fermeture de la modal
+			$('#modal_appliquer_semaine_type').modal('hide');
+		});
+	});
+	</script>
+
 	
 {% endmacro %}

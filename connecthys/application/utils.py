@@ -153,8 +153,14 @@ def GetParametre(nom="", dict_parametres=None, defaut=""):
     else :
         return parametre
 
-  
-    
+def GetJoursOuverts(dict_planning={}):
+    liste_jours = []
+    for date in dict_planning["liste_dates"] :
+        num_jour = date.weekday()
+        if num_jour not in liste_jours :
+            liste_jours.append(num_jour)
+    liste_jours.sort()
+    return liste_jours
 
 
 
@@ -187,5 +193,6 @@ def utility_processor():
         GetIconeFichier=GetIconeFichier,
         GetNbrePeriodesActives=GetNbrePeriodesActives,
         GetParametre=GetParametre,
+        GetJoursOuverts=GetJoursOuverts,
         )
     

@@ -84,10 +84,13 @@
 		<div class="box-footer clearfix">
 				<!-- <a id="imprimer" href="{{ url_for('imprimer_reservations', IDindividu=dict_planning['inscription'].IDindividu, IDperiode=dict_planning['periode'].IDperiode, resultats="coucou") }}" target="_blank" class="btn btn-default"><i class="fa fa-print"></i> Imprimer</a> -->
 				<a id="imprimer" target="_blank" class="btn btn-default"><i class="fa fa-print"></i> Imprimer</a>
+				&nbsp;
+				<button type="button" id="appliquer_semaine_type" class="btn btn-default" data-toggle="modal" data-target="#modal_appliquer_semaine_type"><i class="fa fa-calendar-check-o"></i> Appliquer une semaine-type</button>
 				<ul class="pagination pagination-sm no-margin pull-right">
 				<li>
 					<button type="button" id="annuler" class="btn btn-danger" href="{{ url_for('reservations') }}">Annuler</button>
 				</li>
+				&nbsp;
 				<li>
 					<button type="button" id="envoyer" class="btn btn-primary" data-toggle="modal" data-target="#modal_confirmation_envoi">Envoyer la demande</button>
 				</li>

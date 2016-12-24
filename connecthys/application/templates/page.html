@@ -30,6 +30,8 @@
     <link href="{{ adminlte_find_resource('plugins/pace/pace.css', cdn='local') }}" rel="stylesheet" type="text/css">
     <!-- iCheck -->
     <link href="{{ adminlte_find_resource('plugins/iCheck/all.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">		
+    <!-- daterangepicker -->
+	<link href="{{ adminlte_find_resource('plugins/daterangepicker/daterangepicker.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">		
 	
 	<!-- Pour affichage logo organisateur dans sidebar -->
 	<style type="text/css" media="screen">
@@ -177,13 +179,6 @@
   <script src="{{ adminlte_find_resource('js/plugins/iCheck/icheck.min.js', cdn='local', use_minified=False)}}"></script>
   <!-- AdminLTE App -->
   <script src="{{ adminlte_find_resource('js/AdminLTE/app.js', cdn='local', use_minified=False) }}"></script>
-  <!-- Sparkline -->
-  <script src="{{ adminlte_find_resource('js/plugins/sparkline/jquery.sparkline.js', cdn='local') }}"></script>
-  <!-- jvectormap -->
-  <script src="{{ adminlte_find_resource('js/plugins/jvectormap/jquery-jvectormap-1.2.2.js', cdn='local') }}"></script>
-  <script src="{{ adminlte_find_resource('js/plugins/jvectormap/jquery-jvectormap-world-mill-en.js', cdn='local', use_minified=False) }}"></script>
-  <!-- ChartJS 1.0.1 -->
-  <script src="{{ adminlte_find_resource('js/plugins/chartjs/Chart.js', cdn='local') }}"></script>
   <script>
 	/* turning flask flash messages into js popup notifications */
 	window.popupMessages = {{ get_flashed_messages(with_categories=True) | tojson | safe }};
