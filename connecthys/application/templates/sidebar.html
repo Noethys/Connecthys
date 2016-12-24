@@ -1,11 +1,11 @@
 {% block sidebar -%}
 <!-- sidebar: style can be found in sidebar.less -->
 <!-- sidebar menu: : style can be found in sidebar.less -->
-  <div class="user-panel">
+<div class="user-panel">
 	{% if GetParametre('ORGANISATEUR_IMAGE', dict_parametres) != '' %}
-	<div class="image">
-	  <img src="{{ url_for('static', filename=GetParametre('ORGANISATEUR_IMAGE', dict_parametres)) }}" alt="User Image" {% if GetParametre('ORGANISATEUR_IMAGE_ROND', dict_parametres) == 'True' %}class="img-circle"{% endif %}>
-	</div>
+		<div class="image">
+			<img src="{{ url_for('static', filename=GetParametre('ORGANISATEUR_IMAGE', dict_parametres)) }}" alt="User Image" {% if GetParametre('ORGANISATEUR_IMAGE_ROND', dict_parametres) == 'True' %}class="img-circle"{% endif %}>
+		</div>
 	{% endif %}
 	<div class="info">
 		<ul>
@@ -16,44 +16,42 @@
 			{% if GetParametre('ORGANISATEUR_FAX', dict_parametres) != '' %}<li><i class="fa fa-fax"></i> {{ GetParametre('ORGANISATEUR_FAX', dict_parametres) }}</li>{% endif %}
 		</ul>
 	</div>
-  </div>
+</div>
   
 
 <div>
-<ul class="sidebar-menu">
-
-	
-  
-	{% for dict_menu in g.liste_pages %}
-		
-		{% if dict_menu["type"] == "label" %}
-		
-			<li class="header">{{ dict_menu["label"] }}</li>
-		
-		{% else %}
-			
-			{% set page = dict_menu["page"] %}
-			
-			{% if page == "accueil" or GetParametre(dict_menu["affichage"], dict_parametres) == 'True' %}
+	<ul class="sidebar-menu">
 				
-				{% if page == active_page %}
-					<li class="active">
-				{% else %}
-					<li>
+		{% for dict_menu in g.liste_pages %}
+		
+			{% if dict_menu["type"] == "label" %}
+		
+				<li class="header">{{ dict_menu["label"] }}</li>
+		
+			{% else %}
+			
+				{% set page = dict_menu["page"] %}
+			
+				{% if page == "accueil" or GetParametre(dict_menu["affichage"], dict_parametres) == 'True' %}
+				
+					{% if page == active_page %}
+						<li class="active">
+					{% else %}
+						<li>
+					{% endif %}
+						<a class="item_sidemenu" href="{{ url_for(page) }}">
+							<i class="fa {{ g.dict_pages[page]['icone'] }}"></i> {# Pour avoir la couleur, ajouter : text-{{ g.dict_pages[page]['couleur']  #}
+							<span>{{ g.dict_pages[page]['nom'] }}</span>
+						</a>
+					</li>
+			
 				{% endif %}
-					<a class="item_sidemenu" href="{{ url_for(page) }}">
-						<i class="fa {{ g.dict_pages[page]['icone'] }}"></i> {# Pour avoir la couleur, ajouter : text-{{ g.dict_pages[page]['couleur']  #}
-						<span>{{ g.dict_pages[page]['nom'] }}</span>
-					</a>
-				</li>
-			
-			{% endif %}
 				
-		{% endif %}
+			{% endif %}
 		
-	{% endfor %}
-	
-  </ul>
+		{% endfor %}
+					
+	</ul>
 </div>
 <!-- /.sidebar -->
 {%- endblock sidebar %}

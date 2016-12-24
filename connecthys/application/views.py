@@ -181,6 +181,7 @@ def internal_error(exception):
     trace = traceback.format_exc()
     return("<pre>" + trace + "</pre>"), 500
     
+
 # ------------------------- LOGIN et LOGOUT ---------------------------------- 
 
 @app.route('/login', methods=['GET', 'POST'])
