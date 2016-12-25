@@ -156,11 +156,13 @@ def Update(version=[], mode="", app=None):
         if i.startswith(prefixe) and valide == True :
             d = i.replace(prefixe, "")
             if len(d) > 1 :
-                if os.path.isdir(os.path.join(chemin_dest, i)) or "2.5" in i or "." not in d :
-                    try: os.makedirs(os.path.join(chemin_dest, d))
+                if i.endswith('/') :
+                    try: 
+                        os.makedirs(os.path.join(chemin_dest, d))
                     except: pass
                 else:
-                    try: os.makedirs(os.path.join(chemin_dest, os.path.dirname(d)))
+                    try: 
+                        os.makedirs(os.path.join(chemin_dest, os.path.dirname(d)))
                     except: pass
                     data = zfile.read(i)
                     fp = open(os.path.join(chemin_dest, d), "wb")
