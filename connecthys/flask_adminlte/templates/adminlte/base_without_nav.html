@@ -8,16 +8,17 @@
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
     {%- endblock metas %}
     {%- block styles %}
+	<link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
     <!-- bootstrap 3.0.2 -->
-    <link href="{{ adminlte_find_resource('css/bootstrap.css', cdn='local') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ adminlte_find_resource('bootstrap/css/bootstrap.css', cdn='local') }}" rel="stylesheet" type="text/css" />
     <!-- font Awesome -->
-    <link href="{{ adminlte_find_resource('css/font-awesome.css', cdn='local') }}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
     <!-- Ionicons -->
-    <link href="{{ adminlte_find_resource('css/ionicons.css', cdn='local') }}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
     <!-- Theme style -->
-    <link href="{{ adminlte_find_resource('css/AdminLTE.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+    <link href="{{ adminlte_find_resource('dist/css/AdminLTE.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
     <!-- Skin  -->
-    <link href="{{ adminlte_find_resource('css/skins/skin-blue.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
+    <link href="{{ adminlte_find_resource('dist/css/skins/_all-skins.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
 	{%- endblock styles %}
     {%- endblock head %}
   </head>
@@ -28,12 +29,12 @@
         {% block tail %}{% endblock %}
 
     {% block scripts %}
-    <!-- jQuery 2.0.2 -->
-    <script src="{{ adminlte_find_resource('jquery.js', cdn='jquery') }}"></script>
-    <!-- Bootstrap -->
-    <script src="{{ adminlte_find_resource('js/bootstrap.js', cdn='local') }}"></script>
-    <!-- AdminLTE App -->
-    <script src="{{ adminlte_find_resource('js/AdminLTE/app.js', cdn='local', use_minified=False) }}"></script>
+	<!-- jQuery -->
+	<script src="{{ adminlte_find_resource('plugins/jQuery/jquery-2.2.3.min.js', cdn='local',  use_minified=False) }}"></script>
+	<!-- Bootstrap -->
+	<script src="{{ adminlte_find_resource('bootstrap/js/bootstrap.min.js', cdn='local',  use_minified=False) }}"></script>
+	<!-- AdminLTE App -->
+	<script src="{{ adminlte_find_resource('dist/js/app.min.js', cdn='local', use_minified=False) }}"></script>
 	{%- endblock scripts %}
 
     </body>
