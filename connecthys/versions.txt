@@ -26,3 +26,5 @@ version=0.2.0 # exclusions=flask_adminlte,lib # version_min_noethys=1.1.8.1
 version=0.2.1 # exclusions=flask_adminlte,lib # version_min_noethys=1.1.8.2
 version=0.2.2 # exclusions=flask_adminlte,lib # version_min_noethys=1.1.8.2
 version=0.2.3 # exclusions=flask_adminlte,lib # version_min_noethys=1.1.8.2
+version=0.2.4 # exclusions=lib # version_min_noethys=1.1.8.2
+version=0.2.5 # exclusions=lib # version_min_noethys=1.1.8.3
