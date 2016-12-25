@@ -29,3 +29,4 @@ version=0.2.3 # exclusions=flask_adminlte,lib # version_min_noethys=1.1.8.2
 version=0.2.4 # exclusions=lib # version_min_noethys=1.1.8.2
 version=0.2.5 # exclusions=lib # version_min_noethys=1.1.8.3
 version=0.2.6 # exclusions=lib # version_min_noethys=1.1.8.3
+version=0.2.7 # exclusions=lib # version_min_noethys=1.1.8.3
