@@ -135,9 +135,11 @@ class User(Base):
     email = Column(String(80))
     role = Column(String(80))
     IDfamille = Column(Integer, index=True)
+    IDutilisateur = Column(Integer, index=True)
+    actif = Column(Integer)
     infos = {}
     
-    def __init__(self , IDuser=None, identifiant=None, decryptpassword=None, cryptpassword=None, nom=None, email=None, role="famille", IDfamille=None):
+    def __init__(self , IDuser=None, identifiant=None, decryptpassword=None, cryptpassword=None, nom=None, email=None, role="famille", IDfamille=None, IDutilisateur=None, actif=1):
         if IDuser != None :
             self.IDuser = IDuser
         self.identifiant = identifiant
@@ -150,6 +152,8 @@ class User(Base):
         self.email = email
         self.role = role
         self.IDfamille = IDfamille
+        self.IDutilisateur = IDutilisateur
+        self.actif = actif
  
     def check_password(self, password):
         #resultat = sha256_crypt.verify(password, self.password) # Version passlib
@@ -160,7 +164,10 @@ class User(Base):
         return True
  
     def is_active(self):
-        return True
+        if self.actif == 0 :
+            return False
+        else :
+            return True
  
     def is_anonymous(self):
         return False
@@ -169,7 +176,7 @@ class User(Base):
         return unicode(self.IDuser)
  
     def __repr__(self):
-        return '<User %r>' % (self.username)
+        return '<User %d>' % (self.IDuser)
     
     def get_image(self):
         return 'img/famille.png'

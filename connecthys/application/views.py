@@ -206,7 +206,13 @@ def login():
         
         # Codes d'accès corrects
         if registered_user is not None:
-            app.logger.debug('Connection de l utilisateur %s', form.identifiant.data)
+            app.logger.debug("Connexion de l'utilisateur %s", form.identifiant.data)
+            
+            # Vérifie que le compte internet est actif
+            if registered_user.is_active() == False :
+                app.logger.debug("Tentative de connexion a un compte desactive : Identifiant =", form.identifiant.data)
+                flash(u"Ce compte a été désactivé" , 'error')
+                return redirect(url_for('login'))
             
             # Vérification du mot de passe
             if registered_user.check_password(form.password.data) == False :
@@ -216,13 +222,13 @@ def login():
                 return redirect(url_for('login'))
 
             # Mémorisation du remember_me
-            remember = form.remember.data
+            #remember = form.remember.data
             
             # Mémorisation du user
-            login_user(registered_user, remember=remember)
+            login_user(registered_user, remember=False)
             texte_bienvenue = models.GetParametre(nom="ACCUEIL_BIENVENUE")
             flash(texte_bienvenue)
-            app.logger.debug("Connection reussie de %s", form.identifiant.data)
+            app.logger.debug("Connexion reussie de %s", form.identifiant.data)
             
             return redirect(url_for('accueil'))
             #return redirect(request.args.get('next') or url_for('accueil'))

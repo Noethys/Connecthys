@@ -82,7 +82,8 @@ def Importation(secret=0):
     dengine = db.engine
     dmeta = MetaData(bind=dengine)
     
-    # Lecture de la table des paramètres
+    # Traitement de la table des paramètres
+    app.logger.debug("Traitement de la table parametres...")
     liste_parametres_destination = destination.query(models.Parametre).all()
     dict_parametres_destination = {}
     for parametre in liste_parametres_destination :
@@ -99,10 +100,53 @@ def Importation(secret=0):
             destination.add(models.Parametre(nom=parametre.nom, parametre=parametre.parametre))
     
     destination.commit()    
-            
+     
+    # Traitement de la table users
+    app.logger.debug("Traitement de la table users...")
+    liste_users_destination = destination.query(models.User).all()
+    dict_users_destination = {"familles" : {}, "utilisateurs" : {}}
+    for user in liste_users_destination :
+        if user.IDfamille != None :
+            dict_users_destination["familles"][user.IDfamille] = user
+        if user.IDutilisateur != None :
+            dict_users_destination["utilisateurs"][user.IDutilisateur] = user
+    
+    liste_users_source = source.query(models.User).all()
+    liste_destination = []
+    for user_source in liste_users_source :
+        user_destination = None
+        
+        # Recherche si l'user existe déjà dans la base destination
+        if user_source.IDfamille != None :
+            if dict_users_destination["familles"].has_key(user_source.IDfamille) :
+                user_destination = dict_users_destination["familles"][user_source.IDfamille]
+        if user_source.IDutilisateur != None :
+            if dict_users_destination["utilisateurs"].has_key(user_source.IDutilisateur) :
+                user_destination = dict_users_destination["utilisateurs"][user_source.IDutilisateur]
+        
+        # Si l'user existe déjà, on le modifie si besoin
+        if user_destination != None :
+            if user_destination.identifiant != user_source.identifiant : user_destination.identifiant = user_source.identifiant
+            if user_destination.password != user_source.password : user_destination.password = user_source.password
+            if user_destination.nom != user_source.nom : user_destination.nom = user_source.nom
+            if user_destination.email != user_source.email : user_destination.email = user_source.email
+            if user_destination.actif != user_source.actif : user_destination.actif = user_source.actif
+        
+        # Si l'utilisateur n'existe pas, on le créé :
+        if user_destination == None :
+            destination.add(models.User(identifiant=user_source.identifiant, cryptpassword=user_source.password, nom=user_source.nom, email=user_source.email,  \
+                                                        role=user_source.role, IDfamille=user_source.IDfamille, IDutilisateur=user_source.IDutilisateur, actif=user_source.actif))
+    
+    app.logger.debug("Enregistrement de la table users...")
+
+    destination.commit()    
+    
+    app.logger.debug("Fin de traitement de la table users.")
+
     # Liste des autres tables à transférer
+    app.logger.debug("Traitement des autres tables...")
     tables = [
-        "cotisations_manquantes", "factures", "types_pieces", "users", "pieces_manquantes",
+        "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "consommations", "periodes", "ouvertures", "unites", "inscriptions",
         "groupes", "activites", "individus", "messages",
         ]
@@ -140,7 +184,7 @@ def Importation(secret=0):
 
     # Remplissage des tables (ordre spécial)
     tables = [
-        "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "users", "pieces_manquantes",
+        "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "messages",
         ]
     
@@ -171,5 +215,6 @@ def Importation(secret=0):
     source.close()
     os.remove(os.path.join(basedir, "data/" + os.path.basename(nomFichierDB)))
     
+    app.logger.debug("Fin de l'importation.")
     
     return True
