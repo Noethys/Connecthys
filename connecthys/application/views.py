@@ -126,10 +126,15 @@ def get_version():
     return reponse
 
     
+#@login_manager.user_loader
+#def load_user(id):
+#    return models.User.query.get(int(id))
+    
 @login_manager.user_loader
-def load_user(id):
-    return models.User.query.get(int(id))
-
+def load_user(session_token):
+    if session_token == "None" : return None
+    return models.User.query.filter_by(session_token=session_token).first()
+    
     
 @app.before_request
 def before_request():

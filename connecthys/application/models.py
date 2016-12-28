@@ -137,9 +137,10 @@ class User(Base):
     IDfamille = Column(Integer, index=True)
     IDutilisateur = Column(Integer, index=True)
     actif = Column(Integer)
+    session_token = Column(String(200))
     infos = {}
     
-    def __init__(self , IDuser=None, identifiant=None, decryptpassword=None, cryptpassword=None, nom=None, email=None, role="famille", IDfamille=None, IDutilisateur=None, actif=1):
+    def __init__(self , IDuser=None, identifiant=None, decryptpassword=None, cryptpassword=None, nom=None, email=None, role="famille", IDfamille=None, IDutilisateur=None, actif=1, session_token=None):
         if IDuser != None :
             self.IDuser = IDuser
         self.identifiant = identifiant
@@ -154,6 +155,7 @@ class User(Base):
         self.IDfamille = IDfamille
         self.IDutilisateur = IDutilisateur
         self.actif = actif
+        self.session_token = session_token
  
     def check_password(self, password):
         #resultat = sha256_crypt.verify(password, self.password) # Version passlib
@@ -173,7 +175,8 @@ class User(Base):
         return False
  
     def get_id(self):
-        return unicode(self.IDuser)
+        #return unicode(self.IDuser)
+        return unicode(self.session_token)        
  
     def __repr__(self):
         return '<User %d>' % (self.IDuser)

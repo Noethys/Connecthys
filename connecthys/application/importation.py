@@ -83,7 +83,7 @@ def Importation(secret=0):
     dmeta = MetaData(bind=dengine)
     
     # Traitement de la table des paramètres
-    app.logger.debug("Traitement de la table parametres...")
+    #app.logger.debug("Traitement de la table parametres...")
     liste_parametres_destination = destination.query(models.Parametre).all()
     dict_parametres_destination = {}
     for parametre in liste_parametres_destination :
@@ -102,7 +102,7 @@ def Importation(secret=0):
     destination.commit()    
      
     # Traitement de la table users
-    app.logger.debug("Traitement de la table users...")
+    #app.logger.debug("Traitement de la table users...")
     liste_users_destination = destination.query(models.User).all()
     dict_users_destination = {"familles" : {}, "utilisateurs" : {}}
     for user in liste_users_destination :
@@ -131,20 +131,22 @@ def Importation(secret=0):
             if user_destination.nom != user_source.nom : user_destination.nom = user_source.nom
             if user_destination.email != user_source.email : user_destination.email = user_source.email
             if user_destination.actif != user_source.actif : user_destination.actif = user_source.actif
-        
+            if user_destination.session_token != user_source.session_token : user_destination.session_token = user_source.session_token
+            
         # Si l'utilisateur n'existe pas, on le créé :
         if user_destination == None :
             destination.add(models.User(identifiant=user_source.identifiant, cryptpassword=user_source.password, nom=user_source.nom, email=user_source.email,  \
-                                                        role=user_source.role, IDfamille=user_source.IDfamille, IDutilisateur=user_source.IDutilisateur, actif=user_source.actif))
+                                                        role=user_source.role, IDfamille=user_source.IDfamille, IDutilisateur=user_source.IDutilisateur, actif=user_source.actif, \
+                                                        session_token=user_source.session_token))
     
-    app.logger.debug("Enregistrement de la table users...")
+    #app.logger.debug("Enregistrement de la table users...")
 
     destination.commit()    
     
-    app.logger.debug("Fin de traitement de la table users.")
+    #app.logger.debug("Fin de traitement de la table users.")
 
     # Liste des autres tables à transférer
-    app.logger.debug("Traitement des autres tables...")
+    #app.logger.debug("Traitement des autres tables...")
     tables = [
         "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "consommations", "periodes", "ouvertures", "unites", "inscriptions",
@@ -215,6 +217,6 @@ def Importation(secret=0):
     source.close()
     os.remove(os.path.join(basedir, "data/" + os.path.basename(nomFichierDB)))
     
-    app.logger.debug("Fin de l'importation.")
+    #app.logger.debug("Fin de l'importation.")
     
     return True
