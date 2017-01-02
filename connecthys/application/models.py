@@ -476,6 +476,13 @@ class Individu(Base):
         age = today.year - self.date_naiss.year - ((today.month, today.day) < (self.date_naiss.month, self.date_naiss.day))
         return u"%d ans" % age
         
+    def get_inscriptions(self):
+        liste_inscriptions = []
+        for inscription in self.inscriptions :
+            if inscription.IDfamille == self.IDfamille :
+                liste_inscriptions.append(inscription)
+        return liste_inscriptions
+        
         
 class Inscription(Base):
     __tablename__ = "%sportail_inscriptions" % PREFIXE_TABLES

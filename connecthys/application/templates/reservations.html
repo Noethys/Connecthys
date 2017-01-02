@@ -51,7 +51,7 @@
 			
 				<ul class="nav nav-tabs">
 					{% set index = 1 %}
-					{% for inscription in individu.inscriptions %}
+					{% for inscription in individu.get_inscriptions() %}
 						{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
 							<li {% if index == 1 %}class="active"{% endif %}>
 								<a class="text-{{ couleur }}" href="#tab_{{ inscription.IDinscription }}_{{ index }}" data-toggle="tab">{{ inscription.activite.nom }}</a>
@@ -64,7 +64,7 @@
 				<div class="tab-content no-padding">
 					
 					{% set index = 1 %}
-					{% for inscription in individu.inscriptions %}
+					{% for inscription in individu.get_inscriptions() %}
 						{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
 							<div class="tab-pane {% if index == 1 %}active{% endif %}" id="tab_{{ inscription.IDinscription }}_{{ index }}">
 								<ul class="nav nav-stacked">

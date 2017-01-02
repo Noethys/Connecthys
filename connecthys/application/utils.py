@@ -137,7 +137,7 @@ def GetIconeFichier(nomFichier=""):
     
 def GetNbrePeriodesActives(individu):
     nbre_periodes_actives = 0
-    for inscription in individu.inscriptions :
+    for inscription in individu.get_inscriptions() :
         if inscription.activite.Get_nbre_periodes_actives() > 0 :
             nbre_periodes_actives += 1
     return nbre_periodes_actives

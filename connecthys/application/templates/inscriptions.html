@@ -29,7 +29,7 @@
 	</div>
 	
 	<!-- Liste des inscriptions -->
-	{% if individu.inscriptions|length > 0 %}
+	{% if individu.get_inscriptions()|length > 0 %}
 		<div class="box-footer no-padding">
 			<table class="table table-bordered table-striped no-margin">
 				<tbody>
@@ -38,7 +38,7 @@
 						<th><center>Groupe</center></th>
 					</tr>
 			
-					{% for inscription in individu.inscriptions %}
+					{% for inscription in individu.get_inscriptions() %}
 					<tr>
 						<td><center>{{ inscription.activite.nom }}</center></td>
 						<td><center>{{ inscription.groupe.nom }}</center></td>
