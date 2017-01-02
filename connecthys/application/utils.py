@@ -108,7 +108,7 @@ def GetDictDatesAttente(dict_planning={}):
     dict_dates_attente = {}
     for date, dict_unites in dict_conso_par_unite_resa.iteritems() :
         for unite, etat in dict_unites.iteritems() :
-            if etat == "attente" :
+            if etat == "attente" or etat == "refus" :
                 if not dict_dates_attente.has_key(date) :
                     dict_dates_attente[date] = 0
                 dict_dates_attente[date] += 1

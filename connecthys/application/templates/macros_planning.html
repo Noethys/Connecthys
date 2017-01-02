@@ -31,10 +31,12 @@
 								style="background-color: #f5f5f5;"
 							{% endif %}
 							>
-							{% if etat_case == "absenti" or etat_case == "absentj" or etat_case == "refus" %} 
+							{% if etat_case == "absenti" or etat_case == "absentj" %} 
 								<center><span class="badge bg-red">Absent</span></center>
 							{% elif etat_case == "present" %} 
 								<center><span class="badge bg-green">Présent</span></center>
+							{% elif etat_case == "refus" %} 
+								<center><span class="badge bg-red">Refus</span></center>
 							{% else %} 
 								{% if impression == False %}
 									<center><input type="checkbox" id="case" class="flat-black" data-date="{{ DateDDEnEng(date) }}" data-IDunite={{ unite.IDunite }} {% if etat_coche == True %} checked {% endif %} {% if modification_allowed == False %} disabled {% endif %}></center>

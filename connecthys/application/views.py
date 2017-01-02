@@ -621,6 +621,8 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
                         dict_conso_par_unite_resa[date][unite] = "absenti"
                     elif "absentj" in liste_etats :
                         dict_conso_par_unite_resa[date][unite] = "absentj"
+                    elif "refus" in liste_etats :
+                        dict_conso_par_unite_resa[date][unite] = "refus"
                     else :
                         dict_conso_par_unite_resa[date][unite] = "reservation"
                     
