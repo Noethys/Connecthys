@@ -164,8 +164,11 @@ def Update(version=[], mode="", app=None):
                     try: 
                         os.makedirs(os.path.join(chemin_dest, os.path.dirname(d)))
                     except: pass
+                    nom_fichier_temp = os.path.join(chemin_dest, d)
+                    if os.path.isdir(nom_fichier_temp) :
+                        os.rmdir(nom_fichier_temp)
                     data = zfile.read(i)
-                    fp = open(os.path.join(chemin_dest, d), "wb")
+                    fp = open(nom_fichier_temp, "wb")
                     fp.write(data)
                     fp.close()
 
