@@ -100,9 +100,22 @@ def UpgradeDB():
             
         app.logger.info("Migration ok.")
         app.logger.info("Upgrade de la base de donnees...")
-        flask_migrate.upgrade(directory=REP_MIGRATIONS)
-        app.logger.info("Upgrade ok.")
+        try :
+            flask_migrate.upgrade(directory=REP_MIGRATIONS)
+            app.logger.info("Upgrade ok.")
+        except Exception, err :
+            app.logger.info("Erreur Upgrade.")
+            app.logger.info(err)
             
+            # Si la revision n'existe pas
+            if "Can't locate revision" in str(err) :
+                app.logger.info("Suppression table alembic_version...")
+                result = db.session.execute("DROP TABLE IF EXISTS alembic_version;")
+                app.logger.info("Suppression du repertoire migrations...")
+                shutil.rmtree(REP_MIGRATIONS)
+                flask_migrate.init(directory=REP_MIGRATIONS)
+                flask_migrate.migrate()
+        
     # Mémorisation du nouveau numéro de version dans la DB
     m = Parametre.query.filter_by(nom="version").first()
     m.parametre=app.config["VERSION_APPLICATION"]
@@ -557,8 +570,9 @@ class Groupe(Base):
     nom = Column(String(300))
     ordre = Column(Integer)
     
-    IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
-    activite = relationship("Activite")  
+    #IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
+    #activite = relationship("Activite")  
+    IDactivite = Column(Integer)
 
     def __init__(self , IDgroupe=None, nom=None, IDactivite=None, ordre=None):
         if IDgroupe != None :
@@ -616,11 +630,13 @@ class Ouverture(Base):
     IDouverture = Column(Integer, primary_key=True)
     date = Column(Date)
 
-    IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
-    unite = relationship("Unite")  
+    #IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
+    #unite = relationship("Unite")  
+    IDunite = Column(Integer)
     
-    IDgroupe = Column(Integer, ForeignKey("%sportail_groupes.IDgroupe" % PREFIXE_TABLES))
-    groupe = relationship("Groupe")  
+    #IDgroupe = Column(Integer, ForeignKey("%sportail_groupes.IDgroupe" % PREFIXE_TABLES))
+    #groupe = relationship("Groupe")  
+    IDgroupe = Column(Integer)
     
     def __init__(self , IDouverture=None, date=None, IDunite=None, IDgroupe=None):
         if IDouverture != None :
@@ -639,11 +655,13 @@ class Consommation(Base):
     date = Column(Date)
     etat = Column(String(20))
 
-    IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
-    unite = relationship("Unite")  
+    #IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
+    #unite = relationship("Unite")  
+    IDunite = Column(Integer)
     
-    IDinscription = Column(Integer, ForeignKey("%sportail_inscriptions.IDinscription" % PREFIXE_TABLES))
-    inscription = relationship("Inscription")  
+    #IDinscription = Column(Integer, ForeignKey("%sportail_inscriptions.IDinscription" % PREFIXE_TABLES))
+    #inscription = relationship("Inscription")  
+    IDinscription = Column(Integer)
 
     def __init__(self , IDconsommation=None, date=None, IDunite=None, IDinscription=None, etat=None):
         if IDconsommation != None :

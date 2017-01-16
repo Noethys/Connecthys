@@ -102,7 +102,8 @@ def Importation(secret=0):
     destination.commit()    
      
     # Traitement de la table users
-    #app.logger.debug("Traitement de la table users...")
+    app.logger.debug("Traitement de la table users...")
+    
     liste_users_destination = destination.query(models.User).all()
     dict_users_destination = {"familles" : {}, "utilisateurs" : {}}
     for user in liste_users_destination :
@@ -139,14 +140,14 @@ def Importation(secret=0):
                                                         role=user_source.role, IDfamille=user_source.IDfamille, IDutilisateur=user_source.IDutilisateur, actif=user_source.actif, \
                                                         session_token=user_source.session_token))
     
-    #app.logger.debug("Enregistrement de la table users...")
+    app.logger.debug("Enregistrement de la table users...")
 
     destination.commit()    
     
-    #app.logger.debug("Fin de traitement de la table users.")
+    app.logger.debug("Fin de traitement de la table users.")
 
     # Liste des autres tables à transférer
-    #app.logger.debug("Traitement des autres tables...")
+    app.logger.debug("Traitement des autres tables...")
     tables = [
         "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "consommations", "periodes", "ouvertures", "unites", "inscriptions",
@@ -180,11 +181,15 @@ def Importation(secret=0):
             dengine.execute("DROP TABLE %s" % "%sportail_%s" % (PREFIXE_TABLES, nom_table))
         except :
             pass
-        
+            
+    app.logger.debug("Suppression des tables ok.")
+    
     # Création des tables
     db.create_all()
 
     # Remplissage des tables (ordre spécial)
+    app.logger.debug("Remplissage des autres tables...")
+    
     tables = [
         "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "messages",
@@ -217,6 +222,6 @@ def Importation(secret=0):
     source.close()
     os.remove(os.path.join(basedir, "data/" + os.path.basename(nomFichierDB)))
     
-    #app.logger.debug("Fin de l'importation.")
+    app.logger.debug("Fin de l'importation.")
     
     return True
