@@ -345,10 +345,12 @@
 				opens: "right",
 				alwaysShowCalendars: true,
 				showWeekNumbers: false,
-				startDate: '{{ DateEngFr(dict_planning["liste_dates"][0]) }}',
-				endDate: '{{ DateEngFr(dict_planning["liste_dates"][-1]) }}',
-				minDate: '{{ DateEngFr(dict_planning["liste_dates"][0]) }}',
-				maxDate: '{{ DateEngFr(dict_planning["liste_dates"][-1]) }}',
+				{% if dict_planning["liste_dates"]|length > 0 %}
+					startDate: '{{ DateEngFr(dict_planning["liste_dates"][0]) }}',
+					endDate: '{{ DateEngFr(dict_planning["liste_dates"][-1]) }}',
+					minDate: '{{ DateEngFr(dict_planning["liste_dates"][0]) }}',
+					maxDate: '{{ DateEngFr(dict_planning["liste_dates"][-1]) }}',
+				{% endif %}
 				locale: {
 					"format": "DD/MM/YYYY",
 					"separator": " - ",
