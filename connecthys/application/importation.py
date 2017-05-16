@@ -151,7 +151,7 @@ def Importation(secret=0):
     tables = [
         "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "consommations", "periodes", "ouvertures", "unites", "inscriptions",
-        "groupes", "activites", "individus", "messages",
+        "groupes", "activites", "individus", "messages", "regies",
         ]
     
     # Recherche si des actions sont présentes
@@ -192,7 +192,7 @@ def Importation(secret=0):
     
     tables = [
         "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
-        "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "messages",
+        "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "messages", "regies",
         ]
     
     if "mysql" in to_db :

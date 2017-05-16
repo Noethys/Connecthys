@@ -218,10 +218,12 @@ class Facture(Base):
     montant = Column(Float)
     montant_regle = Column(Float)
     montant_solde = Column(Float)
+    IDregie = Column(Integer)
+    en_cours_paiement = Column(Integer)
     
     def __init__(self , IDfacture=None, IDfamille=None, numero=None, date_edition=None, \
                         date_debut=None, date_fin=None, montant=0.0, montant_regle=0.0, \
-                        montant_solde=0.0):
+                        montant_solde=0.0, IDregie=0, en_cours_paiement=0):
         if IDfacture != None :
             self.IDfacture = IDfacture
         self.IDfamille = IDfamille
@@ -232,13 +234,51 @@ class Facture(Base):
         self.montant = montant
         self.montant_regle = montant_regle
         self.montant_solde = montant_solde
+        self.IDregie = IDregie
+        self.en_cours_paiement = en_cours_paiement
  
     def __repr__(self):
         return '<Facture %d>' % (self.IDfacture)
-
         
     
    
+class Paiement(Base):
+    __tablename__ = "%sportail_paiements" % PREFIXE_TABLES
+    IDpaiement = Column(Integer, primary_key=True)
+    factures_ID = Column(String(50))
+    IDfamille = Column(Integer, index=True)
+    IDtransaction = Column(String(50))
+    refdet = Column(String(50))
+    montant = Column(Float)
+    objet = Column(String(50))
+    saisie = Column(String(5))
+    resultrans = Column(String(5))
+    numauto = Column(String(10))
+    dattrans = Column(String(15))
+    heurtrans = Column(String(15))
+
+    def __init__(self, IDpaiement=None, factures_ID=None, IDfamille=None, IDtransaction=None, refdet=None, \
+                        montant = 0.0, objet=None, saisie=None, resultrans=None, numauto=None, \
+                        dattrans=None, heurtrans=None):
+        if IDpaiement != None :
+            self.IDpaiement = IDpaiement
+            self.factures_ID = factures_ID
+            self.IDfamille = IDfamille
+            self.IDtransaction = IDtransaction
+            self.refdet = refdet
+            self.montant = montant
+            self.objet = objet
+            self.saisie = saisie
+            self.resultrans = resultrans
+            self.numauto = numauto
+            self.dattrans = dattrans
+            self.heurtrans = heurtrans
+
+    def __repr__(self):
+        return '<Paiement %d>' % (self.IDpaiement)
+
+
+
 class Action(Base):
     __tablename__ = "%sportail_actions" % PREFIXE_TABLES
     IDaction = Column(Integer, primary_key=True)
@@ -752,6 +792,24 @@ class Message(Base):
         
         
         
+class Regie(Base) :
+    __tablename__ = "%sportail_regies" % PREFIXE_TABLES
+    IDregie = Column(Integer, primary_key=True)
+    nom = Column(String(255))
+    numclitipi = Column(String(8))
+    email_regisseur = Column(String(255))
+
+    def __init__(self, IDregie=None, nom=None, numclitipi=None, email_regisseur=None) :
+        if IDregie != None :
+            self.IDregie = IDregie
+            self.nom = nom
+            self.numclitipi = numclitipi
+            self.email_regisseur = email_regisseur
+
+    def __repr__(self):
+        return '<IDregie %d>' % (self.IDregie)
+
+
         
 def GetParametre(nom="", dict_parametres=None, defaut=""):
     parametre = None

@@ -19,10 +19,12 @@
 			<div class="callout callout-danger">
 				<h5><i class="icon fa fa-warning"></i>  Il reste {{ nbre_factures_impayees }} facture{% if nbre_factures_impayees > 1 %}s{% endif %} à régler pour un montant total de <strong>{{ Formate_montant(montant_factures_impayees) }}</strong></h5>
 			</div>
-			{% endif %}
+			
 			
 			{# Paiement en ligne #}
 			{{ macros_paiement_ligne.paiement_ligne_body() }}
+
+			{% endif %}
 				  
 			<div class="box box-primary">
 				<div class="box-header with-border">
@@ -53,8 +55,8 @@
 									<td><center>{{ DateDDEnFr(facture.date_fin) }}</center></td>
 									<td><center>{{ facture.numero }}</center></td>
 									<td><center>{{ Formate_montant(facture.montant) }}</center></td>
-									<td><center>{{ Formate_montant(facture.montant_regle) }}</center></td>
-									<td><center><span class="badge bg-{% if facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
+									<td><center>{% if facture.en_cours_paiement == "1" %}<span class="badge bg-yellow">{{ Formate_montant(facture.montant_regle) }}</span>{% else %}{{ Formate_montant(facture.montant_regle) }}{% endif %}</center></td>
+									<td><center><span class="badge bg-{% if facture.en_cours_paiement == "1" %}yellow{% elif facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
 									<td><center>
 										<button type="button" class="btn btn-box-tool" data-toggle="modal" data-target="#modal_recevoir_document" data-id="{{ facture.IDfacture }}" data-info="{{ facture.numero }}" title="Recevoir un exemplaire de cette facture par Email ou par la Poste">
 										<i class="fa fa-download"></i></button>
