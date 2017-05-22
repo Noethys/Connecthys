@@ -447,10 +447,9 @@ def effectuer_paiement_en_ligne():
                 refdet=infos_facture["Numero"],
                 objet="Paiement " + regie.nom.encode("ascii", 'ignore'),
                 email=current_user.email,
-                #urlcl=url_for('retour_tipi', _external=True),
-                urlcl='http://www.billy-berclau.fr/retour_tipi',
+                urlcl=url_for('retour_tipi', _external=True),
                 saisie=saisie)
-            app.logger.debug("Page PAIEMENT_EN_LIGNE (%s): requete: %s // systeme_paiement(%s)", current_user.identifiant, requete, systeme_paiement)
+            app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): requete: %s // systeme_paiement(%s)", current_user.identifiant, requete, systeme_paiement)
             description = u'Paiement en ligne de la facture n° %s pour un montant de %s €: TransactionID %s' % (infos_facture["Numero"], infos_facture["Solde"], requete[0])
 
             m = models.Paiement(IDfamille=current_user.IDfamille, factures_ID=IDfactures_a_debiter, IDtransaction=requete[0], refdet=infos_facture["Numero"], montant=montant_reglement, objet=requete[3], saisie=saisie)
@@ -460,7 +459,7 @@ def effectuer_paiement_en_ligne():
         flash(u"Votre demande de paiement en ligne d une facture est en cours")
         return jsonify(success=1, urltoredirect=requete[2])
     except Exception, erreur:
-        app.logger.debug("Page PAIEMENT_EN_LIGNE (%s): ERREUR: %s)", current_user.identifiant, erreur)
+        app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): ERREUR: %s)", current_user.identifiant, erreur)
         return jsonify(success=0, error_msg=str(erreur))
 
 

@@ -62,55 +62,17 @@
 				
 				</br>
 				<div>
-<!--
-				Montant du règlement : <strong><span class="total">{{ Formate_montant(montant_factures_impayees) }}</span></strong>
--->
-				Montant du règlement : <strong><span class="total">{% if montant_reglement is defined %}{{ Formate_montant(montant_reglement) }}{% endif %}</span></strong>
+				    Montant du règlement : <strong><span class="total">{% if montant_reglement is defined %}{{ Formate_montant(montant_reglement) }}{% endif %}</span></strong>
 				</div>
-				
 			</div>
-			
 		  </div>
 		  <div class="modal-footer">
 			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
 			<a target='_blank' href='' class='btn btn-primary' id='validation-paiement-en-ligne'>Valider</a>
-			<!--<button type="button" class="btn btn-primary" data-dismiss="modal" data-toggle="modal" data-target="#modal_paiement_factures" data-montant="{{ montant_reglement }}">Valider</button>-->
 		  </div>
 		</div>
 	  </div>
 	</div>
-
-	<!-- Modal : Validation paiement en ligne factures-->
-	<!--<div class="modal fade" id="modal_paiement_factures" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-	  <div class="modal-dialog" role="document">
-		<div class="modal-content">
-		  <div class="modal-header">
-			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-			<h4 class="modal-title" id="myModalLabel">Règlement en ligne de facture</h4>
-		  </div>
-		  <div class="modal-body">
-			<form action={{ action }} method="post">
-				<input type='hidden' id="id" value=0>
-				<input type='hidden' id="liste_factures" value=''>
-				<input type='hidden' id="montant_reglement" value=''>
-				<textarea id="message" class="form-control" rows="2" maxlength="100" placeholder="" readonly></textarea>-->
-				<!--
-				<textarea id="message_erreur" class="form-control" rows="2" maxlength="100" placeholder="" readonly></textarea>
-				
-				<iframe frameborder='0' noresize='noresize' style='position: absolute; width:900px; height:700px; background: transparent;' src="http://www.billy-berclau.fr"></iframe>
-				-->
-				<!--<a href="http://www.billy-berclau.fr" target="_blank">test</a>
-			</form>
-
-		  </div>
-		  <div class="modal-footer">
-			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
-			<button type="button" class="btn btn-primary" data-dismiss="modal" id="confirmation_paiement_en_ligne">Valider</button>
-		  </div>
-		</div>
-	  </div>
-	</div>-->
-
 	{% endif %}
 
 {% endmacro %}
@@ -137,6 +99,7 @@ Mise à jour du bandeau sur la page factures
 	</script>
 
 {% if GetParametre('PAIEMENT_EN_LIGNE_MULTI_FACTURES', dict_parametres) != 'True' %}
+
 <!--
 Sélection d une seule facture si multi factures non actif
 -->
@@ -155,6 +118,7 @@ Sélection d une seule facture si multi factures non actif
 
 <!--
 Mise à jour du montant sur le modal Sélection factures
+Validation du paiement en ligne
 -->
 	<script type="text/javascript">
 		$(document).ready(function() {
@@ -188,13 +152,6 @@ Mise à jour du montant sur le modal Sélection factures
 				success: function(data) {
 					$('#modal_paiement_factures').modal('hide');
 					$('#validation-paiement-en-ligne').attr('href', data.urltoredirect);
-					/*$('#validation-paiement-en-ligne').click();*/
-					/*var paiementpage = window.open(data.urltoredirect, '_blank');
-					if (paiementpage) {
-						paiementpage.focus()
-					} else {
-						alert('Veuillez accepter les popups pour ce site');
-					}*/
 					// Recharge la page
 					location.href = "{{ url_for('accueil') }}"
 				},
@@ -210,48 +167,6 @@ Mise à jour du montant sur le modal Sélection factures
 		});
 	</script>
 
-<!--
-Validation du paiement en ligne
-
-        <script type="text/javascript">
-		$(document).ready(function() {
-            	    // Validation du paiement en ligne
-            	    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-            	    $(function() {
-                        $('#confirmation_paiement_en_ligne').bind('click tap', function(event) {
-                                $.ajax({
-                                  type: 'GET',
-                                  dataType: "json",
-                                  contentType: "application/json; charset=utf-8",
-                                  url: $SCRIPT_ROOT + '{{ route }}',
-
-                                  data: {
-                                        id: $('#id').val(),
-					liste_factures: $('#liste_factures').val(),
-					montant_reglement: $('#montant_reglement').val(),
-                                        },
-                                  success: function(data) {
-                                                // Cache la fenêtre modale
-                                                $('#modal_paiement_factures').modal('hide');
-						var paiementpage = window.open(data.urltoredirect, '_blank');
-						if (paiementpage) {
-						    paiementpage.focus()
-						} else {
-						    alert('Veuillez accepter les popups pour ce site');
-						}
-                                    		// Recharge la page
-						location.href = "{{ url_for(page) }}"
-                                                },
-                                  error: function(data) {
-                                                // Affiche un message d'erreur dans la fenêtre modale
-                                                $('#message_erreur').text('Erreur: ' + data.error_msg);
-                                  }
-                                });
-                        });
-            	    });
-		});
-        </script>
--->
 	{% endif %}
 	
 {% endmacro %}

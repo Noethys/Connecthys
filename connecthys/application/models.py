@@ -262,17 +262,17 @@ class Paiement(Base):
                         dattrans=None, heurtrans=None):
         if IDpaiement != None :
             self.IDpaiement = IDpaiement
-            self.factures_ID = factures_ID
-            self.IDfamille = IDfamille
-            self.IDtransaction = IDtransaction
-            self.refdet = refdet
-            self.montant = montant
-            self.objet = objet
-            self.saisie = saisie
-            self.resultrans = resultrans
-            self.numauto = numauto
-            self.dattrans = dattrans
-            self.heurtrans = heurtrans
+        self.factures_ID = factures_ID
+        self.IDfamille = IDfamille
+        self.IDtransaction = IDtransaction
+        self.refdet = refdet
+        self.montant = montant
+        self.objet = objet
+        self.saisie = saisie
+        self.resultrans = resultrans
+        self.numauto = numauto
+        self.dattrans = dattrans
+        self.heurtrans = heurtrans
 
     def __repr__(self):
         return '<Paiement %d>' % (self.IDpaiement)
@@ -802,9 +802,9 @@ class Regie(Base) :
     def __init__(self, IDregie=None, nom=None, numclitipi=None, email_regisseur=None) :
         if IDregie != None :
             self.IDregie = IDregie
-            self.nom = nom
-            self.numclitipi = numclitipi
-            self.email_regisseur = email_regisseur
+        self.nom = nom
+        self.numclitipi = numclitipi
+        self.email_regisseur = email_regisseur
 
     def __repr__(self):
         return '<IDregie %d>' % (self.IDregie)
