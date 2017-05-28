@@ -188,7 +188,7 @@ if __name__ == '__main__':
             exer=9999,
             refdet=999900000000999999,
             objet='test bog',
-            email='eguerin@billy-berclau.fr',
+            email='test@test.test',
             urlcl='http://127.0.0.1/tipi_urlcl',
             saisie='T')
-    print p.response('objet=test bog&montant=12312&saisie=T&mel=eguerin%40billy-berclau.fr&numcli=12345&exer=9999&refdet=999900000000999999&resultrans=P')
+    print p.response('objet=test bog&montant=12312&saisie=T&mel=test%40test.test&numcli=12345&exer=9999&refdet=999900000000999999&resultrans=P')

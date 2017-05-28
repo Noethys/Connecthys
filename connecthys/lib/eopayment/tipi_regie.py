@@ -192,7 +192,7 @@ if __name__ == '__main__':
             exer=2016,
             refdet='2016CANT_0009',
             objet='test bog',
-            email='eguerin@billy-berclau.fr',
-            urlcl='http://www.billy-berclau.fr/tipi_return.php',
+            email='test@test.test',
+            urlcl='http://www.test.test/tipi_return.php',
             saisie='T')
-    #print p.response('objet=test bog&montant=12312&saisie=T&mel=eguerin%40billy-berclau.fr&numcli=12345&exer=9999&refdet=999900000000999999&resultrans=P')
+    #print p.response('objet=test bog&montant=12312&saisie=T&mel=test%40test.test&numcli=12345&exer=9999&refdet=999900000000999999&resultrans=P')
