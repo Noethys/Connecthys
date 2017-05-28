@@ -86,8 +86,8 @@ if config_ok == True :
     AdminLTE(app)
 
     # Flask-WTF csrf protection
-    from flask_wtf.csrf import CsrfProtect 
-    csrf = CsrfProtect()  
+    from flask_wtf.csrf import CSRFProtect 
+    csrf = CSRFProtect()  
     csrf.init_app(app)
 
     # Import des views et des models
