@@ -91,7 +91,7 @@ if config_ok == True :
     csrf.init_app(app)
 
     # Import des views et des models
-    import views, models, utils
+    import models, views, utils
 
     # Recherche la version de la base de données
     versionDB = models.GetVersionDB()
