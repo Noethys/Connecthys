@@ -417,6 +417,7 @@ def effectuer_paiement_en_ligne():
                     dict_facture_a_debiter[ID_a_debiter]['Numero'] = facture.numero
                     dict_facture_a_debiter[ID_a_debiter]['IDregie'] = facture.IDregie
                     dict_facture_a_debiter[ID_a_debiter]['en_cours_paiement'] = facture.en_cours_paiement
+                    dict_facture_a_debiter[ID_a_debiter]['date_debut'] = facture.date_debut
                     if facture.en_cours_paiement == "1" :
                         for paiement in liste_paiements :
                             if paiement.IDfacture == facture.IDfacture :
@@ -443,7 +444,7 @@ def effectuer_paiement_en_ligne():
             app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE : infos_facture: (%s) regie.nom: (%s) type(regie.nom): (%s) regie.numclitipi: (%s)", infos_facture, regie.nom, type(regie.nom), regie.numclitipi)
             p = Payment(systeme_paiement, {'numcli': regie.numclitipi})
             requete = p.request(amount=str(montant_reglement),
-                exer='2017',
+                exer=str(infos_facture["date_debut"].year()),
                 refdet=infos_facture["Numero"],
                 objet="Paiement " + regie.nom.encode("ascii", 'ignore'),
                 email=current_user.email,
