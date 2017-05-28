@@ -8,16 +8,16 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-from flask_wtf import Form  
+from flask_wtf import FlaskForm  
 from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField
 
 
-class LoginForm(Form):  
+class LoginForm(FlaskForm):  
     identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
     password  = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=10)])
     remember = BooleanField("remember", default=False)
 
-class RetourTipi(Form):
+class RetourTipi(FlaskForm):
     NUMCLI = TextField('numcli', [validators.Required(), validators.Length(min=0, max=20)])
     EXER = TextField('exer', [validators.Required(), validators.Length(min=0, max=4)])
     REFDET = TextField('refdet', [validators.Required(), validators.Length(min=0, max=30)])
