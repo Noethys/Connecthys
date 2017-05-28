@@ -1098,7 +1098,7 @@ def envoyer_demande_inscription():
         # Vérifie que l'individu n'est pas déjà inscrit
         inscription = models.Inscription.query.filter_by(IDindividu=IDindividu, IDactivite=IDactivite).first()
         if inscription != None :
-            return jsonify(success=0, error_msg=u"%s est déjà inscrit(e) à l'activité sélectionnée !" % inscription.individu.prenom)
+            return jsonify(success=0, error_msg=u"%s est déjà inscrit(e) à l'activité sélectionnée !" % inscription.get_individu().prenom)
                     
         # Enregistrement
         individu = models.Individu.query.filter_by(IDindividu=IDindividu).first()

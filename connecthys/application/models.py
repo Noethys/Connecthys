@@ -501,8 +501,6 @@ class Individu(Base):
     date_naiss = Column(Date)
     IDcivilite = Column(Integer)
     
-    inscriptions = relationship("Inscription")
-    
     def __init__(self , IDrattachement=None, IDindividu=None, IDfamille=None, prenom=None, date_naiss=None, IDcivilite=None):
         if IDrattachement != None :
             self.IDrattachement = IDrattachement
@@ -530,20 +528,14 @@ class Individu(Base):
         return u"%d ans" % age
         
     def get_inscriptions(self):
-        liste_inscriptions = []
-        for inscription in self.inscriptions :
-            if inscription.IDfamille == self.IDfamille :
-                liste_inscriptions.append(inscription)
-        return liste_inscriptions
+        return Inscription.query.filter_by(IDfamille=self.IDfamille, IDindividu=self.IDindividu).all()
         
         
 class Inscription(Base):
     __tablename__ = "%sportail_inscriptions" % PREFIXE_TABLES
     IDinscription = Column(Integer, primary_key=True)
     IDfamille = Column(Integer, index=True)
-
-    IDindividu = Column(Integer, ForeignKey("%sportail_individus.IDindividu" % PREFIXE_TABLES))
-    individu = relationship("Individu")  
+    IDindividu = Column(Integer, index=True)
 
     IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
@@ -561,6 +553,10 @@ class Inscription(Base):
         
     def __repr__(self):
         return '<IDinscription %d>' % (self.IDinscription)
+
+    def get_individu(self):
+        individu = Individu.query.filter_by(IDindividu=self.IDindividu).first()
+        return individu
 
 
                     
@@ -609,9 +605,6 @@ class Groupe(Base):
     IDgroupe = Column(Integer, primary_key=True)
     nom = Column(String(300))
     ordre = Column(Integer)
-    
-    #IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
-    #activite = relationship("Activite")  
     IDactivite = Column(Integer)
 
     def __init__(self , IDgroupe=None, nom=None, IDactivite=None, ordre=None):
@@ -669,13 +662,7 @@ class Ouverture(Base):
     __tablename__ = "%sportail_ouvertures" % PREFIXE_TABLES
     IDouverture = Column(Integer, primary_key=True)
     date = Column(Date)
-
-    #IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
-    #unite = relationship("Unite")  
     IDunite = Column(Integer)
-    
-    #IDgroupe = Column(Integer, ForeignKey("%sportail_groupes.IDgroupe" % PREFIXE_TABLES))
-    #groupe = relationship("Groupe")  
     IDgroupe = Column(Integer)
     
     def __init__(self , IDouverture=None, date=None, IDunite=None, IDgroupe=None):
@@ -694,13 +681,7 @@ class Consommation(Base):
     IDconsommation = Column(Integer, primary_key=True)
     date = Column(Date)
     etat = Column(String(20))
-
-    #IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
-    #unite = relationship("Unite")  
     IDunite = Column(Integer)
-    
-    #IDinscription = Column(Integer, ForeignKey("%sportail_inscriptions.IDinscription" % PREFIXE_TABLES))
-    #inscription = relationship("Inscription")  
     IDinscription = Column(Integer)
 
     def __init__(self , IDconsommation=None, date=None, IDunite=None, IDinscription=None, etat=None):
@@ -720,16 +701,8 @@ class Reservation(Base):
     IDreservation = Column(Integer, primary_key=True)
     date = Column(Date)
     etat = Column(Integer)
-    
-    #IDinscription = Column(Integer, ForeignKey("%sportail_inscriptions.IDinscription" % PREFIXE_TABLES))
-    #inscription = relationship("Inscription")  
-    
-    #IDunite = Column(Integer, ForeignKey("%sportail_unites.IDunite" % PREFIXE_TABLES))
-    #unite = relationship("Unite")  
-    
     IDinscription = Column(Integer)
     IDunite = Column(Integer)
-    
     IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
     action = relationship("Action")  
     

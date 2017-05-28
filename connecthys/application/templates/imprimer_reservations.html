@@ -37,7 +37,7 @@
 
 <body onload="window.print();">
 	
-	<h3><center>Liste des réservations de {{ dict_planning["inscription"].individu.prenom }}</center></h3>
+	<h3><center>Liste des réservations de {{ dict_planning["inscription"].get_individu().prenom }}</center></h3>
 	
 	<ul>
 		<li>Activité : {{ dict_planning["periode"].activite.nom }}</li>

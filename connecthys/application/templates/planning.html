@@ -17,7 +17,7 @@
 	<!-- Widget: user widget style 1 -->
 	<div class="box box-widget widget-user">
 	<!-- Add the bg color to the header using any of the bg-* classes -->
-	{% set individu = dict_planning["inscription"].individu %}
+	{% set individu = dict_planning["inscription"].get_individu() %}
 	<div class="widget-user-header bg-{{ dict_planning['couleur'] }}">
 	  <h3 class="widget-user-username">{{ individu.prenom }}</h3>
 	  <h5 class="widget-user-desc">{{ individu.get_date_naiss() }}&nbsp;</h5>
