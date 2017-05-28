@@ -13,6 +13,19 @@ from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTim
 
 
 class LoginForm(Form):  
-   identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
-   password  = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=10)])
-   remember = BooleanField("remember", default=False)
+    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
+    password  = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=10)])
+    remember = BooleanField("remember", default=False)
+
+class RetourTipi(Form):
+    NUMCLI = TextField('numcli', [validators.Required(), validators.Length(min=0, max=20)])
+    EXER = TextField('exer', [validators.Required(), validators.Length(min=0, max=4)])
+    REFDET = TextField('refdet', [validators.Required(), validators.Length(min=0, max=30)])
+    OBJET = TextField('objet', [validators.Required(), validators.Length(min=0, max=30)])
+    MONTANT = TextField('montant', [validators.Required(), validators.Length(min=0, max=20)])
+    MEL = TextField('mel', [validators.Required(), validators.Length(min=0, max=30)])
+    SAISIE = TextField('saisie', [validators.Required(), validators.Length(min=0, max=5)])
+    RESULTRANS = TextField('resultrans', [validators.Required(), validators.Length(min=0, max=50)])
+    NUMAUTO = TextField('numauto', [validators.Required(), validators.Length(min=0, max=20)])
+    DATTRANS = TextField('dattrans', [validators.Required(), validators.Length(min=0, max=20)])
+    HEURTRANS = TextField('heurtrans', [validators.Required(), validators.Length(min=0, max=20)])
