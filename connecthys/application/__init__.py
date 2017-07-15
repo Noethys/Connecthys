@@ -86,7 +86,11 @@ if config_ok == True :
     AdminLTE(app)
 
     # Flask-WTF csrf protection
-    from flask_wtf.csrf import CSRFProtect 
+    try :
+        from flask_wtf.csrf import CSRFProtect
+    except :
+        # Pour compatibilité avec anciennes versions de flask_wtf
+        from flask_wtf.csrf import CsrfProtect as CSRFProtect
     csrf = CSRFProtect()  
     csrf.init_app(app)
 

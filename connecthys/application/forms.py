@@ -8,7 +8,12 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-from flask_wtf import FlaskForm  
+try :
+    from flask_wtf import FlaskForm
+except :
+    # Pour la compatibilité avec les anciennes version de flask_wtf
+    from flask_wtf import Form as FlaskForm
+
 from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField
 
 

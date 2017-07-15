@@ -11,7 +11,11 @@
 import random, datetime, traceback
 from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response, send_from_directory
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
-from flask_wtf import CSRFProtect
+try :
+    from flask_wtf import CSRFProtect
+except :
+    # Pour compatibilité avec anciennes versions de flask_wtf
+    from flask_wtf import CsrfProtect
 from application import app, login_manager, db
 from application import models, forms, utils, updater, exemples
 from sqlalchemy import func
