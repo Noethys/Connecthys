@@ -53,10 +53,12 @@
 			<p>Aucune inscription</p>
 		</div>
 	{% endif %}
-	
+		
+	{% if HasActivitesDisponiblesPourInscriptions(liste_activites) == True %}
 	<div class="box-footer no-margin">
 		<span class="pull-right"><a href="#" id="demander_inscription" data-toggle="modal" data-target="#modal_demander_inscription" data-idindividu="{{ individu.IDindividu }}" class="btn btn-primary btn-xs" title="Inscrire {{ individu.prenom }} à une activité">Inscrire à une activité</a></span>
 	</div>
+	{% endif %}
 
 </div>
 {% endfor %}

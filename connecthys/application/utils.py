@@ -175,7 +175,18 @@ def EstFerie(date=None, dict_planning={}):
                 return True
     return False
 
+def HasActivitesDisponiblesPourInscriptions(liste_activites=[]):
+    for activite in liste_activites :
+        if activite.inscriptions_affichage == 1 and (activite.inscriptions_date_debut == None or (activite.inscriptions_date_debut <= GetNow() and activite.inscriptions_date_fin >= GetNow())) :
+            return True
+    return False
 
+    
+    
+    
+    
+    
+    
 
     
 def CallFonction(fonction="", *args):
@@ -208,5 +219,6 @@ def utility_processor():
         GetParametre=GetParametre,
         GetJoursOuverts=GetJoursOuverts,
         EstFerie=EstFerie,
+        HasActivitesDisponiblesPourInscriptions=HasActivitesDisponiblesPourInscriptions,
         )
     
