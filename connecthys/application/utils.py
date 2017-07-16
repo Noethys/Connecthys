@@ -62,7 +62,7 @@ def IsUniteOuverte(unite=None, date=None, dict_planning={}):
 
 def IsUniteModifiable(unite=None, date=None, dict_planning={}):
     # Recherche si l'activité autorise la modification
-    modification_allowed = unite.activite.Is_modification_allowed(date)
+    modification_allowed = unite.activite.Is_modification_allowed(date, dict_planning)
     
     # Recherche si la date est passée
     if date < datetime.date.today() : 
@@ -162,6 +162,19 @@ def GetJoursOuverts(dict_planning={}):
     liste_jours.sort()
     return liste_jours
 
+def EstFerie(date=None, dict_planning={}):
+    jour = date.day
+    mois = date.month
+    annee = date.year        
+    for ferie in dict_planning["liste_feries"] :
+        if ferie.type == "fixe" :
+            if ferie.jour == jour and ferie.mois == mois :
+                return True
+        else:
+            if ferie.jour == jour and ferie.mois == mois and ferie.annee == annee :
+                return True
+    return False
+
 
 
     
@@ -194,5 +207,6 @@ def utility_processor():
         GetNbrePeriodesActives=GetNbrePeriodesActives,
         GetParametre=GetParametre,
         GetJoursOuverts=GetJoursOuverts,
+        EstFerie=EstFerie,
         )
     

@@ -720,6 +720,9 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
     # Ouvertures
     liste_ouvertures = models.Ouverture.query.filter(models.Ouverture.IDgroupe == inscription.IDgroupe, models.Ouverture.date >= periode.date_debut, models.Ouverture.date <= periode.date_fin).all()
     
+    # Fériés
+    liste_feries = models.Ferie.query.all()
+    
     # Dates
     liste_dates = []
     dict_ouvertures = {}
@@ -866,6 +869,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
         "liste_unites" : liste_unites,
         "liste_dates" : liste_dates,
         "dict_ouvertures" : dict_ouvertures,
+        "liste_feries" : liste_feries,
         "dict_consommations" : dict_consommations,
         "dict_conso_par_unite_resa" : dict_conso_par_unite_resa,
         "dict_reservations" : dict_reservations,

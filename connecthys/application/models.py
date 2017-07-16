@@ -482,13 +482,37 @@ class Activite(Base):
                 nbre += 1
         return nbre
     
-    def Is_modification_allowed(self, date=None):
+    def Is_modification_allowed(self, date=None, dict_planning={}):
         """ Demande s'il est possible d'ajouter, modifier ou supprimer la réservation en fonction de la date """
         if self.reservations_limite != None :
-            nbre_jours, heure = self.reservations_limite.split("#")
-            dt_limite = datetime.datetime(year=date.year, month=date.month, day=date.day, hour=int(heure[:2]), minute=int(heure[3:])) - datetime.timedelta(days=int(nbre_jours))
-            if datetime.datetime.now() > dt_limite :
+            limite = self.reservations_limite.split("#")
+            nbre_jours = int(limite[0])
+            heure = limite[1]
+            if len(limite) > 2 :
+                options = limite[2]
+            else :
+                options = ""
+            
+            date_limite = datetime.datetime(year=date.year, month=date.month, day=date.day, hour=int(heure[:2]), minute=int(heure[3:]))
+            x = 1
+            while x <= nbre_jours :
+                date_limite = date_limite - datetime.timedelta(days=1)
+                date_valide = True
+                
+                # Vérifie que la date est hors week-end
+                if "weekends" in options and date_limite.weekday() in (5, 6) :
+                    date_valide = False
+                    
+                # Vérifie que la date est hors fériés
+                if "feries" in options and utils.CallFonction("EstFerie", date_limite, dict_planning) == True :
+                    date_valide = False
+                    
+                if date_valide == True :
+                    x += 1
+            
+            if datetime.datetime.now() > date_limite :
                 return False
+                
         return True
         
         
@@ -674,8 +698,30 @@ class Ouverture(Base):
         
     def __repr__(self):
         return '<IDouverture %d>' % (self.IDouverture)
+       
+       
+class Ferie(Base):
+    __tablename__ = "%sportail_feries" % PREFIXE_TABLES
+    IDferie = Column(Integer, primary_key=True)
+    type = Column(String(10))
+    nom = Column(String(100))
+    jour = Column(Integer)
+    mois = Column(Integer)
+    annee = Column(Integer)
+    
+    def __init__(self , IDferie=None, type=None, nom=None, jour=None, mois=None, annee=None):
+        if IDferie != None :
+            self.IDferie = IDferie
+        self.type = type
+        self.nom = nom
+        self.jour = jour
+        self.mois = mois
+        self.annee = annee
         
-
+    def __repr__(self):
+        return '<IDferie %d>' % (self.IDferie)       
+        
+        
 class Consommation(Base):
     __tablename__ = "%sportail_consommations" % PREFIXE_TABLES
     IDconsommation = Column(Integer, primary_key=True)

@@ -150,7 +150,7 @@ def Importation(secret=0):
     app.logger.debug("Traitement des autres tables...")
     tables = [
         "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
-        "reglements", "consommations", "periodes", "ouvertures", "unites", "inscriptions",
+        "reglements", "consommations", "periodes", "ouvertures", "feries", "unites", "inscriptions",
         "groupes", "activites", "individus", "messages", "regies",
         ]
     
@@ -192,7 +192,7 @@ def Importation(secret=0):
     
     tables = [
         "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
-        "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "messages", "regies",
+        "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "feries", "messages", "regies",
         ]
     
     if "mysql" in to_db :
