@@ -1064,7 +1064,7 @@ def inscriptions():
     
     liste_individus = []
     for individu in liste_individus_temp :
-        if len(individu.get_inscriptions()) > 0 :
+        if True :#len(individu.get_inscriptions()) > 0 :
             # Attribution d'une couleur
             index_couleur = random.randint(0, len(COULEURS)-1)
             individu.index_couleur = index_couleur
