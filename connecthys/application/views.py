@@ -1086,6 +1086,10 @@ def renseignements():
     # Recherche l'historique des demandes liées aux renseignements
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="renseignements")
     dict_parametres = models.GetDictParametres()
+    
+    if dict_parametres["RENSEIGNEMENTS_AFFICHER"] == 'False' :
+        return redirect(url_for('accueil'))
+    
     app.logger.debug("Page RENSEIGNEMENTS (%s): famille id(%s) liste_individus: %s", current_user.identifiant, current_user.IDfamille, liste_individus)
     return render_template('renseignements.html', active_page="renseignements", \
                             liste_individus = liste_individus, \
