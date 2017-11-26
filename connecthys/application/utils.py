@@ -181,9 +181,17 @@ def HasActivitesDisponiblesPourInscriptions(liste_activites=[]):
             return True
     return False
 
+def ConvertToUnicode(valeur=None):
+    if valeur == None :
+        return ""
+    else :
+        return valeur
     
-    
-    
+def GetIndividu(IDindividu=None, liste_individus=[]):
+    for individu in liste_individus :
+        if individu.IDindividu == IDindividu :
+            return individu
+    return None
     
     
     
@@ -220,5 +228,7 @@ def utility_processor():
         GetJoursOuverts=GetJoursOuverts,
         EstFerie=EstFerie,
         HasActivitesDisponiblesPourInscriptions=HasActivitesDisponiblesPourInscriptions,
+        ConvertToUnicode=ConvertToUnicode,
+        GetIndividu=GetIndividu,
         )
     

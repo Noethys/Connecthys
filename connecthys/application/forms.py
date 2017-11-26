@@ -14,7 +14,7 @@ except :
     # Pour la compatibilité avec les anciennes version de flask_wtf
     from flask_wtf import Form as FlaskForm
 
-from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField
+from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField, SelectField
 
 
 class LoginForm(FlaskForm):  
@@ -34,3 +34,23 @@ class RetourTipi(FlaskForm):
     NUMAUTO = TextField('numauto', [validators.Required(), validators.Length(min=0, max=20)])
     DATTRANS = TextField('dattrans', [validators.Required(), validators.Length(min=0, max=20)])
     HEURTRANS = TextField('heurtrans', [validators.Required(), validators.Length(min=0, max=20)])
+    
+class Renseignements(FlaskForm):
+    idindividu = HiddenField("idindividu")
+    nom = TextField('nom')
+    prenom = TextField('prenom')
+    date_naiss = TextField('date_naiss')
+    cp_naiss = TextField('cp_naiss')
+    ville_naiss = TextField('ville_naiss')
+    rue_resid = TextField('rue_resid')
+    cp_resid = TextField('cp_resid')
+    ville_resid = TextField('ville_resid')
+    tel_domicile = TextField('tel_domicile')
+    tel_mobile = TextField('tel_mobile')
+    mail = TextField('mail')
+    profession = TextField('profession')
+    employeur = TextField('employeur')
+    travail_tel = TextField('travail_tel')
+    travail_mail = TextField('travail_mail')
+    adresse_auto = SelectField('adresse_auto', coerce=int)
+    

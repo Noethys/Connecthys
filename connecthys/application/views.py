@@ -26,6 +26,7 @@ LISTE_PAGES = [
     {"type" : "label", "label" : u"MENU"}, 
         {"type" : "page", "page" : "accueil", "raccourci" : True}, 
     {"type" : "label", "label" : u"VOTRE DOSSIER"}, 
+        {"type" : "page", "page" : "renseignements", "raccourci" : True, "affichage" : "RENSEIGNEMENTS_AFFICHER"}, 
         {"type" : "page", "page" : "inscriptions", "raccourci" : True, "affichage" : "ACTIVITES_AFFICHER"}, 
         {"type" : "page", "page" : "reservations", "raccourci" : True, "affichage" : "RESERVATIONS_AFFICHER"}, 
         {"type" : "page", "page" : "factures", "raccourci" : True, "affichage" : "FACTURES_AFFICHER"}, 
@@ -41,6 +42,7 @@ LISTE_PAGES = [
 
 DICT_PAGES = {
     "accueil" : {"nom" : u"Accueil", "icone" : "fa-home", "description" : u" ", "couleur" : "white"},
+    "renseignements" : {"nom" : u"Renseignements", "icone" : "fa-user", "description" : u"Consulter et modifier des renseignements", "couleur" : "purple"},
     "inscriptions" : {"nom" : u"Activités", "icone" : "fa-cogs", "description" : u"Consulter et demander des inscriptions", "couleur" : "blue"},
     "reservations" : {"nom" : u"Réservations", "icone" : "fa-calendar", "description" : u"Consulter et demander des réservations", "couleur" : "aqua"},
     "factures" : {"nom" : u"Factures", "icone" : "fa-file-text-o", "description" : u"Consulter et payer des factures", "couleur" : "green"},
@@ -54,6 +56,12 @@ DICT_PAGES = {
     }
 
 COULEURS = ["green", "blue", "yellow", "red", "light-blue"]
+
+CHAMPS_RENSEIGNEMENTS = ["nom", "prenom", "date_naiss", "cp_naiss", "ville_naiss", "adresse_auto", "rue_resid", "cp_resid", "ville_resid", 
+                                        "tel_domicile", "tel_mobile", "mail", "profession", "employeur", "travail_tel", "travail_mail"]
+
+DICT_RENSEIGNEMENTS = {"nom" : u"Nom", "prenom" : u"Prénom", "date_naiss" : u"Date de naissance", "cp_naiss" : u"CP de naissance", "ville_naiss" : u"Ville de naissance", "rue_resid" : u"Adresse - Rue", "cp_resid" : u"Adresse - CP", "ville_resid" : u"Adresse - Ville", 
+                                        "tel_domicile" : u"Tél. Domicile", "tel_mobile" : u"Tél. Mobile", "mail" : u"Email", "profession" : u"Profession", "employeur" : u"Employeur", "travail_tel" : u"Tél. Pro.", "travail_mail" : u"Email Pro."}
 
 
 @app.route('/robots.txt')
@@ -1051,8 +1059,214 @@ def detail_envoi_reservations():
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
    
+   
 
    
+# ------------------------- RENSEIGNEMENTS ---------------------------------- 
+
+@app.route('/renseignements')
+@login_required
+def renseignements():
+    # Récupération des renseignements modifiés
+    dict_renseignements = GetDictRenseignements(IDfamille=current_user.IDfamille)
+    
+    # Récupération des individus
+    liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.prenom).all()
+    
+    liste_individus = []
+    for individu in liste_individus_temp :
+        # Attribution d'une couleur
+        index_couleur = random.randint(0, len(COULEURS)-1)
+        individu.index_couleur = index_couleur
+        individu.couleur = COULEURS[index_couleur]
+        liste_individus.append(individu)
+        
+        individu.renseignements = dict_renseignements[individu.IDindividu]
+        
+    # Recherche l'historique des demandes liées aux renseignements
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="renseignements")
+    dict_parametres = models.GetDictParametres()
+    app.logger.debug("Page RENSEIGNEMENTS (%s): famille id(%s) liste_individus: %s", current_user.identifiant, current_user.IDfamille, liste_individus)
+    return render_template('renseignements.html', active_page="renseignements", \
+                            liste_individus = liste_individus, \
+                            historique = historique, dict_parametres=dict_parametres)
+
+                            
+                            
+def GetDictRenseignements(IDfamille=None, IDindividu=None):
+    """ Importation des renseignements en cours """
+    # Importation des valeurs de la table individus
+    if IDfamille != None :
+        liste_individus = models.Individu.query.filter_by(IDfamille=IDfamille).all()
+    else :
+        liste_individus = [models.Individu.query.filter_by(IDindividu=IDindividu).first(),]
+    
+    dict_valeurs = {"liste_choix_adresses" : []}
+    liste_choix_adresses = []
+    for individu in liste_individus :
+        if dict_valeurs.has_key(IDindividu) == False :
+            dict_valeurs[individu.IDindividu] = {"individu" : individu, "champs_modifies" : []}
+            
+        for champ in CHAMPS_RENSEIGNEMENTS :
+            valeur = getattr(individu, champ)
+            if "date" in champ :
+                valeur = utils.CallFonction("DateDDEnFr", valeur)
+            elif "adresse_auto" in champ :
+                if valeur == None :
+                    valeur = 0
+                else :
+                    valeur = int(valeur)
+            else :
+                valeur = utils.CallFonction("ConvertToUnicode", valeur)
+            dict_valeurs[individu.IDindividu][champ] = valeur
+            
+            
+    # Récupération des valeurs en cours (initiales + modifiées)
+    if IDfamille != None :
+        actions = models.Action.query.filter_by(categorie="renseignements", IDfamille=current_user.IDfamille, etat="attente").order_by(models.Action.horodatage).all()   
+    else :
+        actions = models.Action.query.filter_by(categorie="renseignements", IDfamille=current_user.IDfamille, IDindividu=IDindividu, etat="attente").order_by(models.Action.horodatage).all()   
+    for action in actions :
+        for renseignement in action.renseignements :
+            valeur = renseignement.valeur
+            if renseignement.champ == "adresse_auto" and valeur == None :
+                valeur = 0
+            dict_valeurs[action.IDindividu][renseignement.champ] = valeur
+            dict_valeurs[action.IDindividu]["champs_modifies"].append(renseignement.champ)
+    
+    for IDindividu, dictChamps in dict_valeurs.iteritems() :
+        if type(dictChamps) == dict :
+            if dictChamps["adresse_auto"] != 0 :
+                IDindividuTemp = int(dictChamps["adresse_auto"])
+                rue =  dict_valeurs[IDindividuTemp]["rue_resid"]
+                cp = dict_valeurs[IDindividuTemp]["cp_resid"]
+                ville = dict_valeurs[IDindividuTemp]["ville_resid"]
+                prenom = dict_valeurs[IDindividuTemp]["prenom"]
+                dict_valeurs[IDindividu]["adresse"] = u"%s %s %s (L'adresse de %s)" % (rue, cp, ville, prenom)
+            else :
+                rue = dict_valeurs[IDindividu]["rue_resid"]
+                cp = dict_valeurs[IDindividu]["cp_resid"]
+                ville = dict_valeurs[IDindividu]["ville_resid"]
+                dict_valeurs[IDindividu]["adresse"] = u"%s %s %s" % (rue, cp, ville)
+            
+                dict_valeurs["liste_choix_adresses"].append((IDindividu, u"La même adresse que %s" % dictChamps["prenom"])) 
+            
+    return dict_valeurs
+    
+    
+@app.route('/modifier_renseignements')
+@login_required
+def modifier_renseignements():
+    IDindividu = request.args.get("IDindividu", None, type=int)    
+    dict_parametres = models.GetDictParametres()
+    
+    # Importation des renseignements en cours
+    dict_renseignements = GetDictRenseignements(IDfamille=current_user.IDfamille)
+    
+    # Remplissage du formulaire
+    form = forms.Renseignements()   
+    form.idindividu.data = IDindividu
+    
+    # Remplissage du champ adresse_auto
+    liste_adresses_auto = [(0, u"L'adresse suivante"),]
+    for IDindividuTemp, label in dict_renseignements["liste_choix_adresses"] :
+        if IDindividu != IDindividuTemp :
+            liste_adresses_auto.append((IDindividuTemp, label))
+    form.adresse_auto.choices = liste_adresses_auto
+    
+    # Attibution des valeurs
+    for champ in CHAMPS_RENSEIGNEMENTS :
+        valeur = dict_renseignements[IDindividu][champ]
+        getattr(form, champ).data = valeur
+        
+    return render_template('modifier_renseignements.html', active_page="renseignements", individu=dict_renseignements[IDindividu]["individu"], dict_parametres=dict_parametres, form=form)
+
+    
+    
+@app.route('/envoyer_modification_renseignements', methods=['POST'])
+@login_required
+def envoyer_modification_renseignements():
+    try:
+        # Récupération du form rempli
+        form = forms.Renseignements(request.form)   
+        
+        # Récupération des valeurs
+        IDindividu = int(form.idindividu.data)
+        
+        # Récupération des valeurs initiales
+        dict_renseignements = GetDictRenseignements(IDfamille=current_user.IDfamille)
+        
+        # Validation des nouvelles valeurs
+        date_naiss = form.date_naiss.data
+        if date_naiss != "" :
+            try :
+                date_naiss = datetime.datetime.strptime(date_naiss, '%d/%m/%Y')
+            except :
+                return jsonify(success=0, error_msg=u"La date de naissance saisie ne semble pas correcte !")
+        
+        if "_" in form.cp_naiss.data :
+            return jsonify(success=0, error_msg=u"Le code postal de naissance saisi ne semble pas correct !")
+
+        if "_" in form.cp_resid.data :
+            return jsonify(success=0, error_msg=u"Le code postal de résidence saisi ne semble pas correct !")
+
+        if "_" in form.tel_domicile.data :
+            return jsonify(success=0, error_msg=u"Le téléphone du domicile saisi ne semble pas correct !")
+
+        if "_" in form.tel_mobile.data :
+            return jsonify(success=0, error_msg=u"Le téléphone mobile saisi ne semble pas correct !")
+
+        if "_" in form.travail_tel.data :
+            return jsonify(success=0, error_msg=u"Le téléphone professionnel saisi ne semble pas correct !")
+
+        if len(form.mail.data) > 0 and u"@" not in form.mail.data :
+            return jsonify(success=0, error_msg=u"L'Email saisi ne semble pas correct !")
+
+        if len(form.travail_mail.data) > 0 and u"@" not in form.travail_mail.data :
+            return jsonify(success=0, error_msg=u"L'Email professionnel saisi ne semble pas correct !")
+
+        
+        # Recherche les champs modifiés
+        dict_champs_modifies = {}
+        for champ in CHAMPS_RENSEIGNEMENTS :
+            nouvelle_valeur = getattr(form, champ).data
+            ancienne_valeur = dict_renseignements[IDindividu][champ]
+            if nouvelle_valeur != ancienne_valeur :
+                dict_champs_modifies[champ] = nouvelle_valeur
+        
+        # Description
+        nbre_champs_modifies = len(dict_champs_modifies)
+        if nbre_champs_modifies == 0 :
+            return jsonify(success=0, error_msg=u"Vous n'avez modifié aucun renseignement !")
+        elif nbre_champs_modifies == 1 :
+            description = u"Modification de 1 renseignement pour %s" % dict_renseignements[IDindividu]["individu"].prenom
+        else :
+            description = u"Modification de %d renseignements pour %s" % (nbre_champs_modifies, dict_renseignements[IDindividu]["individu"].prenom)
+        
+        # Enregistrement de l'action
+        action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="renseignements", action="envoyer", description=description, etat="attente", parametres=None)
+        db.session.add(action)
+        db.session.flush()
+        
+        # Enregistrement des renseignements
+        for champ, valeur in dict_champs_modifies.iteritems():
+            if champ == "adresse_auto" and valeur == 0 :
+                valeur = None
+            renseignement = models.Renseignement(champ=champ, valeur=valeur, IDaction=action.IDaction)
+            db.session.add(renseignement)
+
+        db.session.commit()
+
+            
+        flash(u"Votre demande de modification a bien été enregistrée")
+        return jsonify(success=1)
+        
+    except Exception, erreur:
+        return jsonify(success=0, error_msg=str(erreur))
+
+        
+        
+        
 # ------------------------- INSCRIPTIONS ---------------------------------- 
 
 @app.route('/inscriptions')
@@ -1160,24 +1374,51 @@ def detail_demande():
     try:
         # Détail des réservations
         IDaction = request.args.get("idaction", 0, type=int)
-        liste_reservations = models.Reservation.query.filter_by(IDaction=IDaction).order_by(models.Reservation.date, models.Reservation.etat).all()
+        categorie = request.args.get("categorie", "", type=str)
+        detail = ""
         
-        liste_unites = models.Unite.query.all()
-        dict_unites = {}
-        for unite in liste_unites :
-            dict_unites[unite.IDunite] = unite        
+        # Détail des réservations
+        if categorie == "reservations" :
         
-        liste_lignes = []
-        for reservation in liste_reservations :
-            txt_date = utils.CallFonction("DateDDEnFrComplet", reservation.date)
-            if reservation.etat == 1 :
-                ligne = u"- Ajout"
-            else :
-                ligne = u"- Suppression"
-            ligne += u" de la réservation du %s (%s)\n" % (txt_date, dict_unites[reservation.IDunite].nom)
-            liste_lignes.append(ligne)
-        detail = "".join(liste_lignes)
+            liste_reservations = models.Reservation.query.filter_by(IDaction=IDaction).order_by(models.Reservation.date, models.Reservation.etat).all()
+            
+            liste_unites = models.Unite.query.all()
+            dict_unites = {}
+            for unite in liste_unites :
+                dict_unites[unite.IDunite] = unite        
+            
+            liste_lignes = []
+            for reservation in liste_reservations :
+                txt_date = utils.CallFonction("DateDDEnFrComplet", reservation.date)
+                if reservation.etat == 1 :
+                    ligne = u"- Ajout"
+                else :
+                    ligne = u"- Suppression"
+                ligne += u" de la réservation du %s (%s)\n" % (txt_date, dict_unites[reservation.IDunite].nom)
+                liste_lignes.append(ligne)
+            detail = "".join(liste_lignes)
+        
+        # Détail des renseignements
+        if categorie == "renseignements" :
+            
+            liste_renseignements = models.Renseignement.query.filter_by(IDaction=IDaction).all()
+
+            liste_lignes = []
+            for renseignement in liste_renseignements :
+            
+                label = None
+                if DICT_RENSEIGNEMENTS.has_key(renseignement.champ) :
+                    label = u"- %s : %s\n" % (DICT_RENSEIGNEMENTS[renseignement.champ], renseignement.valeur)
                     
+                if renseignement.champ == "adresse_auto" and renseignement.valeur != None :
+                    individuTemp = models.Individu.query.filter_by(IDindividu=int(renseignement.valeur)).first()
+                    label = u"- Adresse associée à celle de %s\n" % individuTemp.prenom
+                    
+                if label != None :
+                    liste_lignes.append(label)
+                    
+            detail = "".join(liste_lignes)
+
         return jsonify(success=1, detail=detail)
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))

@@ -1,0 +1,263 @@
+{% extends "page.html" %}
+{% import "macros_historique.html" as macros_historique with context %}
+	
+{% block content -%}
+
+{% if GetParametre("RENSEIGNEMENTS_INTRO", dict_parametres) != '' %}
+	<h4 class="page-header">
+		<small><i class="fa fa-info-circle"></i> {{ GetParametre("RENSEIGNEMENTS_INTRO", dict_parametres) }}</small>
+	</h4>
+{% endif %}
+  
+
+{% for individu in liste_individus %}
+<div class="box box-widget widget-user-2">
+	
+	<!-- Définit une couleur au hasard pour l'individu -->
+	{% set couleur = individu.couleur %}
+	{% set champs_modifies = False %}
+	
+	<!-- Nom de l'individu -->
+	<div class="widget-user-header bg-{{ couleur }}">
+		<div class="widget-user-image">
+			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
+		</div>
+		<h3 class="widget-user-username">{{ individu.prenom }}</h3>
+		<h5 class="widget-user-desc">{{ individu.get_date_naiss() }}&nbsp;</h5>
+	</div>
+	
+	<!-- Liste des renseignements -->
+	<div class="box-footer no-padding">
+		<table class="table table-bordered table-striped no-margin">
+			<tbody>
+				
+				{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NOM", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NOM", dict_parametres) != 'masquer') %}
+				<tr>
+					<td  style="width: 50%"><center><b>Nom de famille</b></center></td>
+					<td><center>
+						{{ individu.renseignements["nom"] }}
+						{% if "nom" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				<tr>
+					<td  style="width: 50%"><center><b>Prénom</b></center></td>
+					<td><center>{{ individu.renseignements["prenom"] }}</center></td>
+				</tr>
+				{% endif %}
+				
+				{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NAISSANCE", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NAISSANCE", dict_parametres) != 'masquer') %}
+				<tr>
+					<td  style="width: 50%"><center><b>Date de naissance</b></center></td>
+					<td><center>
+						{{ individu.renseignements["date_naiss"] }}
+						{% if "date_naiss" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				<tr>
+					<td  style="width: 50%"><center><b>Ville de naissance</b></center></td>
+					<td><center>
+						{{ individu.renseignements["ville_naiss"] }}
+						{% if "ville_naiss" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				{% endif %}
+				
+				{% if GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) != 'masquer' %}
+				<tr>
+					<td  style="width: 50%"><center><b>Adresse</b></center></td>
+					<td><center>
+						{{ individu.renseignements["adresse"] }}
+						{% if "adresse_auto" in individu.renseignements["champs_modifies"] or "rue_resid" in individu.renseignements["champs_modifies"] or "cp_resid" in individu.renseignements["champs_modifies"] or "ville_resid" in individu.renseignements["champs_modifies"] %}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				{% endif %}				
+				
+				{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) != 'masquer') %}
+				<tr>
+					<td  style="width: 50%"><center><b>Téléphone domicile</b></center></td>
+					<td><center>
+						{{ individu.renseignements["tel_domicile"] }}
+						{% if "tel_domicile" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				<tr>
+					<td  style="width: 50%"><center><b>Téléphone mobile</b></center></td>
+					<td><center>
+						{{ individu.renseignements["tel_mobile"] }}
+						{% if "tel_mobile" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				<tr>
+					<td  style="width: 50%"><center><b>Adresse Email</b></center></td>
+					<td><center>
+						{{ individu.renseignements["mail"] }}
+						{% if "mail" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				{% endif %}
+
+				{% if individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) != 'masquer' %}
+				<tr>
+					<td  style="width: 50%"><center><b>Profession</b></center></td>
+					<td><center>
+						{{ individu.renseignements["profession"] }}
+						{% if "profession" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				<tr>
+					<td  style="width: 50%"><center><b>Employeur</b></center></td>
+					<td><center>
+						{{ individu.renseignements["employeur"] }}
+						{% if "employeur" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				<tr>
+					<td  style="width: 50%"><center><b>Téléphone professionnel</b></center></td>
+					<td><center>
+						{{ individu.renseignements["travail_tel"] }}
+						{% if "travail_tel" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+					</center></td>
+				</tr>
+				<tr>
+					<td  style="width: 50%"><center><b>Email professionnel</b></center></td>
+					<td><center>
+						{% if "travail_tel" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+						{{ individu.renseignements["travail_tel"] }}
+					</center></td>
+				</tr>
+				{% endif %}
+
+			</tbody>
+		</table>
+	</div>
+		
+	{% if GetParametre("RENSEIGNEMENTS_MODIFIER", dict_parametres) == "True" %}
+	<div class="box-footer no-margin">
+		{% if champs_modifies == True %}<font color="red" size="2px">* Modification en attente de validation par l'administrateur</font>{% endif %}
+		<span class="pull-right"><a href="#" id="demander_modification" data-idindividu="{{ individu.IDindividu }}" class="btn btn-primary btn-xs bouton_modifier" title="Modifier les renseignements de {{ individu.prenom }}">Modifier</a></span>
+	</div>
+	{% endif %}
+
+</div>
+{% endfor %}
+		  	
+			
+
+
+<!-- Modal : Demander une modification -->
+<div class="modal fade" id="modal_demander_modification" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+		
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel"><strong>Demander une modification des renseignements</strong></h4>
+			</div>
+	  
+			<div class="modal-body">
+				<div id="questionnaire"></div>
+				<div id="message_erreur" class="text-red"></div>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+				<button type="button" class="btn btn-primary" id="envoyer">Valider</button>
+			</div>
+
+		</div>
+	</div>
+</div>
+			
+			
+<br>			
+			
+{# Historique des demandes #}
+{{ macros_historique.historique_body(titre="Historique des demandes", soustitre="Vous pouvez supprimer des demandes non traitées.", historique=historique) }}
+
+{%- endblock content %}
+
+{% block scripts %}
+
+	{{ super() }}
+	
+	<script>
+		// Affichage de la fenêtre modale 'Demander une modification'
+		$('.bouton_modifier').click(function(event) {
+			var idindividu = $(this).attr("data-idindividu");
+			var url = "{{ url_for('modifier_renseignements') }}" + "?IDindividu=" + idindividu;
+			$.get(url, function(data) {
+				$('#modal_demander_modification #questionnaire').html(data);
+				$('#modal_demander_modification').modal();
+				
+				$('#modal_demander_modification #date_naiss').inputmask('dd/mm/yyyy', { 'placeholder': 'jj/mm/aaaa' })
+				$('#modal_demander_modification #tel_domicile').inputmask('99.99.99.99.99.', { 'placeholder': '__.__.__.__.__.' })
+				$('#modal_demander_modification #tel_mobile').inputmask('99.99.99.99.99.', { 'placeholder': '__.__.__.__.__.' })
+				$('#modal_demander_modification #travail_tel').inputmask('99.99.99.99.99.', { 'placeholder': '__.__.__.__.__.' })
+				$('#cp_naiss').inputmask('99999', { 'placeholder': '_____' })
+				$('#cp_resid').inputmask('99999', { 'placeholder': '_____' })
+
+				});
+			
+			// Remplissage des champs
+			$('#message_erreur').text('');
+		
+		})
+	</script>
+	
+	<script>
+		$('#modal_demander_modification').on('show.bs.modal', function (e) {
+			var adresse_auto = $('#adresse_auto option:selected').val();
+			if (adresse_auto == 0){
+				$('#adresse_manuelle').show();
+			}else{
+				$('#adresse_manuelle').hide();
+			}
+		});
+	</script>
+	
+	<script type=text/javascript>
+		// Validation de l'envoi de la demande de modification
+		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		$(function() {
+			$('button#envoyer').bind('click', function(event) {
+				// Envoie les données au serveur
+				$.getJSON({
+					url: "{{ url_for('envoyer_modification_renseignements') }}",
+					data: $('form').serialize(),
+					type: 'POST',
+				}, function(data) {
+					if (data.success) {
+						// Cache la fenêtre modale
+						$('#modal_demander_modification').modal('hide');
+						// Recharge la page
+						location.href = "{{ url_for('renseignements') }}"
+					} else {
+						// Affiche un message d'erreur dans la fenêtre modale
+						$('#message_erreur').text('Erreur : ' + data.error_msg)
+					}
+				});
+			});
+		});
+	</script>
+
+	<script type=text/javascript>
+	$(document.body).on('change',"#adresse_auto", function(e) {
+		var adresse_auto = this.value;
+		if (adresse_auto == 0){
+			$('#adresse_manuelle').show();
+		}else{
+			$('#adresse_manuelle').hide();
+		}
+	});
+	</script>
+	
+	
+	
+	<script src="{{ adminlte_find_resource('plugins/input-mask/jquery.inputmask.js', cdn='local', use_minified=False)}}"></script>
+	<script src="{{ adminlte_find_resource('plugins/input-mask/jquery.inputmask.date.extensions.js', cdn='local', use_minified=False)}}"></script>
+	<script src="{{ adminlte_find_resource('plugins/input-mask/jquery.inputmask.extensions.js', cdn='local', use_minified=False)}}"></script>
+
+	{# Historiques des demandes #}
+	{{ macros_historique.historique_scripts(historique=historique, page="renseignements") }}
+
+{%- endblock scripts %}

@@ -278,6 +278,31 @@ class Paiement(Base):
         return '<Paiement %d>' % (self.IDpaiement)
 
 
+        
+class Renseignement(Base):
+    __tablename__ = "%sportail_renseignements" % PREFIXE_TABLES
+    IDrenseignement = Column(Integer, primary_key=True)
+    champ = Column(String(100))
+    valeur = Column(String(255))
+    IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
+    action = relationship("Action")  
+    
+    def __init__(self , IDrenseignement=None, champ=None, valeur=None, IDaction=None):
+        if IDrenseignement != None :
+            self.IDrenseignement = IDreservation
+        self.champ = champ
+        self.valeur = valeur
+        self.IDaction = IDaction
+        
+    def __repr__(self):
+        return '<IDrenseignement %d>' % (self.IDrenseignement)
+        
+    def as_dict(self):
+        dict_temp = {}
+        for c in self.__table__.columns :
+            dict_temp[c.name] = getattr(self, c.name)
+        return dict_temp
+
 
 class Action(Base):
     __tablename__ = "%sportail_actions" % PREFIXE_TABLES
@@ -297,6 +322,7 @@ class Action(Base):
     reponse = Column(String(450))
     
     reservations = relationship("Reservation")
+    renseignements = relationship("Renseignement")
     
     def __init__(self, horodatage=None, IDfamille=None, IDindividu=None, categorie=None, action=None, description=None, \
                         commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None, reponse=None):
@@ -338,6 +364,11 @@ class Action(Base):
         for reservation in self.reservations :
             dict_temp["reservations"].append(reservation.as_dict())
             
+        # Ajout des renseignements dans le dict
+        dict_temp["renseignements"] = []
+        for renseignement in self.renseignements :
+            dict_temp["renseignements"].append(renseignement.as_dict())
+
         return dict_temp
 
         
@@ -521,19 +552,55 @@ class Individu(Base):
     IDrattachement = Column(Integer, primary_key=True)
     IDindividu = Column(Integer, index=True)
     IDfamille = Column(Integer)
+    nom = Column(String(200))
     prenom = Column(String(200))
-    date_naiss = Column(Date)
     IDcivilite = Column(Integer)
-    
-    def __init__(self , IDrattachement=None, IDindividu=None, IDfamille=None, prenom=None, date_naiss=None, IDcivilite=None):
+    IDcategorie = Column(Integer)
+    date_naiss = Column(Date)
+    cp_naiss = Column(String(10))
+    ville_naiss = Column(String(100))
+    adresse_auto = Column(Integer)
+    rue_resid = Column(String(255))
+    cp_resid = Column(String(10))
+    ville_resid = Column(String(100))
+    tel_domicile = Column(String(50))
+    tel_mobile = Column(String(50))
+    mail = Column(String(100))
+    profession = Column(String(100))
+    employeur = Column(String(100))
+    travail_tel = Column(String(50))
+    travail_mail = Column(String(50))
+                                    
+    def __init__(self , IDrattachement=None, IDindividu=None, IDfamille=None, IDcategorie=None,
+                                    nom=None, prenom=None, IDcivilite=None,
+                                    date_naiss=None, cp_naiss=None, ville_naiss=None, 
+                                    adresse_auto=None, rue_resid=None, cp_resid=None, ville_resid=None,
+                                    tel_domicile=None, tel_mobile=None, mail=None, 
+                                    profession=None, employeur=None, travail_tel=None, travail_mail=None, 
+        ):
         if IDrattachement != None :
             self.IDrattachement = IDrattachement
         self.IDfamille = IDfamille
         self.IDindividu = IDindividu
+        self.nom = nom
         self.prenom = prenom
-        self.date_naiss = date_naiss
         self.IDcivilite = IDcivilite
- 
+        self.IDcategorie = IDcategorie
+        self.date_naiss = date_naiss
+        self.cp_naiss = cp_naiss
+        self.ville_naiss = ville_naiss
+        self.adresse_auto = adresse_auto
+        self.rue_resid = rue_resid
+        self.cp_resid = cp_resid
+        self.ville_resid = ville_resid
+        self.tel_domicile = tel_domicile
+        self.tel_mobile = tel_mobile
+        self.mail = mail
+        self.profession = profession
+        self.employeur = employeur
+        self.travail_tel = travail_tel
+        self.travail_mail = travail_mail 
+
     def __repr__(self):
         return '<IDindividu %d>' % (self.IDindividu)
 
@@ -554,6 +621,26 @@ class Individu(Base):
     def get_inscriptions(self):
         return Inscription.query.filter_by(IDfamille=self.IDfamille, IDindividu=self.IDindividu).all()
         
+    def get_adresse(self):
+        if self.adresse_auto == None :
+            rue = utils.CallFonction("ConvertToUnicode", self.rue_resid)
+            cp = utils.CallFonction("ConvertToUnicode", self.cp_resid)
+            ville = utils.CallFonction("ConvertToUnicode", self.ville_resid)
+        else :
+            autre_individu = Individu.query.filter_by(IDindividu=self.adresse_auto).first()
+            rue = utils.CallFonction("ConvertToUnicode", autre_individu.rue_resid)
+            cp = utils.CallFonction("ConvertToUnicode", autre_individu.cp_resid)
+            ville = utils.CallFonction("ConvertToUnicode", autre_individu.ville_resid)
+        
+        modifiee = False
+        
+        complete = u"%s %s %s" % (rue, cp, ville)
+        
+        dict_adresse = {"rue" : rue, "cp" : cp, "ville" : ville, "complete" : complete, "modifiee" : modifiee}
+        return dict_adresse
+    
+    
+    
         
 class Inscription(Base):
     __tablename__ = "%sportail_inscriptions" % PREFIXE_TABLES
@@ -770,6 +857,9 @@ class Reservation(Base):
             dict_temp[c.name] = getattr(self, c.name)
         return dict_temp
 
+        
+       
+        
 
 class Message(Base):
     __tablename__ = "%sportail_messages" % PREFIXE_TABLES

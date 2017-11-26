@@ -1,0 +1,114 @@
+<form id="questionnaire" name="questionnaire" class="form-horizontal" role="form" method="POST">
+	<div class="box-body">
+		
+		{{ form.hidden_tag() }}
+		
+		{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NOM", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NOM", dict_parametres) != 'masquer') %}
+		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NOM", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NOM", dict_parametres) == 'consultation') %}
+		<div class="form-group">
+			<label for="nom" class="col-sm-3 control-label">Nom de famille</label>
+			<div class="col-sm-9">{{ form.nom(id='nom', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="prenom" class="col-sm-3 control-label">Prénom</label>
+			<div class="col-sm-9">{{ form.prenom(id='prenom', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		{% endif %}
+
+	
+		{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NAISSANCE", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NAISSANCE", dict_parametres) != 'masquer') %}
+		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NAISSANCE", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NAISSANCE", dict_parametres) == 'consultation') %}
+		<div class="form-group">
+			<label for="date_naiss" class="col-sm-3 control-label">Date de naissance</label>
+			<div class="col-sm-9">{{ form.date_naiss(id='date_naiss', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="cp_naiss" class="col-sm-3 control-label">CP naissance</label>
+			<div class="col-sm-9">{{ form.cp_naiss(id='cp_naiss', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="ville_naiss" class="col-sm-3 control-label">Ville de naissance</label>
+			<div class="col-sm-9">{{ form.ville_naiss(id='ville_naiss', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		{% endif %}
+		
+		{% if GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) != 'masquer' %}
+		{% set desactive = GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) == 'consultation' %}
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Adresse</label>
+			<div class="col-sm-9">
+				
+				<div>{{ form.adresse_auto(id='adresse_auto', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+				
+				<div id="adresse_manuelle">
+					</br>
+					<div class="form-group">
+						<label for="rue_resid" class="col-sm-1 control-label"><font color="grey">Rue</font></label>
+						<div class="col-sm-11">{{ form.rue_resid(id='rue_resid', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+					</div>	
+					<div class="form-group">
+						<label for="cp_resid" class="col-sm-1 control-label"><font color="grey">CP</font></label>
+						<div class="col-sm-11">{{ form.cp_resid(id='cp_resid', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+					</div>	
+					<div class="form-group">
+						<label for="ville_resid" class="col-sm-1 control-label"><font color="grey">Ville</font></label>
+						<div class="col-sm-11">{{ form.ville_resid(id='ville_resid', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+					</div>	
+				</div>
+				
+			</div>
+		</div>	
+		{% endif %}				
+		
+		{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) != 'masquer') %}
+		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) == 'consultation') %}
+		<div class="form-group">
+			<label for="tel_domicile" class="col-sm-3 control-label">Tél. domicile</label>
+			<div class="col-sm-9">{{ form.tel_domicile(id='tel_domicile', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="tel_mobile" class="col-sm-3 control-label">Tél. mobile</label>
+			<div class="col-sm-9">{{ form.tel_mobile(id='tel_mobile', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="mail" class="col-sm-3 control-label">Adresse Email</label>
+			<div class="col-sm-9">{{ form.mail(id='mail', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		{% endif %}
+
+		{% if individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) != 'masquer' %}
+		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) == 'consultation') %}
+		<div class="form-group">
+			<label for="profession" class="col-sm-3 control-label">Profession</label>
+			<div class="col-sm-9">{{ form.profession(id='profession', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="employeur" class="col-sm-3 control-label">Employeur</label>
+			<div class="col-sm-9">{{ form.employeur(id='employeur', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="travail_tel" class="col-sm-3 control-label">Tél. pro.</label>
+			<div class="col-sm-9">{{ form.travail_tel(id='travail_tel', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		<div class="form-group">
+			<label for="travail_mail" class="col-sm-3 control-label">Email pro.</label>
+			<div class="col-sm-9">{{ form.travail_mail(id='travail_mail', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
+		</div>	
+		{% endif %}
+				
+		
+	</div>	
+</form>
+
+
+<script>
+  $(function () {
+	//Datemask dd/mm/yyyy
+	$('#date_naiss').inputmask('dd/mm/yyyy', { 'placeholder': 'jj/mm/aaaa' })
+	$('#tel_domicile').inputmask('99.99.99.99.99.', { 'placeholder': '__.__.__.__.__.' })
+	$('#tel_mobile').inputmask('99.99.99.99.99.', { 'placeholder': '__.__.__.__.__.' })
+	$('#travail_tel').inputmask('99.99.99.99.99.', { 'placeholder': '__.__.__.__.__.' })
+	$('#cp_naiss').inputmask('99999', { 'placeholder': '_____' })
+	$('#cp_resid').inputmask('99999', { 'placeholder': '_____' })
+  })
+</script>
