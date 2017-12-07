@@ -484,13 +484,15 @@ class Activite(Base):
     unites_multiples = Column(Integer)
     reservations_limite = Column(String(20))
     reservations_absenti = Column(String(20))
+    nbre_inscrits_max = Column(Integer)
     
     periodes = relationship("Periode")
     
     def __init__(self , IDactivite=None, nom=None, inscriptions_affichage=1, \
                 inscriptions_date_debut=None, inscriptions_date_fin=inscriptions_date_debut, \
                 reservations_affichage=1, unites_multiples=0, \
-                reservations_limite=None, reservations_absenti=None):
+                reservations_limite=None, reservations_absenti=None, \
+                nbre_inscrits_max=None):
         if IDactivite != None :
             self.IDactivite = IDactivite
         self.nom = nom
@@ -501,6 +503,7 @@ class Activite(Base):
         self.unites_multiples = unites_multiples
         self.reservations_limite = reservations_limite
         self.reservations_absenti = reservations_absenti
+        self.nbre_inscrits_max = nbre_inscrits_max
  
     def __repr__(self):
         return '<IDactivite %d>' % (self.IDactivite)
@@ -647,6 +650,7 @@ class Inscription(Base):
     IDinscription = Column(Integer, primary_key=True)
     IDfamille = Column(Integer, index=True)
     IDindividu = Column(Integer, index=True)
+    date_desinscription = Column(Date)
 
     IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
@@ -654,13 +658,14 @@ class Inscription(Base):
     IDgroupe = Column(Integer, ForeignKey("%sportail_groupes.IDgroupe" % PREFIXE_TABLES))
     groupe = relationship("Groupe")  
     
-    def __init__(self , IDinscription=None, IDindividu=None, IDfamille=None, IDactivite=None, IDgroupe=None):
+    def __init__(self , IDinscription=None, IDindividu=None, IDfamille=None, IDactivite=None, IDgroupe=None, date_desinscription=None):
         if IDinscription != None :
             self.IDinscription = IDinscription
         self.IDindividu = IDindividu
         self.IDfamille = IDfamille
         self.IDactivite = IDactivite
         self.IDgroupe = IDgroupe
+        self.date_desinscription = date_desinscription
         
     def __repr__(self):
         return '<IDinscription %d>' % (self.IDinscription)
@@ -717,17 +722,43 @@ class Groupe(Base):
     nom = Column(String(300))
     ordre = Column(Integer)
     IDactivite = Column(Integer)
+    nbre_inscrits_max = Column(Integer)
 
-    def __init__(self , IDgroupe=None, nom=None, IDactivite=None, ordre=None):
+    def __init__(self , IDgroupe=None, nom=None, IDactivite=None, ordre=None, nbre_inscrits_max=None):
         if IDgroupe != None :
             self.IDgroupe = IDgroupe
         self.nom = nom
         self.IDactivite = IDactivite
         self.ordre = ordre
+        self.nbre_inscrits_max = nbre_inscrits_max
         
     def __repr__(self):
         return '<IDgroupe %d>' % (self.IDgroupe)
+    
+    def IsComplet(self):
+        # Importation du nombre d'inscrits
+        nbre_inscriptions_activite = Inscription.query.filter_by(IDactivite=self.IDactivite).filter(Inscription.date_desinscription==None).count()
+        nbre_inscriptions_groupe = Inscription.query.filter_by(IDgroupe=self.IDgroupe).filter(Inscription.date_desinscription==None).count()
+        
+        # Importation des capacités max.
+        nbre_inscrits_max_activite = Activite.query.filter_by(IDactivite=self.IDactivite).first().nbre_inscrits_max
+        nbre_inscrits_max_groupe = self.nbre_inscrits_max
+        
+        # Vérification du groupe
+        if nbre_inscrits_max_groupe != None :
+            if nbre_inscriptions_groupe >= nbre_inscrits_max_groupe :
+                return True
+        
+        # Vérification de l'activité
+        if nbre_inscrits_max_activite != None :
+            if nbre_inscriptions_activite >= nbre_inscrits_max_activite :
+                return True
 
+        # Sinon pas complet
+        return False
+    
+    
+    
         
 class Unite(Base):
     __tablename__ = "%sportail_unites" % PREFIXE_TABLES

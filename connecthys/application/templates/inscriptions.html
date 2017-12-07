@@ -2,7 +2,15 @@
 {% import "macros_historique.html" as macros_historique with context %}
 
 
+{%- block styles %}
+	{{ super() }}
 	
+	<!-- Select2 -->
+	<link href="{{ adminlte_find_resource('plugins/select2/select2.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">		
+{%- endblock styles %}
+
+
+
 	
 {% block content -%}
 
@@ -66,7 +74,7 @@
 			
 			
 <!-- Modal : Demander une inscription -->
-<div class="modal fade" id="modal_demander_inscription" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<div class="modal fade" id="modal_demander_inscription" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
 	<div class="modal-content">
 		
@@ -81,13 +89,15 @@
 		<input type='hidden' id="idindividu" value=0>
 		</form>
 
-		<div class="form-group">
+		<div class="form-group", id="form_activite">
 		  <h4>Sélectionnez une activité et un groupe</h4>
-		  <select id="choix_activite" class="form-control">
+		  <select id="choix_activite"  class="form-control select2" style="width: 100%;" data-placeholder="Sélectionnez une activité et un groupe">
+		  <!-- <select id="choix_activite" class="form-control"> -->
 			{% for activite in liste_activites %}
 				{% if activite.inscriptions_affichage == 1 and (activite.inscriptions_date_debut == None or (activite.inscriptions_date_debut <= GetNow() and activite.inscriptions_date_fin >= GetNow())) %}
+					<optgroup label="{{ activite.nom }}">
 					{% for groupe in dict_groupes[activite.IDactivite] %}
-						<option value="{{ activite.IDactivite }}-{{ groupe.IDgroupe }}">{{ activite.nom }} - {{ groupe.nom }}</option>
+						<option value="{{ activite.IDactivite }}-{{ groupe.IDgroupe }}"  {% if groupe.IsComplet() == True %}disabled="disabled"{% endif %}>{{ activite.nom }} - {{ groupe.nom }} {% if groupe.IsComplet() == True %}(Complet){% endif %}</option>
 					{% endfor %}
 				{% endif %}
 			{% endfor %}
@@ -168,5 +178,18 @@
 	
 	{# Historiques des demandes #}
 	{{ macros_historique.historique_scripts(historique=historique, page="inscriptions") }}
+
+	<!-- Select2 -->
+	<script src="{{ adminlte_find_resource('plugins/select2/select2.full.min.js', cdn='local',  use_minified=False) }}"></script>
+
+	<script>
+	$(function() {
+		//Initialize Select2 Elements
+		$('.select2').select2({
+			dropdownParent: $('#modal_demander_inscription')
+			});
+	})
+	</script>
+	
 
 {%- endblock scripts %}
