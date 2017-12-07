@@ -1,5 +1,71 @@
 {% extends "page.html" %}
 {% import "macros_historique.html" as macros_historique with context %}
+
+
+    {%- block styles %}
+
+	{{ super() }}
+
+	<!-- Pour affichage de l'autocomplete de jQuery -->
+	<style type="text/css" media="screen">
+
+.ui-autocomplete {
+  position: absolute;
+  z-index: 2150000000 !important;
+  cursor: default;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  float: left;
+  display: none;
+  min-width: 160px;
+  _width: 160px;
+  padding: 4px 0;
+  margin: 2px 0 0 0;
+  list-style: none;
+  background-color: #ffffff;
+  border-color: #ccc;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-style: solid;
+  border-width: 1px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  -webkit-background-clip: padding-box;
+  -moz-background-clip: padding;
+  background-clip: padding-box;
+  *border-right-width: 2px;
+  *border-bottom-width: 2px;
+
+  .ui-menu-item > a.ui-corner-all {
+    display: block;
+    padding: 3px 15px;
+    clear: both;
+    font-weight: normal;
+    line-height: 18px;
+    color: #555555;
+    white-space: nowrap;
+
+    &.ui-state-hover, &.ui-state-active {
+      color: #ffffff;
+      text-decoration: none;
+      background-color: #0088cc;
+      border-radius: 0px;
+      -webkit-border-radius: 0px;
+      -moz-border-radius: 0px;
+      background-image: none;
+    }
+  }
+}
+	</style>
+	
+	{%- endblock styles %}
+
+
+
 	
 {% block content -%}
 
@@ -8,7 +74,11 @@
 		<small><i class="fa fa-info-circle"></i> {{ GetParametre("RENSEIGNEMENTS_INTRO", dict_parametres) }}</small>
 	</h4>
 {% endif %}
-  
+  		
+
+			
+
+		
 
 {% for individu in liste_individus %}
 <div class="box box-widget widget-user-2">
@@ -180,6 +250,123 @@
 
 	{{ super() }}
 	
+	
+	<script>
+	  $('#modal_demander_modification').on('show.bs.modal', function (e) {
+
+			$("#cp_resid").autocomplete({
+				source: function (request, response) {
+					$.ajax({
+						url: "https://api-adresse.data.gouv.fr/search/?postcode="+$("input[id='cp_resid']").val()+"&limit=7",
+						data: { q: request.term },
+						dataType: "json",
+						success: function (data) {
+							var postcodes = [];
+							response($.map(data.features, function (item) {
+								// Ici on est obligé d'ajouter les CP dans un array pour ne pas avoir plusieurs fois le même
+								if ($.inArray(item.properties.postcode + " - " + item.properties.city, postcodes) == -1) {
+									postcodes.push(item.properties.postcode + " - " + item.properties.city);
+									return { label: item.properties.postcode + " - " + item.properties.city, 
+											 city: item.properties.city,
+											 value: item.properties.postcode
+									};
+								}
+							}));
+						}
+					});
+				},
+				// On remplit aussi la ville
+				select: function(event, ui) {
+					$('#ville_resid').val(ui.item.city);
+				}
+			});
+			$("#ville_resid").autocomplete({
+				source: function (request, response) {
+					$.ajax({
+						url: "https://api-adresse.data.gouv.fr/search/?city="+$("input[id='ville_resid']").val()+"&type=municipality&limit=7",
+						data: { q: request.term },
+						dataType: "json",
+						success: function (data) {
+							var cities = [];
+							response($.map(data.features, function (item) {
+								// Ici on est obligé d'ajouter les villes dans un array pour ne pas avoir plusieurs fois la même
+								if ($.inArray(item.properties.postcode, cities) == -1) {
+									cities.push(item.properties.postcode);
+									return { label: item.properties.postcode + " - " + item.properties.city, 
+											 postcode: item.properties.postcode,
+											 value: item.properties.city
+									};
+								}
+							}));
+						}
+					});
+				},
+				// On remplit aussi le CP
+				select: function(event, ui) {
+					$('#cp_resid').val(ui.item.postcode);
+				}
+			});
+	  
+	  
+			$("#cp_naiss").autocomplete({
+				source: function (request, response) {
+					$.ajax({
+						url: "https://api-adresse.data.gouv.fr/search/?postcode="+$("input[id='cp_naiss']").val()+"&limit=7",
+						data: { q: request.term },
+						dataType: "json",
+						success: function (data) {
+							var postcodes = [];
+							response($.map(data.features, function (item) {
+								// Ici on est obligé d'ajouter les CP dans un array pour ne pas avoir plusieurs fois le même
+								if ($.inArray(item.properties.postcode + " - " + item.properties.city, postcodes) == -1) {
+									postcodes.push(item.properties.postcode + " - " + item.properties.city);
+									return { label: item.properties.postcode + " - " + item.properties.city, 
+											 city: item.properties.city,
+											 value: item.properties.postcode
+									};
+								}
+							}));
+						}
+					});
+				},
+				// On remplit aussi la ville
+				select: function(event, ui) {
+					$('#ville_naiss').val(ui.item.city);
+				}
+			});
+			
+			$("#ville_naiss").autocomplete({
+				source: function (request, response) {
+					$.ajax({
+						url: "https://api-adresse.data.gouv.fr/search/?city="+$("input[id='ville_naiss']").val()+"&type=municipality&limit=7",
+						data: { q: request.term },
+						dataType: "json",
+						success: function (data) {
+							var cities = [];
+							response($.map(data.features, function (item) {
+								// Ici on est obligé d'ajouter les villes dans un array pour ne pas avoir plusieurs fois la même
+								if ($.inArray(item.properties.postcode, cities) == -1) {
+									cities.push(item.properties.postcode);
+									return { label: item.properties.postcode + " - " + item.properties.city, 
+											 postcode: item.properties.postcode,
+											 value: item.properties.city
+									};
+								}
+							}));
+						}
+					});
+				},
+				// On remplit aussi le CP
+				select: function(event, ui) {
+					$('#cp_naiss').val(ui.item.postcode);
+				}
+			});
+
+	  });
+	  </script>
+	
+	
+	
 	<script>
 		// Affichage de la fenêtre modale 'Demander une modification'
 		$('.bouton_modifier').click(function(event) {
@@ -250,9 +437,7 @@
 		}
 	});
 	</script>
-	
-	
-	
+		
 	<script src="{{ adminlte_find_resource('plugins/input-mask/jquery.inputmask.js', cdn='local', use_minified=False)}}"></script>
 	<script src="{{ adminlte_find_resource('plugins/input-mask/jquery.inputmask.date.extensions.js', cdn='local', use_minified=False)}}"></script>
 	<script src="{{ adminlte_find_resource('plugins/input-mask/jquery.inputmask.extensions.js', cdn='local', use_minified=False)}}"></script>
