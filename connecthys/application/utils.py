@@ -193,9 +193,23 @@ def GetIndividu(IDindividu=None, liste_individus=[]):
             return individu
     return None
     
-    
-    
+def IsRenseignementDisabled(dict_parametres=None, individu=None, categorie="", champ=""):
+    if categorie == "nom" or champ in ("nom", "prenom") :
+        return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NOM", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NOM", dict_parametres) == 'consultation')
+    if categorie == "naissance" or champ in ("date_naiss", "cp_naiss", "ville_naiss") :
+        return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NAISSANCE", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NAISSANCE", dict_parametres) == 'consultation')
+    if categorie == "adresse" or champ in ("adresse_auto", "rue_resid", "cp_resid", "ville_resid") :
+		return GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) == 'consultation'
+    if categorie == "coords" or champ in ("tel_domicile", "tel_mobile", "mail") :
+		return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) == 'consultation')
+    if categorie == "profession" or champ in ("profession", "employeur", "travail_tel", "travail_mail") :
+		return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) == 'consultation')
+    return False
+        
 
+        
+        
+        
     
 def CallFonction(fonction="", *args):
     """ Pour appeller directement une fonction Utils depuis Python """
@@ -230,5 +244,6 @@ def utility_processor():
         HasActivitesDisponiblesPourInscriptions=HasActivitesDisponiblesPourInscriptions,
         ConvertToUnicode=ConvertToUnicode,
         GetIndividu=GetIndividu,
+        IsRenseignementDisabled=IsRenseignementDisabled,
         )
     

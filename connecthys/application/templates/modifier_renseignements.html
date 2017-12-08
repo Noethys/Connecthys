@@ -4,7 +4,7 @@
 		{{ form.hidden_tag() }}
 		
 		{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NOM", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NOM", dict_parametres) != 'masquer') %}
-		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NOM", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NOM", dict_parametres) == 'consultation') %}
+		{% set desactive = IsRenseignementDisabled(dict_parametres, individu, "nom") %}
 		<div class="form-group">
 			<label for="nom" class="col-sm-3 control-label">Nom de famille</label>
 			<div class="col-sm-9">{{ form.nom(id='nom', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
@@ -17,7 +17,7 @@
 
 	
 		{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NAISSANCE", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NAISSANCE", dict_parametres) != 'masquer') %}
-		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NAISSANCE", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NAISSANCE", dict_parametres) == 'consultation') %}
+		{% set desactive = IsRenseignementDisabled(dict_parametres, individu, "naissance") %}
 		<div class="form-group">
 			<label for="date_naiss" class="col-sm-3 control-label">Date de naissance</label>
 			<div class="col-sm-9">{{ form.date_naiss(id='date_naiss', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
@@ -33,7 +33,7 @@
 		{% endif %}
 		
 		{% if GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) != 'masquer' %}
-		{% set desactive = GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) == 'consultation' %}
+		{% set desactive = IsRenseignementDisabled(dict_parametres, individu, "adresse") %}
 		<div class="form-group">
 			<label class="col-sm-3 control-label">Adresse</label>
 			<div class="col-sm-9">
@@ -61,7 +61,7 @@
 		{% endif %}				
 		
 		{% if (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) != 'masquer') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) != 'masquer') %}
-		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) == 'consultation') %}
+		{% set desactive = IsRenseignementDisabled(dict_parametres, individu, "coords") %}
 		<div class="form-group">
 			<label for="tel_domicile" class="col-sm-3 control-label">Tél. domicile</label>
 			<div class="col-sm-9">{{ form.tel_domicile(id='tel_domicile', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>
@@ -77,7 +77,7 @@
 		{% endif %}
 
 		{% if individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) != 'masquer' %}
-		{% set desactive = (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) == 'consultation') %}
+		{% set desactive = IsRenseignementDisabled(dict_parametres, individu, "profession") %}
 		<div class="form-group">
 			<label for="profession" class="col-sm-3 control-label">Profession</label>
 			<div class="col-sm-9">{{ form.profession(id='profession', class='form-control', placeholder='', type='text', disabled=desactive) }}</div>

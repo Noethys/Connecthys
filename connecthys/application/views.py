@@ -1190,6 +1190,8 @@ def modifier_renseignements():
 @app.route('/envoyer_modification_renseignements', methods=['POST'])
 @login_required
 def envoyer_modification_renseignements():
+    dict_parametres = models.GetDictParametres()
+
     try:
         # Récupération du form rempli
         form = forms.Renseignements(request.form)   
@@ -1199,6 +1201,7 @@ def envoyer_modification_renseignements():
         
         # Récupération des valeurs initiales
         dict_renseignements = GetDictRenseignements(IDfamille=current_user.IDfamille)
+        individu = dict_renseignements[IDindividu]["individu"]
         
         # Validation des nouvelles valeurs
         date_naiss = form.date_naiss.data
@@ -1235,7 +1238,8 @@ def envoyer_modification_renseignements():
         for champ in CHAMPS_RENSEIGNEMENTS :
             nouvelle_valeur = getattr(form, champ).data
             ancienne_valeur = dict_renseignements[IDindividu][champ]
-            if nouvelle_valeur != ancienne_valeur :
+            champ_desactive = utils.IsRenseignementDisabled(dict_parametres, individu, champ=champ)
+            if champ_desactive == False and nouvelle_valeur != ancienne_valeur :
                 dict_champs_modifies[champ] = nouvelle_valeur
         
         # Description
@@ -1243,9 +1247,9 @@ def envoyer_modification_renseignements():
         if nbre_champs_modifies == 0 :
             return jsonify(success=0, error_msg=u"Vous n'avez modifié aucun renseignement !")
         elif nbre_champs_modifies == 1 :
-            description = u"Modification de 1 renseignement pour %s" % dict_renseignements[IDindividu]["individu"].prenom
+            description = u"Modification de 1 renseignement pour %s" % individu.prenom
         else :
-            description = u"Modification de %d renseignements pour %s" % (nbre_champs_modifies, dict_renseignements[IDindividu]["individu"].prenom)
+            description = u"Modification de %d renseignements pour %s" % (nbre_champs_modifies, individu.prenom)
         
         # Enregistrement de l'action
         action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="renseignements", action="envoyer", description=description, etat="attente", parametres=None)
