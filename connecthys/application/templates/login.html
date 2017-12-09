@@ -2,7 +2,7 @@
 
 {% block title %}Connexion{% endblock %}
 {% block description %}Connexion{% endblock %}
-{% block bodytag %}login-page{% endblock %}
+{% block bodytag %}login-page {% block skin %}{{ GetParametre('SKIN', dict_parametres, 'skin-blue') }}{% endblock %}{% endblock %}
 
 {% block head %}
 	{{ super() }}
@@ -15,7 +15,9 @@
 	{% if IMAGE_FOND == "" %}
 		{% set IMAGE_FOND = "bleu.jpg" %}
 	{% endif %}
+	
 	<style type="text/css" media="screen">
+	
 		html, body {
 			background-size: cover;
 			background: center fixed;
@@ -28,12 +30,35 @@
 		{
 		  background:rgba(255, 255, 255, 0.8);	
 		}
+		
+	
+.login-footer {
+	position: fixed;
+    bottom: 0;
+    width: 100%;
+	display: block;
+	background-color: #222d32;
+    padding: 15px;
+	color: #fff;
+	font-size: 15px;
+    border-top: 1px solid #d2d6de;
+    -webkit-transition: -webkit-transform .3s ease-in-out,margin .3s ease-in-out;
+    -moz-transition: -moz-transform .3s ease-in-out,margin .3s ease-in-out;
+    -o-transition: -o-transform .3s ease-in-out,margin .3s ease-in-out;
+    transition: transform .3s ease-in-out,margin .3s ease-in-out;
+    z-index: 820;
+	}
+	
+	
 	</style>
 	
 	
 {% endblock %}
 
+
+
 {% block body %}
+
 
   <div class="login-box">
     <div style="color: black" class="login-logo">
@@ -72,6 +97,20 @@
       </form>
     </div>
   </div>
+
+
+
+<footer class="login-footer">
+
+	<div class="pull-right hidden-xs">
+		{% block version %}
+		<b><a href="https://connecthys.com" title="Connecthys, le portail internet de Noethys">Connecthys</a></b> {{ config["VERSION_APPLICATION"] }}
+		{% endblock %}
+	</div>
+	
+	{% block copyright %}{% if GetParametre('ORGANISATEUR_NOM', dict_parametres) != '' %}{{ GetParametre('ORGANISATEUR_NOM', dict_parametres) }}{% endif %}{% endblock %}
+
+</footer>
 
 {% endblock %}
 
