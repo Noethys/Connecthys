@@ -16,6 +16,7 @@ try :
 except :
     # Pour compatibilité avec anciennes versions de flask_wtf
     from flask_wtf import CsrfProtect
+from flask_wtf.csrf import CSRFError
 from application import app, login_manager, db
 from application import models, forms, utils, updater, exemples
 from sqlalchemy import func
@@ -200,7 +201,11 @@ def internal_error(exception):
     trace = traceback.format_exc()
     return("<pre>" + trace + "</pre>"), 500
     
-
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    return render_template('csrf_error.html', reason=e.description), 400
+    
+    
 # ------------------------- LOGIN et LOGOUT ---------------------------------- 
 
 @app.route('/login', methods=['GET', 'POST'])
