@@ -39,8 +39,8 @@ Installation sur un hébergement internet mutualisé (Testé sur OVH)
 -------------------------
 
 - Copiez le répertoire "connecthys" à la racine de votre répertoire FTP
-- Avec votre client FTP (Filezilla par exemple), appliquez la valeur 755 aux droits d'accès du fichier "portail.cgi" du répertoire connecthys
-- Chargez la page **http://www.monsite.com/connecthys/portail.cgi/** pour ouvrir le portail
+- Avec votre client FTP (Filezilla par exemple), appliquez la valeur 755 aux droits d'accès du fichier "connecthys.cgi" du répertoire connecthys
+- Chargez la page **http://www.monsite.com/connecthys/connecthys.cgi/** pour ouvrir le portail
 
 
 Installation sur un hébergement internet dédié ou sur Google App Engine
