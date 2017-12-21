@@ -192,8 +192,8 @@
 				<tr>
 					<td  style="width: 50%"><center><b>Email professionnel</b></center></td>
 					<td><center>
-						{% if "travail_tel" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
-						{{ individu.renseignements["travail_tel"] }}
+						{% if "travail_mail" in individu.renseignements["champs_modifies"]%}<span style="color:red">*</span>{% set champs_modifies = True %}{% endif %}
+						{{ individu.renseignements["travail_mail"] }}
 					</center></td>
 				</tr>
 				{% endif %}
@@ -205,7 +205,7 @@
 	{% if GetParametre("RENSEIGNEMENTS_MODIFIER", dict_parametres) == "True" %}
 	<div class="box-footer no-margin">
 		{% if champs_modifies == True %}<font color="red" size="2px">* Modification en attente de validation par l'administrateur</font>{% endif %}
-		<span class="pull-right"><a href="#" id="demander_modification" data-idindividu="{{ individu.IDindividu }}" class="btn btn-primary btn-xs bouton_modifier" title="Modifier les renseignements de {{ individu.prenom }}">Modifier</a></span>
+		<span class="pull-right"><a href="#" id="demander_modification" data-idindividu="{{ individu.IDindividu }}" class="btn btn-primary btn-xs bouton_modifier" title="Modifier les renseignements de {{ individu.prenom }}"><i class="fa fa-pencil"></i> Modifier</a></span>
 	</div>
 	{% endif %}
 
