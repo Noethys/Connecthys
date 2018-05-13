@@ -482,7 +482,7 @@ class Activite(Base):
     inscriptions_date_fin = Column(DateTime)
     reservations_affichage = Column(Integer)
     unites_multiples = Column(Integer)
-    reservations_limite = Column(String(20))
+    reservations_limite = Column(String(50))
     reservations_absenti = Column(String(20))
     nbre_inscrits_max = Column(Integer)
     
@@ -543,10 +543,10 @@ class Activite(Base):
                     
                 if date_valide == True :
                     x += 1
-            
+
             if datetime.datetime.now() > date_limite :
                 return False
-                
+
         return True
         
         
