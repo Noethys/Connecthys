@@ -28,7 +28,7 @@
 						<tbody>
 							{% for piece_manquante in liste_pieces_manquantes %}
 							<tr>
-								<td class="text-red">{{ piece_manquante.nom }}</td>
+								<td class="text-red">{{ piece_manquante.GetNom() }}</td>
 							</tr>
 							{% endfor %}
 						</tbody>

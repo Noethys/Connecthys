@@ -70,7 +70,7 @@
 						<li>{{ liste_pieces_manquantes|length }} pièce{% if liste_pieces_manquantes|length > 1 %}s{% endif %} manquante{% if liste_pieces_manquantes|length > 1 %}s{% endif %} :
 							<ul>
 								{% for piece_manquante in liste_pieces_manquantes %}
-									<li><a href="{{ url_for('pieces') }}">{{ piece_manquante.nom }}</a></li>
+									<li><a href="{{ url_for('pieces') }}">{{ piece_manquante.GetNom() }}</a></li>
 								{% endfor %}
 							</ul>
 						</li>

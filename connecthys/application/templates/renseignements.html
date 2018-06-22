@@ -93,7 +93,7 @@
 		<div class="widget-user-image">
 			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
 		</div>
-		<h3 class="widget-user-username">{{ individu.prenom }}</h3>
+		<h3 class="widget-user-username">{{ individu.GetRenseignement("prenom") }}</h3>
 		<h5 class="widget-user-desc">{{ individu.get_date_naiss() }}&nbsp;</h5>
 	</div>
 	
@@ -205,7 +205,7 @@
 	{% if GetParametre("RENSEIGNEMENTS_MODIFIER", dict_parametres) == "True" %}
 	<div class="box-footer no-margin">
 		{% if champs_modifies == True %}<font color="red" size="2px">* Modification en attente de validation par l'administrateur</font>{% endif %}
-		<span class="pull-right"><a href="#" id="demander_modification" data-idindividu="{{ individu.IDindividu }}" class="btn btn-primary btn-xs bouton_modifier" title="Modifier les renseignements de {{ individu.prenom }}"><i class="fa fa-pencil"></i> Modifier</a></span>
+		<span class="pull-right"><a href="#" id="demander_modification" data-idindividu="{{ individu.IDindividu }}" class="btn btn-primary btn-xs bouton_modifier" title="Modifier les renseignements de {{ individu.GetRenseignement("prenom") }}"><i class="fa fa-pencil"></i> Modifier</a></span>
 	</div>
 	{% endif %}
 
