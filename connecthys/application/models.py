@@ -143,9 +143,9 @@ class User(Base):
     __tablename__ = "%sportail_users" % PREFIXE_TABLES
     IDuser = Column(Integer, primary_key=True)
     identifiant = Column(String(20), unique=True, index=True)
-    password = Column(String(200))
-    nom = Column(String(80))
-    email = Column(String(80))
+    password = Column(String(300))
+    nom = Column(String(300))
+    email = Column(String(300))
     role = Column(String(80))
     IDfamille = Column(Integer, index=True)
     IDutilisateur = Column(Integer, index=True)
@@ -204,7 +204,10 @@ class User(Base):
         if self.infos.has_key(key) :
             return self.infos[key]
         return None
-        
+
+    def GetNom(self):
+        return utils.CallFonction("DecrypteChaine", self.nom)
+
         
         
 class Facture(Base):
@@ -289,7 +292,7 @@ class Renseignement(Base):
     
     def __init__(self , IDrenseignement=None, champ=None, valeur=None, IDaction=None):
         if IDrenseignement != None :
-            self.IDrenseignement = IDreservation
+            self.IDrenseignement = IDrenseignement
         self.champ = champ
         self.valeur = valeur
         self.IDaction = IDaction
@@ -411,7 +414,7 @@ class Piece_manquante(Base):
     IDfamille = Column(Integer, index=True)
     IDtype_piece = Column(Integer)
     IDindividu = Column(Integer)
-    nom = Column(String(200))
+    nom = Column(String(300))
     
     def __init__(self , IDpiece_manquante=None, IDfamille=None, IDtype_piece=None, IDindividu=None, nom=None):
         if IDpiece_manquante != None :
@@ -423,6 +426,10 @@ class Piece_manquante(Base):
  
     def __repr__(self):
         return '<IDpiece_manquante %d>' % (self.IDpiece_manquante)
+
+    def GetNom(self):
+        return utils.CallFonction("DecrypteChaine", self.nom)
+
 
    
 class Type_piece(Base):
@@ -555,24 +562,24 @@ class Individu(Base):
     IDrattachement = Column(Integer, primary_key=True)
     IDindividu = Column(Integer, index=True)
     IDfamille = Column(Integer)
-    nom = Column(String(200))
-    prenom = Column(String(200))
+    nom = Column(String(300))
+    prenom = Column(String(300))
     IDcivilite = Column(Integer)
     IDcategorie = Column(Integer)
-    date_naiss = Column(Date)
-    cp_naiss = Column(String(10))
-    ville_naiss = Column(String(100))
+    date_naiss = Column(String(300))
+    cp_naiss = Column(String(300))
+    ville_naiss = Column(String(300))
     adresse_auto = Column(Integer)
-    rue_resid = Column(String(255))
-    cp_resid = Column(String(10))
-    ville_resid = Column(String(100))
-    tel_domicile = Column(String(50))
-    tel_mobile = Column(String(50))
-    mail = Column(String(100))
-    profession = Column(String(100))
-    employeur = Column(String(100))
-    travail_tel = Column(String(50))
-    travail_mail = Column(String(50))
+    rue_resid = Column(String(300))
+    cp_resid = Column(String(300))
+    ville_resid = Column(String(300))
+    tel_domicile = Column(String(300))
+    tel_mobile = Column(String(300))
+    mail = Column(String(300))
+    profession = Column(String(300))
+    employeur = Column(String(300))
+    travail_tel = Column(String(300))
+    travail_mail = Column(String(300))
                                     
     def __init__(self , IDrattachement=None, IDindividu=None, IDfamille=None, IDcategorie=None,
                                     nom=None, prenom=None, IDcivilite=None,
@@ -618,7 +625,12 @@ class Individu(Base):
         if self.date_naiss in (None, "") :
             return ""
         today = datetime.date.today()
-        age = today.year - self.date_naiss.year - ((today.month, today.day) < (self.date_naiss.month, self.date_naiss.day))
+        if isinstance(self.date_naiss, unicode) or isinstance(self.date_naiss, str) :
+            datenaiss = utils.CallFonction("DecrypteChaine", self.date_naiss)
+            datenaiss = utils.CallFonction("DateEngEnDD", datenaiss)
+        else :
+            datenaiss = self.date_naiss
+        age = today.year - datenaiss.year - ((today.month, today.day) < (datenaiss.month, datenaiss.day))
         return u"%d ans" % age
         
     def get_inscriptions(self):
@@ -641,7 +653,10 @@ class Individu(Base):
         
         dict_adresse = {"rue" : rue, "cp" : cp, "ville" : ville, "complete" : complete, "modifiee" : modifiee}
         return dict_adresse
-    
+
+    def GetRenseignement(self, nom=""):
+        valeur = getattr(self, nom)
+        return utils.CallFonction("DecrypteChaine", valeur)
     
     
         
@@ -816,8 +831,37 @@ class Ouverture(Base):
         
     def __repr__(self):
         return '<IDouverture %d>' % (self.IDouverture)
-       
-       
+
+
+class Evenement(Base):
+    __tablename__ = "%sportail_evenements" % PREFIXE_TABLES
+    IDevenement = Column(Integer, primary_key=True)
+    IDactivite = Column(Integer)
+    IDunite = Column(Integer)
+    IDgroupe = Column(Integer)
+    date = Column(Date)
+    nom = Column(String(200))
+    description = Column(String(500))
+    heure_debut = Column(String(20))
+    heure_fin = Column(String(20))
+
+    def __init__(self, IDevenement=None, IDactivite=None, IDunite=None, IDgroupe=None, date=None, nom=None, description=None, heure_debut=None, heure_fin=None):
+        if IDevenement != None:
+            self.IDevenement = IDevenement
+        self.IDactivite = IDactivite
+        self.IDunite = IDunite
+        self.IDgroupe = IDgroupe
+        self.date = date
+        self.nom = nom
+        self.description = description
+        self.heure_debut = heure_debut
+        self.heure_fin = heure_fin
+
+    def __repr__(self):
+        return '<IDevenement %d>' % (self.IDevenement)
+
+
+
 class Ferie(Base):
     __tablename__ = "%sportail_feries" % PREFIXE_TABLES
     IDferie = Column(Integer, primary_key=True)
@@ -847,14 +891,16 @@ class Consommation(Base):
     etat = Column(String(20))
     IDunite = Column(Integer)
     IDinscription = Column(Integer)
+    IDevenement = Column(Integer)
 
-    def __init__(self , IDconsommation=None, date=None, IDunite=None, IDinscription=None, etat=None):
+    def __init__(self , IDconsommation=None, date=None, IDunite=None, IDinscription=None, etat=None, IDevenement=None):
         if IDconsommation != None :
             self.IDconsommation = IDconsommation
         self.date = date
         self.IDunite = IDunite
         self.IDinscription = IDinscription
         self.etat = etat
+        self.IDevenement = IDevenement
         
     def __repr__(self):
         return '<IDconsommation %d>' % (self.IDconsommation)
@@ -867,15 +913,17 @@ class Reservation(Base):
     etat = Column(Integer)
     IDinscription = Column(Integer)
     IDunite = Column(Integer)
+    IDevenement = Column(Integer)
     IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
     action = relationship("Action")  
     
-    def __init__(self , IDreservation=None, date=None, IDinscription=None, IDunite=None, IDaction=None, etat=None):
+    def __init__(self , IDreservation=None, date=None, IDinscription=None, IDunite=None, IDevenement=None, IDaction=None, etat=None):
         if IDreservation != None :
             self.IDreservation = IDreservation
         self.date = date
         self.IDinscription = IDinscription
         self.IDunite = IDunite
+        self.IDevenement = IDevenement
         self.IDaction = IDaction
         self.etat = etat
         

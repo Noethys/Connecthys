@@ -10,6 +10,7 @@
 
 import datetime
 from application import app
+from cryptage import AESCipher
 
     
 def GetNow():
@@ -59,6 +60,15 @@ def IsUniteOuverte(unite=None, date=None, dict_planning={}):
         if not IDunite_conso in dict_planning["dict_ouvertures"][date] :
             return False
     return True
+
+def GetEvenementsOuverts(unite=None, date=None, dict_planning={}):
+    liste_evenements = []
+    for IDunite_conso in unite.Get_unites_principales() :
+        if dict_planning["dict_evenements"].has_key(date) :
+            if dict_planning["dict_evenements"][date].has_key(IDunite_conso):
+                for evenement in dict_planning["dict_evenements"][date][IDunite_conso]:
+                    liste_evenements.append(evenement)
+    return liste_evenements
 
 def IsUniteModifiable(unite=None, date=None, dict_planning={}):
     # Recherche si l'activité autorise la modification
@@ -199,18 +209,41 @@ def IsRenseignementDisabled(dict_parametres=None, individu=None, categorie="", c
     if categorie == "naissance" or champ in ("date_naiss", "cp_naiss", "ville_naiss") :
         return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_NAISSANCE", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_NAISSANCE", dict_parametres) == 'consultation')
     if categorie == "adresse" or champ in ("adresse_auto", "rue_resid", "cp_resid", "ville_resid") :
-		return GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) == 'consultation'
+        return GetParametre("RENSEIGNEMENTS_ADRESSE", dict_parametres) == 'consultation'
     if categorie == "coords" or champ in ("tel_domicile", "tel_mobile", "mail") :
-		return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) == 'consultation')
+        return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_COORDS", dict_parametres) == 'consultation') or (individu.IDcategorie == 2 and GetParametre("RENSEIGNEMENTS_ENFANT_COORDS", dict_parametres) == 'consultation')
     if categorie == "profession" or champ in ("profession", "employeur", "travail_tel", "travail_mail") :
-		return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) == 'consultation')
+        return (individu.IDcategorie == 1 and GetParametre("RENSEIGNEMENTS_ADULTE_PROFESSION", dict_parametres) == 'consultation')
     return False
-        
 
-        
-        
-        
-    
+def DecrypteChaine(liste_chaines=[]):
+    if isinstance(liste_chaines, unicode) or isinstance(liste_chaines, str) :
+        type_donnee = "CHAINE"
+        liste_chaines = [liste_chaines,]
+    elif isinstance(liste_chaines, list) :
+        type_donnee = "LISTE"
+    else :
+        return liste_chaines
+    cryptage = AESCipher(app.config['SECRET_KEY'][10:20], bs=16, prefixe=u"#@#")
+    liste_resultats = []
+    for chaine in liste_chaines :
+        resultat = cryptage.decrypt(chaine)
+        liste_resultats.append(resultat)
+    if type_donnee == "CHAINE" :
+        return liste_resultats[0]
+    return liste_resultats
+
+def CrypteChaine(chaine=""):
+    if chaine in ("", None):
+        return chaine
+    cryptage = AESCipher(app.config['SECRET_KEY'][10:20], bs=16, prefixe=u"#@#")
+    resultat = cryptage.encrypt(chaine)
+    return resultat
+
+
+
+
+
 def CallFonction(fonction="", *args):
     """ Pour appeller directement une fonction Utils depuis Python """
     return utility_processor()[fonction](*args)
@@ -227,6 +260,7 @@ def utility_processor():
         DateDDEnFrComplet=DateDDEnFrComplet,
         DateDTEnHeureFr=DateDTEnHeureFr,
         IsUniteOuverte=IsUniteOuverte,
+        GetEvenementsOuverts=GetEvenementsOuverts,
         IsUniteModifiable=IsUniteModifiable,
         GetEtatFondCase=GetEtatFondCase,
         GetEtatCocheCase=GetEtatCocheCase,
@@ -245,5 +279,7 @@ def utility_processor():
         ConvertToUnicode=ConvertToUnicode,
         GetIndividu=GetIndividu,
         IsRenseignementDisabled=IsRenseignementDisabled,
+        DecrypteChaine=DecrypteChaine,
+        CrypteChaine=CrypteChaine,
         )
     

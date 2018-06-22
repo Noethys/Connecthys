@@ -276,7 +276,7 @@ def logout():
 @login_required
 def accueil():  
     # Récupération des éléments manquants
-    liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.nom).all()
+    liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.IDtype_piece).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
     
     # Récupération des messages
@@ -287,7 +287,7 @@ def accueil():
             liste_messages.append(message)
             
     dict_parametres = models.GetDictParametres()
-    app.logger.debug("Page ACCUEIL (%s): famille id(%s) %s", current_user.identifiant, current_user.IDfamille, current_user.nom )
+    app.logger.debug("Page ACCUEIL (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('accueil.html', active_page="accueil",\
                             liste_pieces_manquantes=liste_pieces_manquantes, \
                             liste_cotisations_manquantes=liste_cotisations_manquantes, \
@@ -635,7 +635,7 @@ def historique():
 @login_required
 def pieces():
     # Récupération de la liste des pièces manquantes
-    liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.nom).all()
+    liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.IDtype_piece).all()
 
     # Récupération de la liste des types de pièces
     liste_types_pieces = models.Type_piece.query.order_by(models.Type_piece.nom).all()
@@ -701,7 +701,7 @@ def reservations():
     # Recherche l'historique des demandes liées aux réservations
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reservations")
     dict_parametres = models.GetDictParametres()
-    app.logger.debug("Page RESERVATIONS (%s): famille id(%s) %s - liste_individus: %s", current_user.identifiant, current_user.IDfamille, current_user.nom, liste_individus)
+    app.logger.debug("Page RESERVATIONS (%s): famille id(%s) - liste_individus: %s", current_user.identifiant, current_user.IDfamille, liste_individus)
     return render_template('reservations.html', active_page="reservations", \
                             liste_individus = liste_individus, \
                             historique = historique, dict_parametres=dict_parametres)
@@ -712,7 +712,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
     if index_couleur > len(COULEURS)-1 :
         return None
     couleur = COULEURS[index_couleur]
-    
+
     # Période
     periode = models.Periode.query.filter_by(IDperiode=IDperiode).first()
     if periode == None or not periode.Is_active_today() :
@@ -721,7 +721,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
         return None
     
     # Inscription
-    inscription = models.Inscription.query.filter_by(IDfamille=current_user.IDfamille, IDindividu=IDindividu, IDactivite=periode.IDactivite).first() # .order_by(models.Activite.nom)
+    inscription = models.Inscription.query.filter_by(IDfamille=current_user.IDfamille, IDindividu=IDindividu, IDactivite=periode.IDactivite).first()
     if inscription == None :
         app.logger.warning(u"IDfamille %d : Tentative d'accéder à l'individu %s dans les réservations." % (current_user.IDfamille, IDindividu))
         flash(u"Vous n'êtes pas autorisé à accéder au planning de l'individu demandé !")
@@ -732,7 +732,17 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
     
     # Ouvertures
     liste_ouvertures = models.Ouverture.query.filter(models.Ouverture.IDgroupe == inscription.IDgroupe, models.Ouverture.date >= periode.date_debut, models.Ouverture.date <= periode.date_fin).all()
-    
+
+    # Evenements
+    # liste_evenements = models.Evenement.query.filter(models.Evenement.IDgroupe == inscription.IDgroupe, models.Evenement.date >= periode.date_debut, models.Evenement.date <= periode.date_fin).all()
+    # dict_evenements = {}
+    # for evenement in liste_evenements :
+    #     if not dict_evenements.has_key(evenement.date):
+    #         dict_evenements[evenement.date] = {}
+    #     if not dict_evenements[evenement.date].has_key(evenement.IDunite):
+    #         dict_evenements[evenement.date][evenement.IDunite] = []
+    #     dict_evenements[evenement.date][evenement.IDunite].append(evenement)
+
     # Fériés
     liste_feries = models.Ferie.query.all()
     
@@ -772,7 +782,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
             for coche in coches.split(",") :
                 date, IDunite = utils.DateEngEnDD(coche.split("A")[0]), int(coche.split("A")[1])
                 liste_coches.append((date, IDunite))
-                
+
                 # Coche les nouvelles réservations
                 if dict_reservations != None :
                     if not dict_reservations.has_key(date) :
@@ -785,18 +795,6 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
                     if (date, IDunite) not in liste_coches :
                         dict_reservations[date][IDunite] = 0
 
-                    
-    # Génération de la liste initiale des réservations actives
-    # liste_reservations_initiale = []
-    # for date, liste_unites_temp in dict_reservations.iteritems() :
-        # for IDunite, etat in liste_unites_temp.iteritems() :
-            # if etat == 1 :
-                # liste_reservations_initiale.append("%s#%d" % (date, IDunite))
-    
-            
-    
-    
-    
     # Consommations
     liste_consommations = models.Consommation.query.filter_by(IDinscription=inscription.IDinscription).all()
     dict_consommations = {}
@@ -858,7 +856,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
     for date in liste_dates :
         for unite in liste_unites :
             dict_planning_temp = {"dict_reservations" : dict_reservations, "dict_conso_par_unite_resa" : dict_conso_par_unite_resa}
-            
+
             # Vérifie si la case est cochée
             coche = utils.GetEtatCocheCase(unite, date, dict_planning_temp)
             
@@ -890,7 +888,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
         "liste_reservations_initiale" : liste_reservations_initiale,
         }
     
-    app.logger.debug("Page PLANNING (%s): famille id(%s) Individu id(%s) pour la periode id(%s)\ndict_planning: %s", current_user.identifiant, current_user.IDfamille, IDindividu, IDperiode, dict_planning)
+    app.logger.debug("Page PLANNING (%s): famille id(%s) Individu id(%s) pour la periode id(%s)", current_user.identifiant, current_user.IDfamille, IDindividu, IDperiode)
     return dict_planning
     
 # @app.route('/planning/<int:IDindividu>/<int:IDperiode>/<int:index_couleur>')
@@ -1076,7 +1074,7 @@ def renseignements():
     dict_renseignements = GetDictRenseignements(IDfamille=current_user.IDfamille)
     
     # Récupération des individus
-    liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.prenom).all()
+    liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.nom).all()
     
     liste_individus = []
     for individu in liste_individus_temp :
@@ -1118,7 +1116,10 @@ def GetDictRenseignements(IDfamille=None, IDindividu=None):
             
         for champ in CHAMPS_RENSEIGNEMENTS :
             valeur = getattr(individu, champ)
+            valeur = utils.CallFonction("DecrypteChaine", valeur)
             if "date" in champ :
+                if isinstance(valeur, unicode) or isinstance(valeur, str):
+                    valeur = utils.CallFonction("DateEngEnDD", valeur)
                 valeur = utils.CallFonction("DateDDEnFr", valeur)
             elif "adresse_auto" in champ :
                 if valeur == None :
@@ -1137,7 +1138,7 @@ def GetDictRenseignements(IDfamille=None, IDindividu=None):
         actions = models.Action.query.filter_by(categorie="renseignements", IDfamille=current_user.IDfamille, IDindividu=IDindividu, etat="attente").order_by(models.Action.horodatage).all()   
     for action in actions :
         for renseignement in action.renseignements :
-            valeur = renseignement.valeur
+            valeur = utils.CallFonction("DecrypteChaine", renseignement.valeur)
             if renseignement.champ == "adresse_auto" and valeur == None :
                 valeur = 0
             dict_valeurs[action.IDindividu][renseignement.champ] = valeur
@@ -1252,9 +1253,9 @@ def envoyer_modification_renseignements():
         if nbre_champs_modifies == 0 :
             return jsonify(success=0, error_msg=u"Vous n'avez modifié aucun renseignement !")
         elif nbre_champs_modifies == 1 :
-            description = u"Modification de 1 renseignement pour %s" % individu.prenom
+            description = u"Modification de 1 renseignement pour %s" % individu.GetRenseignement("prenom")
         else :
-            description = u"Modification de %d renseignements pour %s" % (nbre_champs_modifies, individu.prenom)
+            description = u"Modification de %d renseignements pour %s" % (nbre_champs_modifies, individu.GetRenseignement("prenom"))
         
         # Enregistrement de l'action
         action = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="renseignements", action="envoyer", description=description, etat="attente", parametres=None)
@@ -1265,6 +1266,7 @@ def envoyer_modification_renseignements():
         for champ, valeur in dict_champs_modifies.iteritems():
             if champ == "adresse_auto" and valeur == 0 :
                 valeur = None
+            valeur = utils.CallFonction("CrypteChaine", valeur)
             renseignement = models.Renseignement(champ=champ, valeur=valeur, IDaction=action.IDaction)
             db.session.add(renseignement)
 
@@ -1333,12 +1335,12 @@ def envoyer_demande_inscription():
         # Vérifie que l'individu n'est pas déjà inscrit
         inscription = models.Inscription.query.filter_by(IDindividu=IDindividu, IDactivite=IDactivite).first()
         if inscription != None :
-            return jsonify(success=0, error_msg=u"%s est déjà inscrit(e) à l'activité sélectionnée !" % inscription.get_individu().prenom)
+            return jsonify(success=0, error_msg=u"%s est déjà inscrit(e) à l'activité sélectionnée !" % inscription.get_individu().GetRenseignement("prenom"))
                     
         # Enregistrement
         individu = models.Individu.query.filter_by(IDindividu=IDindividu).first()
         activite = models.Activite.query.filter_by(IDactivite=IDactivite).first()
-        description = u"Inscription de %s à l'activité %s" % (individu.prenom, activite.nom)
+        description = u"Inscription de %s à l'activité %s" % (individu.GetRenseignement("prenom"), activite.nom)
         parametres = u"IDactivite=%d#IDgroupe=%d" % (IDactivite, IDgroupe)
 
         m = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="inscriptions", action="inscrire", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
@@ -1418,14 +1420,15 @@ def detail_demande():
 
             liste_lignes = []
             for renseignement in liste_renseignements :
+                valeur = utils.CallFonction("DecrypteChaine", renseignement.valeur)
             
                 label = None
                 if DICT_RENSEIGNEMENTS.has_key(renseignement.champ) :
-                    label = u"- %s : %s\n" % (DICT_RENSEIGNEMENTS[renseignement.champ], renseignement.valeur)
+                    label = u"- %s : %s\n" % (DICT_RENSEIGNEMENTS[renseignement.champ], valeur)
                     
                 if renseignement.champ == "adresse_auto" and renseignement.valeur != None :
-                    individuTemp = models.Individu.query.filter_by(IDindividu=int(renseignement.valeur)).first()
-                    label = u"- Adresse associée à celle de %s\n" % individuTemp.prenom
+                    individuTemp = models.Individu.query.filter_by(IDindividu=int(valeur)).first()
+                    label = u"- Adresse associée à celle de %s\n" % individuTemp.GetRenseignement("prenom")
                     
                 if label != None :
                     liste_lignes.append(label)

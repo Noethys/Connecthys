@@ -538,7 +538,7 @@
 				IDactivite: {{ dict_planning["inscription"].IDactivite }},
 				activite_nom: '{{ dict_planning["inscription"].activite.nom }}',
 				IDindividu: {{ dict_planning["inscription"].IDindividu }},
-				individu_prenom: '{{ dict_planning["inscription"].get_individu().prenom }}',
+				individu_prenom: '{{ dict_planning["inscription"].get_individu().GetRenseignement("prenom") }}',
 				date_debut_periode: '{{ dict_planning["periode"].date_debut }}',
 				date_fin_periode: '{{ dict_planning["periode"].date_fin }}',
 				commentaire: $("#commentaire").val(),
