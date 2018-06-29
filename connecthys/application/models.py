@@ -913,17 +913,15 @@ class Reservation(Base):
     etat = Column(Integer)
     IDinscription = Column(Integer)
     IDunite = Column(Integer)
-    IDevenement = Column(Integer)
     IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
     action = relationship("Action")  
     
-    def __init__(self , IDreservation=None, date=None, IDinscription=None, IDunite=None, IDevenement=None, IDaction=None, etat=None):
+    def __init__(self , IDreservation=None, date=None, IDinscription=None, IDunite=None, IDaction=None, etat=None):
         if IDreservation != None :
             self.IDreservation = IDreservation
         self.date = date
         self.IDinscription = IDinscription
         self.IDunite = IDunite
-        self.IDevenement = IDevenement
         self.IDaction = IDaction
         self.etat = etat
         
