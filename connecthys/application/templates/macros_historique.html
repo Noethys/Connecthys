@@ -30,6 +30,8 @@
 							{{ action.description }}
 							{% if action.etat == "suppression" %}</del>{% endif %}
 						</h3>
+
+						{% if action.action != "maj_password" %}
 						<div class="timeline-footer">
 						
 							{% if action.categorie in ("reservations", "renseignements") %}
@@ -55,10 +57,10 @@
 							{% if action.etat == "validation" %}
 								<span class="text-green">Votre demande a été traitée le {{ DateDDEnFr(action.traitement_date) }}. {% if action.reponse != None and action.reponse != '' %}Réponse : {{ action.reponse }}{% endif %}</span>
 							{% endif %}
-							
-							
-							
+
 						</div>
+						{% endif %}
+
 					</div>
 				</li>
 				{% endfor %}
@@ -78,7 +80,7 @@
 		  <div class="modal-dialog" role="document">
 			<div class="modal-content">
 				
-			  <div class="modal-header">
+			  <div class="modal-header bg-light-blue">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" id="myModalLabel"><strong>Supprimer une demande</strong></h4>
 			  </div>
@@ -111,7 +113,7 @@
 		  <div class="modal-dialog" role="document">
 			<div class="modal-content">
 				
-			  <div class="modal-header">
+			  <div class="modal-header bg-light-blue">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" id="myModalLabel"><strong>Détail de la demande</strong></h4>
 			  </div>

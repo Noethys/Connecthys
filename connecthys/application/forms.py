@@ -11,7 +11,7 @@
 try :
     from flask_wtf import FlaskForm
 except :
-    # Pour la compatibilité avec les anciennes version de flask_wtf
+    # Pour la compatibilitï¿½ avec les anciennes version de flask_wtf
     from flask_wtf import Form as FlaskForm
 
 from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField, SelectField
@@ -19,8 +19,13 @@ from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTim
 
 class LoginForm(FlaskForm):  
     identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
-    password  = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=10)])
+    password = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=20)])
     remember = BooleanField("remember", default=False)
+
+class ChangePassword(FlaskForm):
+    password1 = PasswordField('password1',  [validators.Required(), validators.Length(min=0, max=20)])
+    password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
+    accept = BooleanField("accept", default=False)
 
 class RetourTipi(FlaskForm):
     NUMCLI = TextField('numcli', [validators.Required(), validators.Length(min=0, max=20)])

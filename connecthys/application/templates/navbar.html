@@ -19,6 +19,7 @@
 			<span>{{ current_user.full_name }} <i class="caret"></i></span>
 		  </a>
 		  <ul class="dropdown-menu">
+
 			<!-- User image -->
 			<li class="user-header">
 			  <img src="{{ url_for('static', filename=current_user.get_image()) }}" class="img-circle" alt="User Image" />
@@ -27,12 +28,17 @@
 				<small>Famille</small>
 			  </p>
 			</li>
+
 			<!-- Menu Footer-->
 			<li class="user-footer">
-			  <div>
-				<a href="{{ url_for('logout') }}" style="width:100%;" class="btn btn-default btn-flat">Se déconnecter</a>
-			  </div>
+				<div class="pull-left">
+					<a href="{{ url_for('compte') }}" class="btn btn-default btn-flat">Gestion du compte</a>
+				</div>
+				<div class="pull-right">
+					<a href="{{ url_for('logout') }}" style="width:100%;" class="btn btn-default btn-flat">Se déconnecter</a>
+				</div>
 			</li>
+
 		  </ul>
 		</li>
 		

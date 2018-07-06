@@ -54,6 +54,7 @@ DICT_PAGES = {
     "contact" : {"nom" : u"Contact", "icone" : "fa-envelope-o", "description" : u"Contacter l'organisateur", "couleur" : "yellow"},
     "mentions" : {"nom" : u"Mentions légales", "icone" : "fa-info-circle", "description" : u"Consulter les mentions légales"},
     "aide" : {"nom" : u"Aide", "icone" : "fa-support", "description" : u"Consulter l'aide"},
+    "compte" : {"nom" : u"Gestion du compte", "icone" : "fa-support", "description" : u"Gestion du compte"},
     }
 
 COULEURS = ["green", "blue", "yellow", "red", "light-blue"]
@@ -240,7 +241,7 @@ def login():
             
             # Vérification du mot de passe
             if registered_user.check_password(form.password.data) == False :
-                app.logger.debug("Mot de passe %s incorrect pour %s", form.password.data, form.identifiant.data)
+                app.logger.debug("Mot de passe incorrect pour %s", form.identifiant.data)
                 registered_user = None
                 flash(u"Mot de passe incorrect" , 'error')
                 return redirect(url_for('login'))
@@ -253,7 +254,12 @@ def login():
             texte_bienvenue = models.GetParametre(nom="ACCUEIL_BIENVENUE")
             flash(texte_bienvenue)
             app.logger.debug("Connexion reussie de %s", form.identifiant.data)
-            
+
+            # Force la modification du mot de passe
+            if "custom" not in registered_user.password:
+                app.logger.debug("Force modification mot de passe pour %s", form.identifiant.data)
+                return redirect(url_for('force_change_password'))
+
             return redirect(url_for('accueil'))
             #return redirect(request.args.get('next') or url_for('accueil'))
 
@@ -266,15 +272,47 @@ def login():
 def logout():
     logout_user()
     flash(u"Vous avez été déconnecté", "error")
-    return redirect(url_for('login')) 
-    
-    
-    
-# ------------------------- ACCUEIL ---------------------------------- 
+    return redirect(url_for('login'))
+
+
+# ------------------------- FORCE CHANGE PASSWORD ----------------------------------
+
+@app.route('/force_change_password', methods=['GET', 'POST'])
+@login_required
+def force_change_password():
+    # Si l'utilisateur n'est pas connecté, on le renvoie vers l'accueil
+    if not current_user.is_authenticated or "custom" in current_user.password :
+        return redirect(url_for('login'))
+
+    # Génération du form de login
+    form = forms.ChangePassword()
+
+    # Affiche la page de changement
+    if request.method == 'GET':
+        dict_parametres = models.GetDictParametres()
+        return render_template('force_change_password.html', form=form, dict_parametres=dict_parametres)
+
+    # Validation du form avec Flask-WTF
+    if form.validate_on_submit():
+        if ValiderModificationPassword(form=form) != True :
+            return redirect(url_for("force_change_password"))
+
+    # Renvoie vers l'accueil
+    flash(u"Votre nouveau mot de passe a bien été enregistré")
+    return redirect(url_for('accueil'))
+
+
+
+# ------------------------- ACCUEIL ----------------------------------
 
 @app.route('/accueil')
 @login_required
-def accueil():  
+def accueil():
+    # Vérifie que son mot de passe est personnalisé, sinon on le logout
+    if "custom" not in current_user.password:
+        flash(u"Vous devez obligatoirement modifier votre mot de passe !", 'error')
+        return redirect(url_for('logout'))
+
     # Récupération des éléments manquants
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.IDtype_piece).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
@@ -1358,11 +1396,11 @@ def envoyer_demande_inscription():
 
 @app.route('/contact')
 @login_required
-def contact():    
+def contact():
     dict_parametres = models.GetDictParametres()
     return render_template('contact.html', active_page="contact", dict_parametres=dict_parametres)
-    
-        
+
+
 # ------------------------- MENTIONS ---------------------------------- 
 
 @app.route('/mentions')
@@ -1380,9 +1418,36 @@ def aide():
     dict_parametres = models.GetDictParametres()
     return render_template('aide.html', active_page="aide", dict_parametres=dict_parametres)
 
-    
-    
-    
+
+# ------------------------- COMPTE ----------------------------------
+
+
+@app.route('/compte', methods=['GET', 'POST'])
+@login_required
+def compte():
+    # Si l'utilisateur n'est pas connecté, on le renvoie vers l'accueil
+    if not current_user.is_authenticated :
+        return redirect(url_for('login'))
+
+    # Génération du form de login
+    form = forms.ChangePassword()
+
+    # Affiche la page de changement
+    if request.method == 'GET':
+        dict_parametres = models.GetDictParametres()
+        return render_template('compte.html', active_page="compte", form=form, dict_parametres=dict_parametres)
+
+    # Validation du form avec Flask-WTF
+    if form.validate_on_submit():
+        if ValiderModificationPassword(form=form, valider_conditions=False) != True :
+            return redirect(url_for("compte"))
+
+    # Renvoie vers l'accueil
+    flash(u"Votre nouveau mot de passe a bien été enregistré", 'error')
+    return redirect(url_for('compte'))
+
+
+
 @app.route('/detail_demande')
 @login_required
 def detail_demande():
@@ -1475,4 +1540,53 @@ def GetHistorique(IDfamille=None, categorie=None):
                 dict_dernieres_reservations[action.IDperiode] = action
     
     return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro, "categorie" : categorie}
-    
+
+
+def ValiderModificationPassword(form=None, valider_conditions=True):
+    # Vérifie que les mots de passe sont identiques
+    if form.password1.data != form.password2.data:
+        flash(u"Les deux mots de passe saisis doivent être identiques !", 'error')
+        return False
+
+    # Vérifie que le mot de passe a bien été changé
+    if current_user.check_password(form.password1.data) == True:
+        flash(u"Vous ne pouvez pas conserver l'ancien mot de passe !", 'error')
+        return False
+
+    # Vérifie que le mot de passe est bien formaté
+    if len(form.password1.data) < 8:
+        flash(u"Le mot de passe doit comporter au moins 8 caractères !", 'error')
+        return False
+
+    if not sum(1 for c in form.password1.data if c.islower()):
+        flash(u"Le mot de passe doit comporter au moins une lettre minuscule !", 'error')
+        return False
+
+    if not sum(1 for c in form.password1.data if c.isupper()):
+        flash(u"Le mot de passe doit comporter au moins une lettre majuscule !", 'error')
+        return False
+
+    if not sum(1 for c in form.password1.data if c.isdigit()):
+        flash(u"Le mot de passe doit comporter au moins un chiffre !", 'error')
+        return False
+
+    if not sum(1 for c in form.password1.data if c in u"%#:$*@-_"):
+        flash(u"Le mot de passe doit comporter au moins un caractère spécial (%#:$*@-_) !", 'error')
+        return False
+
+    # Vérifie que la case des conditions d'utilisation a été cochée
+    if valider_conditions == True :
+        if form.accept.data == False:
+            flash(u"Vous devez obligatoirement accepter les conditions d'utilisation !", 'error')
+            return False
+
+    # Enregistre le nouveau mot de passe
+    current_user.SetCustomPassword(form.password1.data)
+    app.logger.debug("Nouveau mot de passe enregistre pour %s", current_user.identifiant)
+
+    # Enregistre l'action
+    m = models.Action(IDfamille=current_user.IDfamille, categorie="compte", action="maj_password", description=u"Mise à jour du mot de passe", etat="attente", parametres=current_user.password)
+    db.session.add(m)
+    db.session.commit()
+
+    return True

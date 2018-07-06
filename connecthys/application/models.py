@@ -93,6 +93,7 @@ def UpgradeDB():
         try :
             flask_migrate.migrate(directory=REP_MIGRATIONS)
         except Exception, err :
+            app.logger.info(err)
             if "Path doesn't exist" in str(err) :
                 app.logger.info("Repertoire Migrations manquant -> Initialisation de flask_migrate maintenant...")
                 flask_migrate.init(directory=REP_MIGRATIONS)
@@ -115,7 +116,7 @@ def UpgradeDB():
                 shutil.rmtree(REP_MIGRATIONS)
                 flask_migrate.init(directory=REP_MIGRATIONS)
                 flask_migrate.migrate()
-        
+
     # Mémorisation du nouveau numéro de version dans la DB
     m = Parametre.query.filter_by(nom="version").first()
     m.parametre=app.config["VERSION_APPLICATION"]
@@ -151,6 +152,7 @@ class User(Base):
     IDutilisateur = Column(Integer, index=True)
     actif = Column(Integer)
     session_token = Column(String(200))
+    last_maj_password = Column(DateTime)
     infos = {}
     
     def __init__(self , IDuser=None, identifiant=None, decryptpassword=None, cryptpassword=None, nom=None, email=None, role="famille", IDfamille=None, IDutilisateur=None, actif=1, session_token=None):
@@ -169,11 +171,19 @@ class User(Base):
         self.IDutilisateur = IDutilisateur
         self.actif = actif
         self.session_token = session_token
- 
+
+    def SetCustomPassword(self, password=""):
+        self.password = "custom" + SHA256.new(password.encode('utf-8')).hexdigest()
+        self.last_maj_password = datetime.datetime.now()
+        db.session.commit()
+
     def check_password(self, password):
         #resultat = sha256_crypt.verify(password, self.password) # Version passlib
-        resultat = SHA256.new(password).hexdigest() == self.password
-        return resultat
+        try :
+            resultat = SHA256.new(password.encode('utf-8')).hexdigest() == self.password.replace("custom", "")
+            return resultat
+        except :
+            return False
         
     def is_authenticated(self):
         return True

@@ -1,0 +1,74 @@
+{% extends "page.html" %}
+  
+  
+{% block content -%}
+  
+	{% if GetParametre("CONTACT_INTRO", dict_parametres) != '' %}
+		<h4 class="page-header">
+			<small><i class="fa fa-info-circle"></i> {{ GetParametre("CONTACT_INTRO", dict_parametres) }}</small>
+		</h4>
+	{% endif %}
+
+
+	<div class="box box-danger">
+	
+		<div class="box-header with-border">
+			<h3 class="box-title">Modifier le mot de passe</h3>
+		</div>
+		
+		<div class="box-body">
+
+			<div>
+				<p>Vous pouvez ici modifier le mot de passe de votre compte.</p>
+				<p>Saisissez deux fois le nouveau mot de passe souhaité puis cliquez sur le bouton Modifier. Attention, votre mot de passe doit comporter au moins 8 caractères, dont au minimum un chiffre, une lettre majuscule, une lettre minuscule et un caractère spécial (%#:$*@-_).</p>
+			  {# Display errors (if there are any). #}
+			  {% with messages = get_flashed_messages(category_filter=["error"]) %}
+				{% if messages %}
+					{% for message in messages %}
+					  <p><strong style="color: red">{{ message }}</strong></p>
+					{% endfor %}
+				{% endif %}
+			  {% endwith %}
+			  {# Render the form. #}
+			  <form action="{{ url_for('compte') }}" method="post">
+				{{ form.csrf_token }}
+
+				<div class="pull-left form-group has-feedback">
+				  {{ form.password1(class='form-control', placeholder='Tapez un mot de passe', type='password', required='true') }}
+				  <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+				</div>
+				<span class="pull-left">&nbsp;&nbsp;&nbsp;</span>
+				<div class="pull-left form-group has-feedback">
+					{{ form.password2(class='form-control', placeholder='Retapez le mot de passe', type='password', required='true') }}
+					<span class="glyphicon glyphicon-lock form-control-feedback"></span>
+				</div>
+				<span class="pull-left">&nbsp;&nbsp;&nbsp;</span>
+				<div class="pull-left info">
+					<button type="submit" class="btn btn-primary btn-block btn-flat">Modifier le mot de passe</button>
+				</div>
+			  </form>
+			</div>
+
+
+
+
+
+
+	
+		</div>
+	</div>
+
+	
+	<div class="box box-primary">
+	
+		<div class="box-header with-border">
+			<h3 class="box-title">Désactiver le compte</h3>
+		</div>
+		<div class="box-body">
+			Pour désactiver votre compte en ligne, veuillez adresser votre demande à l'organisateur depuis la rubrique  <a id="desactiver_compte" href="{{ url_for('contact') }}"><i class="fa fa-envelope-o"></i> Contact</a>.
+		</div>
+
+	</div>
+		
+	
+{%- endblock content %}
