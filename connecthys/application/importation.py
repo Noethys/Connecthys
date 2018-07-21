@@ -88,9 +88,12 @@ def Importation(secret=0):
     dict_parametres_destination = {}
     for parametre in liste_parametres_destination :
         dict_parametres_destination[parametre.nom] = parametre
-    
+
+    liste_tables_modifiees = []
     liste_parametres_source = source.query(models.Parametre).all()
     for parametre in liste_parametres_source :
+
+        # Mémorisation du paramètre
         if dict_parametres_destination.has_key(parametre.nom) :
             # Modification si besoin d'un paramètre existant
             if dict_parametres_destination[parametre.nom].parametre != parametre.parametre :
@@ -98,9 +101,14 @@ def Importation(secret=0):
         else :
             # Saisie d'un nouveau paramètre
             destination.add(models.Parametre(nom=parametre.nom, parametre=parametre.parametre))
-    
-    destination.commit()    
-     
+
+        # Recherche la liste des tables à importer
+        if parametre.nom == "tables_modifiees_synchro" :
+            tables_modifiees_synchro = parametre.parametre.split(";")
+
+    destination.commit()
+
+
     # Traitement de la table users
     app.logger.debug("Traitement de la table users...")
     
@@ -151,7 +159,7 @@ def Importation(secret=0):
     tables = [
         "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "consommations", "periodes", "ouvertures", "feries", "unites", "inscriptions",
-        "groupes", "activites", "individus", "messages", "regies",
+        "groupes", "activites", "individus", "messages", "regies", "pages", "blocs", "elements",
         ]
     
     # Recherche si des actions sont présentes
@@ -177,10 +185,11 @@ def Importation(secret=0):
     
     # Suppression des tables
     for nom_table in tables:
-        try :
-            dengine.execute("DROP TABLE %s" % "%sportail_%s" % (PREFIXE_TABLES, nom_table))
-        except :
-            pass
+        if nom_table in tables_modifiees_synchro :
+            try :
+                dengine.execute("DROP TABLE %s" % "%sportail_%s" % (PREFIXE_TABLES, nom_table))
+            except :
+                pass
             
     app.logger.debug("Suppression des tables ok.")
     
@@ -192,25 +201,27 @@ def Importation(secret=0):
     
     tables = [
         "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
-        "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "feries", "messages", "regies",
+        "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures",
+        "feries", "messages", "regies", "pages", "blocs", "elements",
         ]
     
     if "mysql" in to_db :
         dengine.execute("SET foreign_key_checks = 0;")
     
     for nom_table in tables:
-        dtable = Table("%sportail_%s" % (PREFIXE_TABLES, nom_table), dmeta, autoload=True)
-        stable = Table("portail_%s" % nom_table, smeta, autoload=True)
-        NewRecord = quick_mapper(stable)
-        columns = stable.columns.keys()
-        data = source.query(stable).all()
-        listeDonnees = []
-        for record in data :
-            data = dict([(str(column), getattr(record, column)) for column in columns])
-            listeDonnees.append(data) 
-        
-        if len(listeDonnees) > 0 :
-            dengine.execute(dtable.insert(), listeDonnees)
+        if nom_table in tables_modifiees_synchro:
+            dtable = Table("%sportail_%s" % (PREFIXE_TABLES, nom_table), dmeta, autoload=True)
+            stable = Table("portail_%s" % nom_table, smeta, autoload=True)
+            NewRecord = quick_mapper(stable)
+            columns = stable.columns.keys()
+            data = source.query(stable).all()
+            listeDonnees = []
+            for record in data :
+                data = dict([(str(column), getattr(record, column)) for column in columns])
+                listeDonnees.append(data)
+
+            if len(listeDonnees) > 0 :
+                dengine.execute(dtable.insert(), listeDonnees)
     
     # Commit de l'importation des tables
     destination.commit()

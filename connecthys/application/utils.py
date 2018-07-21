@@ -44,6 +44,11 @@ def DateEngEnDD(date):
     if type(date) == datetime.date : return date
     return datetime.date(int(date[:4]), int(date[5:7]), int(date[8:10]))
 
+def DateDTEnFr(datetm):
+    """ Transforme une datetime en FR """
+    if datetm == None : return ""
+    return datetm.strftime("%d/%m/%Y %H:%M")
+
 def DateDTEnHeureFr(datetm):
     """ Transforme une datetime en Heure FR """
     if datetm == None : return ""
@@ -240,6 +245,20 @@ def CrypteChaine(chaine=""):
     resultat = cryptage.encrypt(chaine)
     return resultat
 
+def TriElementsPourBlog(liste_elements=[]):
+    """ Tri les éléments pour les pages perso de type blog """
+    liste_temp = []
+    for element in liste_elements :
+        if element.date_debut <= datetime.datetime.now() and (element.date_fin == None or element.date_fin >= datetime.datetime.now()):
+            liste_temp.append((element.date_debut, element))
+    liste_temp.sort(reverse=True)
+    return liste_temp
+
+def FusionDonneesOrganisateur(texte="", dict_parametres={}):
+    for key, valeur in dict_parametres.iteritems():
+        if key.startswith("ORGANISATEUR_") :
+            texte = texte.replace(u"{%s}" % key, valeur)
+    return texte
 
 
 
@@ -258,6 +277,7 @@ def utility_processor():
         Formate_montant=Formate_montant,
         DateDDEnFr=DateDDEnFr,
         DateDDEnFrComplet=DateDDEnFrComplet,
+        DateDTEnFr=DateDTEnFr,
         DateDTEnHeureFr=DateDTEnHeureFr,
         IsUniteOuverte=IsUniteOuverte,
         GetEvenementsOuverts=GetEvenementsOuverts,
@@ -281,5 +301,7 @@ def utility_processor():
         IsRenseignementDisabled=IsRenseignementDisabled,
         DecrypteChaine=DecrypteChaine,
         CrypteChaine=CrypteChaine,
+        TriElementsPourBlog=TriElementsPourBlog,
+        FusionDonneesOrganisateur=FusionDonneesOrganisateur,
         )
     

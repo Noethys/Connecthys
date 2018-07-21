@@ -1006,7 +1006,83 @@ class Regie(Base) :
         return '<IDregie %d>' % (self.IDregie)
 
 
-        
+
+class Page(Base):
+    __tablename__ = "%sportail_pages" % PREFIXE_TABLES
+    IDpage = Column(Integer, primary_key=True)
+    titre = Column(String(300))
+    couleur = Column(String(100))
+    ordre = Column(Integer)
+
+    def __init__(self, IDpage=None, titre=None, couleur=None, ordre=None):
+        if IDpage != None:
+            self.IDpage = IDpage
+        self.titre = titre
+        self.couleur = couleur
+        self.ordre = ordre
+
+    def __repr__(self):
+        return '<IDpage %d>' % (self.IDpage)
+
+
+
+class Bloc(Base):
+    __tablename__ = "%sportail_blocs" % PREFIXE_TABLES
+    IDbloc = Column(Integer, primary_key=True)
+    IDpage = Column(Integer)
+    titre = Column(String(300))
+    couleur = Column(String(100))
+    categorie = Column(String(200))
+    ordre = Column(Integer)
+    parametres = Column(String(100000))
+
+    def __init__(self, IDbloc=None, IDpage=None, titre=None, couleur=None, categorie=None, ordre=None, parametres=None):
+        if IDbloc != None:
+            self.IDbloc = IDbloc
+        self.IDpage = IDpage
+        self.titre = titre
+        self.couleur = couleur
+        self.categorie = categorie
+        self.ordre = ordre
+        self.parametres = parametres
+
+    def __repr__(self):
+        return '<IDbloc %d>' % (self.IDbloc)
+
+
+
+class Element(Base):
+    __tablename__ = "%sportail_elements" % PREFIXE_TABLES
+    IDelement = Column(Integer, primary_key=True)
+    IDbloc = Column(Integer)
+    ordre = Column(Integer)
+    titre = Column(String(300))
+    categorie = Column(String(200))
+    date_debut = Column(DateTime)
+    date_fin = Column(DateTime)
+    parametres = Column(String(100000))
+    texte_html = Column(String(100000))
+
+    def __init__(self, IDelement=None, IDbloc=None, ordre=None, titre=None, categorie=None, date_debut=None, date_fin=None, parametres=None, texte_html=None):
+        if IDelement != None:
+            self.IDelement = IDelement
+        self.IDbloc = IDbloc
+        self.ordre = ordre
+        self.titre = titre
+        self.categorie = categorie
+        self.date_debut = date_debut
+        self.date_fin = date_fin
+        self.parametres = parametres
+        self.texte_html = texte_html
+
+    def __repr__(self):
+        return '<IDelement %d>' % (self.IDelement)
+
+
+
+
+
+
 def GetParametre(nom="", dict_parametres=None, defaut=""):
     parametre = None
     # Si un dict_parametre est donné

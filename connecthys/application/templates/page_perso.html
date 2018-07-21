@@ -1,0 +1,138 @@
+{% extends "page.html" %}
+
+{%- block styles %}
+	{{ super() }}
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.min.css', cdn='local', use_minified=False) }}" rel="stylesheet">
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.print.min.css', cdn='local', use_minified=False) }}" rel="stylesheet"  media="print">
+{%- endblock styles %}
+
+  
+{% block content -%}
+
+	{% for bloc in liste_blocs %}
+		<div class="box box-{{ bloc.couleur }}">
+			<div class="box-header with-border">
+				<h3 class="box-title">{{ bloc.titre }}</h3>
+			</div>
+
+				{# ------------ BLOC TEXTE ------------ #}
+				{% if bloc.categorie == "bloc_texte" %}
+					<div class="box-body">
+					{% if dict_elements.has_key(bloc.IDbloc) %}
+						{% for element in dict_elements[bloc.IDbloc] %}
+							{{ element.texte_html|safe }}
+						{% endfor %}
+					{% endif %}
+					</div>
+				{% endif %}
+
+				{# ------------ BLOC ONGLETS ------------ #}
+				{% if bloc.categorie == "bloc_onglets" %}
+					<div class="box-body no-padding">
+					{% if dict_elements.has_key(bloc.IDbloc) %}
+						<div class="nav-tabs-custom no-margin">
+							<ul class="nav nav-tabs">
+								{% for element in dict_elements[bloc.IDbloc] %}
+									<li {% if element.ordre == 1 %}class="active"{% endif %}>
+										<a id="tab_bloc_{{ bloc.IDbloc }}_element_{{ element.IDelement }}" class="text-primary" href="#page_bloc_{{ bloc.IDbloc }}_element_{{ element.IDelement }}" data-toggle="tab">{{ element.titre }}</a>
+									</li>
+								{% endfor %}
+							</ul>
+							<div class="tab-content no-margin">
+								{% for element in dict_elements[bloc.IDbloc] %}
+								<div class="tab-pane {% if element.ordre == 1 %}active{% endif %}" id="page_bloc_{{ bloc.IDbloc }}_element_{{ element.IDelement }}">
+									{{ element.texte_html|safe }}
+								</div>
+								{% endfor %}
+							</div>
+						</div>
+					{% endif %}
+					</div>
+				{% endif %}
+
+				{# ------------ BLOC BLOG ------------ #}
+				{% if bloc.categorie == "bloc_blog" %}
+					<div class="box-body">
+					{% if dict_elements.has_key(bloc.IDbloc) %}
+						{% set liste_elements = TriElementsPourBlog(dict_elements[bloc.IDbloc]) %}
+						{% for date_debut, element in liste_elements %}
+							<div class="post">
+								<h4><strong>{{ element.titre }}</strong></h4>
+								<p class="text-sm">Posté le {{ DateDTEnFr(element.date_debut) }}</p>
+								<p>{{ element.texte_html|safe }}</p>
+							</div>
+						{% endfor %}
+					{% endif %}
+					</div>
+				{% endif %}
+
+				{# ------------ BLOC CALENDRIER ------------ #}
+				{% if bloc.categorie == "bloc_calendrier" %}
+					<div class="box-body no-padding">
+						<div id="calendrier{{ bloc.IDbloc }}"></div>
+					</div>
+				{% endif %}
+
+				{# ------------ BLOC TROMBI ------------ #}
+				{% if bloc.categorie == "bloc_trombi" %}
+					<div class="box-body">
+						{% if dict_elements.has_key(bloc.IDbloc) %}
+							<ul class="users-list clearfix">
+							{% for element in dict_elements[bloc.IDbloc] %}
+								<li>
+									<img src="data:image/png;base64, {{ element.texte_html|safe }}"/>
+									<span class="users-list-name"><strong>{{ element.titre }}</strong></span>
+									<span class="users-list-date">{{ element.parametres }}</span>
+								</li>
+							{% endfor %}
+							</ul>
+						{% endif %}
+					</div>
+				{% endif %}
+
+
+
+
+
+		</div>
+	{% endfor %}
+
+
+{%- endblock content %}
+
+{% block scripts %}
+	{{ super() }}
+	<!-- Calendrier -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+	<script src="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.min.js', cdn='local', use_minified=False)}}"></script>
+	<script src="{{ adminlte_find_resource('plugins/fullcalendar/locale/fr.js', cdn='local', use_minified=False)}}"></script>
+
+	{% for bloc in liste_blocs %}
+		<script>
+		  $(function () {
+			$('#calendrier{{ bloc.IDbloc }}').fullCalendar({
+			  header: {
+				left  : 'prev,next today',
+				center: 'title',
+				right : 'month,agendaWeek,agendaDay,listWeek'
+			  },
+			  // Popup pour afficher une description dans un tip
+			  eventRender: function(eventObj, $el) {
+				$el.popover({
+				  title: eventObj.title,
+				  content: eventObj.description,
+				  trigger: 'hover',
+				  placement: 'top',
+				  container: 'body'
+				});
+			  },
+			  // Mémorisation des évènements
+			  events: '{{ url_for('get_events_calendrier', idbloc=bloc.IDbloc) }}',
+			  editable  : false,
+			  droppable : false,
+			})
+		  })
+		</script>
+	{% endfor %}
+
+{%- endblock scripts %}

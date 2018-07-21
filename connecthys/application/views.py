@@ -8,7 +8,7 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-import random, datetime, traceback
+import random, datetime, traceback, copy
 from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response, send_from_directory
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 try :
@@ -35,7 +35,7 @@ LISTE_PAGES = [
         {"type" : "page", "page" : "pieces", "raccourci" : True, "affichage" : "PIECES_AFFICHER"}, 
         {"type" : "page", "page" : "cotisations", "raccourci" : True, "affichage" : "COTISATIONS_AFFICHER"}, 
         {"type" : "page", "page" : "historique", "raccourci" : True, "affichage" : "HISTORIQUE_AFFICHER"},
-    {"type" : "label", "label" : u"INFOS"},     
+    {"type" : "label", "label" : u"DIVERS"},
         {"type" : "page", "page" : "contact", "raccourci" : True, "affichage" : "CONTACT_AFFICHER"}, 
         {"type" : "page", "page" : "mentions", "raccourci" : False, "affichage" : "MENTIONS_AFFICHER"},
         {"type" : "page", "page" : "aide", "raccourci" : False, "affichage" : "AIDE_AFFICHER"},
@@ -156,11 +156,32 @@ def load_user(session_token):
 def before_request():
     # Mémorise l'utilisateur en cours
     g.user = current_user
-    g.liste_pages = LISTE_PAGES
-    g.dict_pages = DICT_PAGES
+
+    # Mémorise des variables
+    g.liste_pages, g.dict_pages = GetPages()
     g.date_jour = datetime.date.today()
-    
-    
+
+def GetPages():
+    liste_pages = copy.copy(LISTE_PAGES)
+    dict_pages = copy.copy(DICT_PAGES)
+
+    liste_pages_perso = models.Page.query.order_by(models.Page.ordre).all()
+    if len(liste_pages_perso) > 0 :
+
+        # Label
+        liste_pages.insert(2, {"type": "label", "label": u"INFORMATIONS"})
+
+        # Création des pages
+        index = 3
+        for page in liste_pages_perso :
+            codePage = "page_perso%d" % page.IDpage
+            liste_pages.insert(index, {"type": "page", "page": codePage, "num_page" : page.IDpage, "raccourci": False, "affichage": True})
+            dict_pages[codePage] = {"nom" : page.titre, "icone" : "fa-circle-o", "description" : u" ", "couleur" : page.couleur}
+            index += 1
+
+    return liste_pages, dict_pages
+
+
 @app.after_request
 def add_header(response):
     response.cache_control.private = True
@@ -256,7 +277,7 @@ def login():
             app.logger.debug("Connexion reussie de %s", form.identifiant.data)
 
             # Force la modification du mot de passe
-            if "custom" not in registered_user.password:
+            if "custom" not in registered_user.password and models.GetParametre(nom="MDP_FORCER_MODIFICATION", defaut="True") == "True" :
                 app.logger.debug("Force modification mot de passe pour %s", form.identifiant.data)
                 return redirect(url_for('force_change_password'))
 
@@ -290,7 +311,12 @@ def force_change_password():
     # Affiche la page de changement
     if request.method == 'GET':
         dict_parametres = models.GetDictParametres()
-        return render_template('force_change_password.html', form=form, dict_parametres=dict_parametres)
+        conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
+        if conditions_utilisation == None :
+            conditions_utilisation = ""
+        else :
+            conditions_utilisation = utils.FusionDonneesOrganisateur(conditions_utilisation.texte_html, dict_parametres)
+        return render_template('force_change_password.html', form=form, dict_parametres=dict_parametres, conditions_utilisation=conditions_utilisation)
 
     # Validation du form avec Flask-WTF
     if form.validate_on_submit():
@@ -1407,7 +1433,12 @@ def contact():
 @login_required
 def mentions():   
     dict_parametres = models.GetDictParametres()
-    return render_template('mentions.html', active_page="mentions", dict_parametres=dict_parametres)
+    conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
+    if conditions_utilisation == None:
+        conditions_utilisation = ""
+    else:
+        conditions_utilisation = utils.FusionDonneesOrganisateur(conditions_utilisation.texte_html, dict_parametres)
+    return render_template('mentions.html', active_page="mentions", dict_parametres=dict_parametres, conditions_utilisation=conditions_utilisation)
         
       
 # ------------------------- AIDE ---------------------------------- 
@@ -1445,6 +1476,71 @@ def compte():
     # Renvoie vers l'accueil
     flash(u"Votre nouveau mot de passe a bien été enregistré", 'error')
     return redirect(url_for('compte'))
+
+
+@app.route('/page_perso/<int:num_page>')
+@login_required
+def page_perso(num_page=0):
+    # Vérifie que la page existe bien
+    if g.dict_pages.has_key("page_perso%d" % num_page) == False :
+        return redirect(url_for('accueil'))
+
+    # Importation des blocs et des éléments de blocs
+    liste_blocs = models.Bloc.query.filter_by(IDpage=num_page).order_by(models.Bloc.ordre).all()
+    listeIDblocs = [bloc.IDbloc for bloc in liste_blocs]
+    liste_elements = models.Element.query.filter(models.Element.IDbloc.in_(listeIDblocs)).order_by(models.Element.ordre).all()
+    dict_elements = {}
+    for element in liste_elements :
+        if dict_elements.has_key(element.IDbloc) == False :
+            dict_elements[element.IDbloc] = []
+        dict_elements[element.IDbloc].append(element)
+
+    # Création de la page
+    dict_parametres = models.GetDictParametres()
+    return render_template('page_perso.html', active_page="page_perso%d" % num_page, dict_parametres=dict_parametres, liste_blocs=liste_blocs, dict_elements=dict_elements)
+
+@app.route('/get_events_calendrier/<int:idbloc>')
+@login_required
+def get_events_calendrier(idbloc=None):
+    try :
+        start = request.args['start']
+        end = request.args['end']
+        start = datetime.datetime.strptime("%s 00:00" % start, '%Y-%m-%d %H:%M')
+        end = datetime.datetime.strptime("%s 23:59" % end, '%Y-%m-%d %H:%M')
+        liste_elements = models.Element.query.filter(models.Element.categorie=="bloc_calendrier", models.Element.IDbloc==idbloc, models.Element.date_debut <= end, models.Element.date_fin >= start).all()
+    except :
+        liste_elements = []
+
+    liste_events = []
+    for element in liste_elements :
+        description = ""
+        couleur = "#3c8dbc"
+        try :
+            for parametre in element.parametres.split("###"):
+                nom, valeur = parametre.split(":::")
+                if nom == "description":
+                    description = valeur
+                if nom == "couleur":
+                    couleur = valeur
+        except:
+            pass
+
+        dictEvent = {
+            "allDay": "",
+            "title": element.titre,
+            "id": str(element.IDelement),
+            "start": str(element.date_debut),
+            "end": str(element.date_fin),
+            "description": description,
+            "backgroundColor": couleur,
+            "borderColor": couleur,
+        }
+        liste_events.append(dictEvent)
+
+    return jsonify(liste_events)
+
+
+
 
 
 
