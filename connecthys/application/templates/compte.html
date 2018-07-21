@@ -1,5 +1,5 @@
 {% extends "page.html" %}
-  
+
   
 {% block content -%}
   
@@ -10,6 +10,7 @@
 	{% endif %}
 
 
+	{% if GetParametre("MDP_AUTORISER_MODIFICATION", dict_parametres) == 'True' %}
 	<div class="box box-danger">
 	
 		<div class="box-header with-border">
@@ -48,16 +49,9 @@
 				</div>
 			  </form>
 			</div>
-
-
-
-
-
-
-	
 		</div>
 	</div>
-
+	{% endif %}
 	
 	<div class="box box-primary">
 	
