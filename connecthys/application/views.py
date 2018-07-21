@@ -149,7 +149,11 @@ def get_version():
 @login_manager.user_loader
 def load_user(session_token):
     if session_token == "None" : return None
-    return models.User.query.filter_by(session_token=session_token).first()
+    try :
+        user = models.User.query.filter_by(session_token=session_token).first()
+    except :
+        user = None
+    return user
     
     
 @app.before_request
@@ -165,7 +169,11 @@ def GetPages():
     liste_pages = copy.copy(LISTE_PAGES)
     dict_pages = copy.copy(DICT_PAGES)
 
-    liste_pages_perso = models.Page.query.order_by(models.Page.ordre).all()
+    try :
+        liste_pages_perso = models.Page.query.order_by(models.Page.ordre).all()
+    except :
+        liste_pages_perso = []
+
     if len(liste_pages_perso) > 0 :
 
         # Label
