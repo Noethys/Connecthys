@@ -122,7 +122,27 @@ def UpgradeDB():
     m.parametre=app.config["VERSION_APPLICATION"]
     db.session.commit()
 
-      
+def RepairDB():
+    """ Tentative de réparation de la DB """
+    with app.app_context():
+
+        # Création du répertoire migrations si manquant
+        if os.path.isdir(REP_MIGRATIONS) == False :
+            app.logger.info("Repertoire Migrations manquant -> Initialisation de flask_migrate maintenant...")
+            try :
+                flask_migrate.init(directory=REP_MIGRATIONS)
+            except SystemExit as e:
+                pass
+            except Exception, err:
+                pass
+
+        # Enregistre la dernière num_version dans la table alembic
+        app.logger.info("Stamp...")
+        flask_migrate.stamp(directory=REP_MIGRATIONS)
+
+
+
+
 class Parametre(Base):
     __tablename__ = "%sportail_parametres" % PREFIXE_TABLES
     IDparametre = Column(Integer, primary_key=True)

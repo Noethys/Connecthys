@@ -132,6 +132,33 @@ def upgrade(secret=0):
     return reponse
 
 
+@app.route('/repairdb/<int:secret>')
+def repairdb(secret=0):
+    # Codage et vérification de la clé de sécurité
+    secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
+    for caract in app.config['SECRET_KEY']:
+        if caract in "0123456789":
+            secret_key += caract
+    secret_key = int(secret_key)
+
+    if secret_key != secret:
+        dict_resultat = {"resultat": "erreur", "erreur": u"Clé de sécurité erronée."}
+
+    else:
+        try:
+            models.RepairDB()
+            dict_resultat = {"resultat": "ok"}
+        except Exception, err:
+            dict_resultat = {"resultat": "erreur", "erreur": str(err), "trace": traceback.format_exc()}
+
+        if dict_resultat["resultat"] != "ok":
+            app.logger.error("Erreur dans le repairdb : %s" % traceback.format_exc())
+
+    reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
+    app.logger.debug("Demande repairdb: secretkey(%s)", secret_key)
+    return reponse
+
+
 @app.route('/get_version')
 def get_version():
     # Renvoie le numéro de la version de l'application
@@ -343,7 +370,7 @@ def force_change_password():
 @login_required
 def accueil():
     # Vérifie que son mot de passe est personnalisé, sinon on le logout
-    if "custom" not in current_user.password:
+    if "custom" not in current_user.password and models.GetParametre(nom="MDP_FORCER_MODIFICATION", defaut="True") == "True":
         flash(u"Vous devez obligatoirement modifier votre mot de passe !", 'error')
         return redirect(url_for('logout'))
 
