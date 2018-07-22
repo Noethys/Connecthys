@@ -12,6 +12,7 @@ import datetime
 from Crypto.Hash import SHA256
 import shutil
 import os.path
+import traceback
 
 
 try :
@@ -90,22 +91,26 @@ def UpgradeDB():
     """ Mise à jour de la DB """
     with app.app_context():
         app.logger.info("Migration de la base de donnees...")
+
         try :
             flask_migrate.migrate(directory=REP_MIGRATIONS)
+            app.logger.info("Migrate - Migration ok.")
+        except SystemExit as e:
+            app.logger.info("SystemQuit -> Erreur dans migration > migrate")
+            app.logger.info(traceback.format_exc())
         except Exception, err :
+            app.logger.info("Erreur dans migration > migrate.")
             app.logger.info(err)
-            if "Path doesn't exist" in str(err) :
-                app.logger.info("Repertoire Migrations manquant -> Initialisation de flask_migrate maintenant...")
-                flask_migrate.init(directory=REP_MIGRATIONS)
-                flask_migrate.migrate()
-            
-        app.logger.info("Migration ok.")
+
         app.logger.info("Upgrade de la base de donnees...")
         try :
             flask_migrate.upgrade(directory=REP_MIGRATIONS)
-            app.logger.info("Upgrade ok.")
+            app.logger.info("Migrate - Upgrade ok.")
+        except SystemExit as e:
+            app.logger.info("SystemQuit -> Erreur dans migration > upgrade.")
+            app.logger.info(traceback.format_exc())
         except Exception, err :
-            app.logger.info("Erreur Upgrade.")
+            app.logger.info("Erreur dans migration > upgrade.")
             app.logger.info(err)
             
             # Si la revision n'existe pas
