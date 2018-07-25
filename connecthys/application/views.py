@@ -1811,7 +1811,7 @@ def ValiderModificationPassword(form=None, valider_conditions=True):
         return False
 
     if not sum(1 for c in form.password1.data if c in u"%#:$*@-_"):
-        flash(u"Le mot de passe doit comporter au moins un caractère spécial (%#:$*@-_) !", 'error')
+        flash(u"Le mot de passe doit comporter au moins un caractère spécial (%#:$*@-_!?&) !", 'error')
         return False
 
     # Vérifie que la case des conditions d'utilisation a été cochée
