@@ -21,8 +21,16 @@
 
 <div>
 	<ul class="sidebar-menu">
-				
-		{% for dict_menu in g.liste_pages %}
+
+		{% if current_user.role == "famille" %}
+			{% set liste_pages = g.liste_pages_familles %}
+		{% elif current_user.role == "utilisateur" %}
+			{% set liste_pages = g.liste_pages_admin %}
+		{% else %}
+			{% set liste_pages = [] %}
+		{% endif %}
+
+		{% for dict_menu in liste_pages %}
 		
 			{% if dict_menu["type"] == "label" %}
 		
@@ -32,7 +40,7 @@
 			
 				{% set page = dict_menu["page"] %}
 			
-				{% if page == "accueil" or dict_menu["affichage"] == True or GetParametre(dict_menu["affichage"], dict_parametres) == 'True' %}
+				{% if page == "accueil_famille" or page == "accueil_admin" or dict_menu["affichage"] == True or GetParametre(dict_menu["affichage"], dict_parametres) == 'True' %}
 				
 					{% if page == active_page %}
 						<li class="active">

@@ -230,6 +230,8 @@ class User(Base):
         return '<User %d>' % (self.IDuser)
     
     def get_image(self):
+        if self.role == "utilisateur" :
+            return 'img/admin.png'
         return 'img/famille.png'
     
     def SetInfos(self, key="", valeur=None):
@@ -348,6 +350,7 @@ class Action(Base):
     horodatage = Column(DateTime)
     IDfamille = Column(Integer, index=True)
     IDindividu = Column(Integer)
+    IDutilisateur = Column(Integer)
     categorie = Column(String(50))
     action = Column(String(50))
     description = Column(String(300))
@@ -362,7 +365,7 @@ class Action(Base):
     reservations = relationship("Reservation")
     renseignements = relationship("Renseignement")
     
-    def __init__(self, horodatage=None, IDfamille=None, IDindividu=None, categorie=None, action=None, description=None, \
+    def __init__(self, horodatage=None, IDfamille=None, IDindividu=None, IDutilisateur=None, categorie=None, action=None, description=None, \
                         commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None, reponse=None):
         if horodatage == None :
             self.horodatage = datetime.datetime.now()
@@ -370,6 +373,7 @@ class Action(Base):
             self.horodatage = horodatage
         self.IDfamille = IDfamille
         self.IDindividu = IDindividu
+        self.IDutilisateur = IDutilisateur
         self.categorie = categorie
         self.action = action
         self.description = description
@@ -386,7 +390,11 @@ class Action(Base):
         
     def GetRefUnique(self):
         horodatage = self.horodatage.strftime("%Y%m%d%H%M%S%f")
-        ref_unique = "%s%06d" % (horodatage, self.IDfamille)
+        if self.IDfamille != None :
+            ID = self.IDfamille
+        if self.IDutilisateur != None :
+            ID = self.IDutilisateur
+        ref_unique = "%s%06d" % (horodatage, ID)
         return ref_unique
         
     def __repr__(self):

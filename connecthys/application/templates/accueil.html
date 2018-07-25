@@ -109,7 +109,7 @@
   <!-- Menu -->
   <div class="row">
 
-	{% for dict_menu in g.liste_pages[2:] %}
+	{% for dict_menu in g.liste_pages_familles[2:] %}
 	
 		{%if dict_menu["type"] == "page" and dict_menu["raccourci"] == True and GetParametre(dict_menu["affichage"], dict_parametres) == 'True' %}
 		

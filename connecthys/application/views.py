@@ -23,9 +23,9 @@ from sqlalchemy import func
 from eopayment import Payment
 
 
-LISTE_PAGES = [
+LISTE_PAGES_FAMILLES = [
     {"type" : "label", "label" : u"MENU"}, 
-        {"type" : "page", "page" : "accueil", "raccourci" : True}, 
+        {"type" : "page", "page" : "accueil_famille", "raccourci" : True},
     {"type" : "label", "label" : u"VOTRE DOSSIER"}, 
         {"type" : "page", "page" : "renseignements", "raccourci" : True, "affichage" : "RENSEIGNEMENTS_AFFICHER"}, 
         {"type" : "page", "page" : "inscriptions", "raccourci" : True, "affichage" : "ACTIVITES_AFFICHER"}, 
@@ -41,8 +41,15 @@ LISTE_PAGES = [
         {"type" : "page", "page" : "aide", "raccourci" : False, "affichage" : "AIDE_AFFICHER"},
     ]
 
+LISTE_PAGES_ADMIN = [
+    {"type" : "label", "label" : u"MENU"},
+        {"type" : "page", "page" : "accueil_admin", "raccourci" : True},
+    ]
+
+
 DICT_PAGES = {
-    "accueil" : {"nom" : u"Accueil", "icone" : "fa-home", "description" : u" ", "couleur" : "white"},
+    # Familles
+    "accueil_famille" : {"nom" : u"Accueil", "icone" : "fa-home", "description" : u" ", "couleur" : "white"},
     "renseignements" : {"nom" : u"Renseignements", "icone" : "fa-user", "description" : u"Consulter et modifier des renseignements", "couleur" : "purple"},
     "inscriptions" : {"nom" : u"Activités", "icone" : "fa-cogs", "description" : u"Consulter et demander des inscriptions", "couleur" : "green"},
     "reservations" : {"nom" : u"Réservations", "icone" : "fa-calendar", "description" : u"Consulter et demander des réservations", "couleur" : "aqua"},
@@ -55,7 +62,11 @@ DICT_PAGES = {
     "mentions" : {"nom" : u"Mentions légales", "icone" : "fa-info-circle", "description" : u"Consulter les mentions légales"},
     "aide" : {"nom" : u"Aide", "icone" : "fa-support", "description" : u"Consulter l'aide"},
     "compte" : {"nom" : u"Gestion du compte", "icone" : "fa-support", "description" : u"Gestion du compte"},
+
+    # Administrateurs
+    "accueil_admin" : {"nom" : u"Accueil", "icone" : "fa-home", "description" : u" ", "couleur" : "white"},
     }
+
 
 COULEURS = ["green", "blue", "yellow", "red", "light-blue"]
 
@@ -169,10 +180,7 @@ def get_version():
     return reponse
 
     
-#@login_manager.user_loader
-#def load_user(id):
-#    return models.User.query.get(int(id))
-    
+
 @login_manager.user_loader
 def load_user(session_token):
     if session_token == "None" : return None
@@ -189,11 +197,12 @@ def before_request():
     g.user = current_user
 
     # Mémorise des variables
-    g.liste_pages, g.dict_pages = GetPages()
+    g.liste_pages_familles, g.liste_pages_admin, g.dict_pages = GetPages()
     g.date_jour = datetime.date.today()
 
 def GetPages():
-    liste_pages = copy.copy(LISTE_PAGES)
+    liste_pages_familles = copy.copy(LISTE_PAGES_FAMILLES)
+    liste_pages_admin = copy.copy(LISTE_PAGES_ADMIN)
     dict_pages = copy.copy(DICT_PAGES)
 
     try :
@@ -204,17 +213,17 @@ def GetPages():
     if len(liste_pages_perso) > 0 :
 
         # Label
-        liste_pages.insert(2, {"type": "label", "label": u"INFORMATIONS"})
+        liste_pages_familles.insert(2, {"type": "label", "label": u"INFORMATIONS"})
 
         # Création des pages
         index = 3
         for page in liste_pages_perso :
             codePage = "page_perso%d" % page.IDpage
-            liste_pages.insert(index, {"type": "page", "page": codePage, "num_page" : page.IDpage, "raccourci": False, "affichage": True})
+            liste_pages_familles.insert(index, {"type": "page", "page": codePage, "num_page" : page.IDpage, "raccourci": False, "affichage": True})
             dict_pages[codePage] = {"nom" : page.titre, "icone" : "fa-circle-o", "description" : u" ", "couleur" : page.couleur}
             index += 1
 
-    return liste_pages, dict_pages
+    return liste_pages_familles, liste_pages_admin, dict_pages
 
 
 @app.after_request
@@ -374,6 +383,24 @@ def accueil():
         flash(u"Vous devez obligatoirement modifier votre mot de passe !", 'error')
         return redirect(url_for('logout'))
 
+    if current_user.role == "famille" :
+        return redirect(url_for('accueil_famille'))
+    if current_user.role == "utilisateur" :
+        return redirect(url_for('accueil_admin'))
+    return redirect(url_for('logout'))
+
+
+@app.route('/accueil_famille')
+@login_required
+def accueil_famille():
+    # Vérifie que son mot de passe est personnalisé, sinon on le logout
+    if "custom" not in current_user.password and models.GetParametre(nom="MDP_FORCER_MODIFICATION", defaut="True") == "True":
+        flash(u"Vous devez obligatoirement modifier votre mot de passe !", 'error')
+        return redirect(url_for('logout'))
+
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération des éléments manquants
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.IDtype_piece).all()
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
@@ -387,11 +414,24 @@ def accueil():
             
     dict_parametres = models.GetDictParametres()
     app.logger.debug("Page ACCUEIL (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
-    return render_template('accueil.html', active_page="accueil",\
+    return render_template('accueil.html', active_page="accueil_famille",\
                             liste_pieces_manquantes=liste_pieces_manquantes, \
                             liste_cotisations_manquantes=liste_cotisations_manquantes, \
                             liste_messages=liste_messages, \
                             dict_parametres=dict_parametres)
+
+
+@app.route('/accueil_admin')
+@login_required
+def accueil_admin():
+    if current_user.role != "utilisateur" :
+        return redirect(url_for('logout'))
+
+
+    dict_parametres = models.GetDictParametres()
+    app.logger.debug("Page ACCUEIL_ADMIN (%s): utilisateur id(%s)", current_user.identifiant, current_user.IDutilisateur)
+    return render_template('admin.html', active_page="accueil_admin", dict_parametres=dict_parametres)
+
 
     
 # ------------------------- FACTURES ---------------------------------- 
@@ -399,6 +439,9 @@ def accueil():
 @app.route('/factures')
 @login_required
 def factures():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération de la liste des factures
     liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
     
@@ -460,6 +503,9 @@ def factures():
 @app.route('/envoyer_demande_facture')
 @login_required
 def envoyer_demande_facture():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     try:
         id = request.args.get("id", 0, type=int)
         numfacture = request.args.get("info", "", type=str)
@@ -489,6 +535,9 @@ def envoyer_demande_facture():
 @app.route('/effectuer_paiement_en_ligne')
 @login_required
 def effectuer_paiement_en_ligne():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération de la liste des factures
     liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
     app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) liste_factures(%s)", current_user.identifiant, current_user.IDfamille, liste_factures)
@@ -585,6 +634,8 @@ from application import csrf
 @app.route('/retour_tipi', methods=['POST'])
 @csrf.exempt
 def retour_tipi():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
 
     try:
         tipiform = forms.RetourTipi(request.form)
@@ -632,6 +683,9 @@ def retour_tipi():
 @app.route('/reglements')
 @login_required
 def reglements():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération de la liste des règlements
     liste_reglements = models.Reglement.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Reglement.date.desc()).all()
     
@@ -689,6 +743,9 @@ def reglements():
 @app.route('/envoyer_demande_recu')
 @login_required
 def envoyer_demande_recu():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     try:
         id = request.args.get("id", 0, type=int)
         info = request.args.get("info", "", type=str)
@@ -721,6 +778,9 @@ def envoyer_demande_recu():
 @app.route('/historique')
 @login_required
 def historique():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Recherche l'historique général
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie=None)
     dict_parametres = models.GetDictParametres()
@@ -733,6 +793,9 @@ def historique():
 @app.route('/pieces')
 @login_required
 def pieces():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération de la liste des pièces manquantes
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.IDtype_piece).all()
 
@@ -750,6 +813,9 @@ def pieces():
 @app.route('/cotisations')
 @login_required
 def cotisations():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération de la liste des cotisations manquantes
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
     dict_parametres = models.GetDictParametres()
@@ -761,6 +827,9 @@ def cotisations():
 @app.route('/supprimer_demande')
 @login_required
 def supprimer_demande():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     try:
         IDaction = request.args.get("idaction", 0, type=int)
 
@@ -784,7 +853,9 @@ def supprimer_demande():
 @app.route('/reservations')
 @login_required
 def reservations():
-    
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération des individus
     liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.prenom).all()
     
@@ -1000,6 +1071,9 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
 @app.route('/planning')
 @login_required
 def planning():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     IDindividu = request.args.get("IDindividu", None, type=int)
     IDperiode = request.args.get("IDperiode", None, type=int)
     index_couleur = request.args.get("index_couleur", None, type=int)
@@ -1016,6 +1090,9 @@ def planning():
 @app.route('/imprimer_reservations')
 @login_required
 def imprimer_reservations():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     IDindividu = request.args.get("IDindividu", None, type=int)
     IDperiode = request.args.get("IDperiode", None, type=int)
     resultats = request.args.get("resultats", "", type=str)
@@ -1031,6 +1108,9 @@ def imprimer_reservations():
 @app.route('/envoyer_reservations')
 @login_required
 def envoyer_reservations():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     try:
         # Récupération de la liste des cases cochées
         resultats = request.args.get("resultats", "", type=str)
@@ -1130,6 +1210,9 @@ def GetModificationsReservations(liste_reservations_initiale=[], resultats=[]):
 @app.route('/detail_envoi_reservations')
 @login_required
 def detail_envoi_reservations():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     try:
         # Détail des réservations
         IDactivite = request.args.get("IDactivite", None, type=int)
@@ -1169,6 +1252,9 @@ def detail_envoi_reservations():
 @app.route('/renseignements')
 @login_required
 def renseignements():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération des renseignements modifiés
     dict_renseignements = GetDictRenseignements(IDfamille=current_user.IDfamille)
     
@@ -1266,6 +1352,9 @@ def GetDictRenseignements(IDfamille=None, IDindividu=None):
 @app.route('/modifier_renseignements')
 @login_required
 def modifier_renseignements():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     IDindividu = request.args.get("IDindividu", None, type=int)    
     dict_parametres = models.GetDictParametres()
     
@@ -1295,6 +1384,9 @@ def modifier_renseignements():
 @app.route('/envoyer_modification_renseignements', methods=['POST'])
 @login_required
 def envoyer_modification_renseignements():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     dict_parametres = models.GetDictParametres()
 
     try:
@@ -1386,7 +1478,9 @@ def envoyer_modification_renseignements():
 @app.route('/inscriptions')
 @login_required
 def inscriptions():
-    
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     # Récupération des individus
     liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.prenom).all()
     
@@ -1422,6 +1516,9 @@ def inscriptions():
 @app.route('/envoyer_demande_inscription')
 @login_required
 def envoyer_demande_inscription():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     try:
         IDindividu = request.args.get("idindividu", 0, type=int)
         activite = request.args.get("activite", "", type=str)
@@ -1458,6 +1555,9 @@ def envoyer_demande_inscription():
 @app.route('/contact')
 @login_required
 def contact():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     dict_parametres = models.GetDictParametres()
     return render_template('contact.html', active_page="contact", dict_parametres=dict_parametres)
 
@@ -1466,7 +1566,10 @@ def contact():
 
 @app.route('/mentions')
 @login_required
-def mentions():   
+def mentions():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     dict_parametres = models.GetDictParametres()
     conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
     if conditions_utilisation == None:
@@ -1480,7 +1583,10 @@ def mentions():
 
 @app.route('/aide')
 @login_required
-def aide():    
+def aide():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     dict_parametres = models.GetDictParametres()
     return render_template('aide.html', active_page="aide", dict_parametres=dict_parametres)
 
@@ -1582,6 +1688,9 @@ def get_events_calendrier(idbloc=None):
 @app.route('/detail_demande')
 @login_required
 def detail_demande():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
     try:
         # Détail des réservations
         IDaction = request.args.get("idaction", 0, type=int)
@@ -1716,7 +1825,7 @@ def ValiderModificationPassword(form=None, valider_conditions=True):
     app.logger.debug("Nouveau mot de passe enregistre pour %s", current_user.identifiant)
 
     # Enregistre l'action
-    m = models.Action(IDfamille=current_user.IDfamille, categorie="compte", action="maj_password", description=u"Mise à jour du mot de passe", etat="attente", parametres=current_user.password)
+    m = models.Action(IDfamille=current_user.IDfamille, IDutilisateur=current_user.IDutilisateur, categorie="compte", action="maj_password", description=u"Mise à jour du mot de passe", etat="attente", parametres=current_user.password)
     db.session.add(m)
     db.session.commit()
 

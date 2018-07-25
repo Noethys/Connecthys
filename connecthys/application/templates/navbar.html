@@ -25,7 +25,12 @@
 			  <img src="{{ url_for('static', filename=current_user.get_image()) }}" class="img-circle" alt="User Image" />
 			  <p>
 				{{ current_user.GetNom() }}
-				<small>Famille</small>
+				{% if current_user.role == "famille" %}
+					<small>Famille</small>
+				{% endif %}
+				{% if current_user.role == "utilisateur" %}
+					<small>Administrateur</small>
+				{% endif %}
 			  </p>
 			</li>
 
