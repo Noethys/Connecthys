@@ -50,35 +50,31 @@
 			<div class="nav-tabs-custom no-margin">
 			
 				<ul class="nav nav-tabs">
-					{% for inscription in individu.get_inscriptions() %}
-						{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
-							<li {% if loop.index == 1 %}class="active"{% endif %}>
-								<a class="text-{{ couleur }}" href="#tab_{{ inscription.IDinscription }}_{{ loop.index }}" data-toggle="tab">{{ inscription.activite.nom }}</a>
-							</li>
-						{% endif %}
+					{% for inscription in individu.get_inscriptions(avec_periode_actives=True) %}
+						<li {% if loop.index == 1 %}class="active"{% endif %}>
+							<a class="text-{{ couleur }}" href="#tab_{{ inscription.IDinscription }}_{{ loop.index }}" data-toggle="tab">{{ inscription.activite.nom }}</a>
+						</li>
 					{% endfor %}
 				</ul>
 							
 				<div class="tab-content no-padding">
 					
-					{% for inscription in individu.get_inscriptions() %}
-						{% if inscription.activite.Get_nbre_periodes_actives() > 0 %}
-							<div class="tab-pane {% if loop.index == 1 %}active{% endif %}" id="tab_{{ inscription.IDinscription }}_{{ loop.index }}">
-								<ul class="nav nav-stacked">
-									{% for periode in inscription.activite.periodes %}
-										{% if periode.Is_active_today() == True %}
-											<li>
-												<a href="{{ url_for('planning', IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, index_couleur=individu.index_couleur) }}">
-													<i class="fa fa-calendar text-{{ couleur }}"></i> 
-													{{ periode.nom }} 
-													<small class="pull-right">Du {{ DateDDEnFr(periode.date_debut) }} au {{ DateDDEnFr(periode.date_fin) }}</small>
-												</a>
-											</li>
-										{% endif %}
-									{% endfor %}
-								</ul>
-							</div>
-						{% endif %}
+					{% for inscription in individu.get_inscriptions(avec_periode_actives=True) %}
+						<div class="tab-pane {% if loop.index == 1 %}active{% endif %}" id="tab_{{ inscription.IDinscription }}_{{ loop.index }}">
+							<ul class="nav nav-stacked">
+								{% for periode in inscription.activite.periodes %}
+									{% if periode.Is_active_today() == True %}
+										<li>
+											<a href="{{ url_for('planning', IDindividu=inscription.IDindividu, IDperiode=periode.IDperiode, index_couleur=individu.index_couleur) }}">
+												<i class="fa fa-calendar text-{{ couleur }}"></i>
+												{{ periode.nom }}
+												<small class="pull-right">Du {{ DateDDEnFr(periode.date_debut) }} au {{ DateDDEnFr(periode.date_fin) }}</small>
+											</a>
+										</li>
+									{% endif %}
+								{% endfor %}
+							</ul>
+						</div>
 					{% endfor %}
 					
 				</div>

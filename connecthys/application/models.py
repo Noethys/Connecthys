@@ -676,9 +676,17 @@ class Individu(Base):
         age = today.year - datenaiss.year - ((today.month, today.day) < (datenaiss.month, datenaiss.day))
         return u"%d ans" % age
         
-    def get_inscriptions(self):
-        return Inscription.query.filter_by(IDfamille=self.IDfamille, IDindividu=self.IDindividu).all()
-        
+    def get_inscriptions(self, avec_periode_actives=False):
+        liste_inscriptions = []
+        liste_temp = Inscription.query.filter_by(IDfamille=self.IDfamille, IDindividu=self.IDindividu).filter((Inscription.date_desinscription==None)|(Inscription.date_desinscription>datetime.date.today())).all()
+        if avec_periode_actives == True:
+            for inscription in liste_temp :
+                if inscription.activite.Get_nbre_periodes_actives() > 0:
+                    liste_inscriptions.append(inscription)
+        else :
+            liste_inscriptions = liste_temp
+        return liste_inscriptions
+
     def get_adresse(self):
         if self.adresse_auto == None :
             rue = utils.CallFonction("ConvertToUnicode", self.rue_resid)
