@@ -1331,14 +1331,18 @@ def GetDictRenseignements(IDfamille=None, IDindividu=None):
     
     for IDindividu, dictChamps in dict_valeurs.iteritems() :
         if type(dictChamps) == dict :
+            adresse_rattachee = False
             if dictChamps["adresse_auto"] != 0 :
                 IDindividuTemp = int(dictChamps["adresse_auto"])
-                rue =  dict_valeurs[IDindividuTemp]["rue_resid"]
-                cp = dict_valeurs[IDindividuTemp]["cp_resid"]
-                ville = dict_valeurs[IDindividuTemp]["ville_resid"]
-                prenom = dict_valeurs[IDindividuTemp]["prenom"]
-                dict_valeurs[IDindividu]["adresse"] = u"%s %s %s (L'adresse de %s)" % (rue, cp, ville, prenom)
-            else :
+                if dict_valeurs.has_key(IDindividuTemp):
+                    rue =  dict_valeurs[IDindividuTemp]["rue_resid"]
+                    cp = dict_valeurs[IDindividuTemp]["cp_resid"]
+                    ville = dict_valeurs[IDindividuTemp]["ville_resid"]
+                    prenom = dict_valeurs[IDindividuTemp]["prenom"]
+                    dict_valeurs[IDindividu]["adresse"] = u"%s %s %s (L'adresse de %s)" % (rue, cp, ville, prenom)
+                    adresse_rattachee = True
+
+            if adresse_rattachee == False :
                 rue = dict_valeurs[IDindividu]["rue_resid"]
                 cp = dict_valeurs[IDindividu]["cp_resid"]
                 ville = dict_valeurs[IDindividu]["ville_resid"]
