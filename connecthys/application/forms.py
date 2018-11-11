@@ -27,6 +27,16 @@ class ChangePassword(FlaskForm):
     password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
     accept = BooleanField("accept", default=False)
 
+class ResetPassword(FlaskForm):
+    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=1, max=20)])
+    password1 = PasswordField('password1',  [validators.Required(), validators.Length(min=0, max=20)])
+    password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
+    accept = BooleanField("accept", default=False)
+
+class LostPassword(FlaskForm):
+    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=1, max=20)])
+    email = TextField('email',  [validators.Required(), validators.Length(min=3, max=50)])
+
 class RetourTipi(FlaskForm):
     NUMCLI = TextField('numcli', [validators.Required(), validators.Length(min=0, max=20)])
     EXER = TextField('exer', [validators.Required(), validators.Length(min=0, max=4)])

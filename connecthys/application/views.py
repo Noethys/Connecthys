@@ -8,7 +8,7 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-import random, datetime, traceback, copy
+import random, datetime, traceback, copy, re
 from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response, send_from_directory
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 try :
@@ -16,11 +16,18 @@ try :
 except :
     # Pour compatibilité avec anciennes versions de flask_wtf
     from flask_wtf import CsrfProtect
+from itsdangerous import URLSafeTimedSerializer
 from flask_wtf.csrf import CSRFError
-from application import app, login_manager, db
+from application import app, login_manager, db, mail
 from application import models, forms, utils, updater, exemples
 from sqlalchemy import func
 from eopayment import Payment
+
+try :
+    from flask_mail import Message
+except :
+    app.logger.error("Impossible d'importer flask_mail")
+
 
 
 LISTE_PAGES_FAMILLES = [
@@ -1748,9 +1755,129 @@ def detail_demande():
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
-    
-    
-    
+
+@app.route('/lost_password', methods=['GET', 'POST'])
+def lost_password():
+    # Si l'utilisateur est déjà connecté, on le renvoie vers l'accueil
+    if current_user.is_authenticated or models.GetParametre(nom="MDP_AUTORISER_REINITIALISATION", defaut="False") == "False":
+        return redirect(url_for('login'))
+
+    # Génération du form
+    form = forms.LostPassword()
+    dict_parametres = models.GetDictParametres()
+
+    # Affiche la page de login
+    if request.method == 'GET':
+        return render_template('lost_password.html', form=form, dict_parametres=dict_parametres)
+
+    # Validation du form
+    if form.validate_on_submit():
+
+        app.logger.debug("Demande reinit password identifiant=%s email=%s", form.identifiant.data, form.email.data)
+
+        # Recherche si l'identifiant est correct
+        user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
+        if user == None :
+            app.logger.debug("Demande reinit password identifiant=%s email=%s : Identifiant incorrect.", form.identifiant.data, form.email.data)
+            flash(u"L'identifiant saisi est incorrect !", 'error')
+            return redirect(url_for('lost_password'))
+        identifiant = form.identifiant.data
+
+        # Vérifie la saisie de l'email
+        if re.match("^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$", form.email.data) == None:
+            app.logger.debug("Demande reinit password identifiant=%s email=%s : Adresse email non valide.", form.identifiant.data, form.email.data)
+            flash(u"L'adresse email saisie n'est pas valide !", 'error')
+            return redirect(url_for('lost_password'))
+
+        # Recherche si l'adresse email correspond à l'identifiant saisi
+        email_destinataire = False
+        if user.email != ("", None):
+            emails = utils.CallFonction("DecrypteChaine", user.email)
+            for email in emails.split(";"):
+                if email == form.email.data:
+                    email_destinataire = form.email.data
+
+        if email_destinataire == False :
+            app.logger.debug("Demande reinit password identifiant=%s email=%s : Adresse email inconnue.", form.identifiant.data, form.email.data)
+            flash(u"L'adresse email saisie est inconnue !", 'error')
+            return redirect(url_for('lost_password'))
+
+        # Préparation du token et de l'url de reset
+        ts = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+        token = ts.dumps(identifiant, salt='confirm-password-lost')
+        confirm_url = url_for('reset_password', token=token, _external=True)
+
+        # Envoi de l'email
+        msg = Message(u"Réinitialisation du mot de passe", recipients=[email_destinataire,])
+        msg.body = render_template("email/lost_password.txt", confirm_url=confirm_url, dict_parametres=dict_parametres)
+        msg.html = render_template("email/lost_password.html", confirm_url=confirm_url, dict_parametres=dict_parametres)
+        try :
+            mail.send(msg)
+        except Exception, err:
+            app.logger.debug("Demande reinit password identifiant=%s email=%s : ERREUR dans l'envoi de l'email.", form.identifiant.data, form.email.data)
+            app.logger.debug(err)
+            flash(u"L'email n'a pas pu être envoyé. Merci de contacter l'administrateur du portail !", 'error')
+            return redirect(url_for('login'))
+
+        app.logger.debug("Demande reinit password identifiant=%s email=%s : Email envoye avec succes.", form.identifiant.data, form.email.data)
+        flash(u"L'email de réinitialisation a bien été envoyé. Consultez votre messagerie dans quelques instants.", 'error')
+        return redirect(url_for('login'))
+
+    # Renvoie le formulaire
+    return redirect(url_for('lost_password'))
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token=None):
+    # Si la fonction Mot de passe oublié est désactivés
+    if models.GetParametre(nom="MDP_AUTORISER_REINITIALISATION", defaut="False") == "False":
+        return redirect(url_for('login'))
+
+    try:
+        ts = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+        identifiant = ts.loads(token, salt="confirm-password-lost", max_age=86400)
+    except:
+        app.logger.debug("Lien de reinitialisation du mot de passe errone ou expire.")
+        flash(u"Le lien de réinitialisation est erroné ou a expiré !", 'error')
+        return redirect(url_for('login'))
+
+    # Génération du form de login
+    form = forms.ResetPassword()
+
+    # Affiche la page de changement
+    if request.method == 'GET':
+        dict_parametres = models.GetDictParametres()
+        conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
+        if conditions_utilisation == None :
+            conditions_utilisation = ""
+        else :
+            conditions_utilisation = utils.FusionDonneesOrganisateur(conditions_utilisation.texte_html, dict_parametres)
+        return render_template('reset_password.html', form=form, token=token, dict_parametres=dict_parametres, conditions_utilisation=conditions_utilisation)
+
+    # Validation du form avec Flask-WTF
+    if form.validate_on_submit():
+        if identifiant != form.identifiant.data :
+            app.logger.debug("Reset du mot de passe identifiant=%s : Identifiant incorrect.", form.identifiant.data)
+            flash(u"L'identifiant saisi est incorrect !", 'error')
+            return redirect(url_for('reset_password', token=token))
+
+        user = models.User.query.filter_by(identifiant=identifiant).first()
+        if user == None :
+            app.logger.debug("Reset du mot de passe identifiant=%s : Identifiant incorrect.", form.identifiant.data)
+            flash(u"L'identifiant saisi est incorrect !", 'error')
+            return redirect(url_for('reset_password', token=token))
+
+        if ValiderModificationPassword(form=form, user=user) != True :
+            return redirect(url_for('reset_password', token=token))
+
+        # Renvoie vers l'accueil
+        app.logger.debug("Reset du mot de passe identifiant=%s : Nouveau mot de passe valide.", form.identifiant.data)
+        flash(u"Votre nouveau mot de passe a bien été enregistré !")
+
+    return redirect(url_for('accueil'))
+
+
+# ------------------------------------------------------------------------------------------------------------------
+
 def GetHistorique(IDfamille=None, categorie=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """
     """ Si categorie == None > Toutes les catégories sont affichées """
@@ -1786,15 +1913,10 @@ def GetHistorique(IDfamille=None, categorie=None):
     return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro, "categorie" : categorie}
 
 
-def ValiderModificationPassword(form=None, valider_conditions=True):
+def ValiderModificationPassword(form=None, valider_conditions=True, user=None):
     # Vérifie que les mots de passe sont identiques
     if form.password1.data != form.password2.data:
         flash(u"Les deux mots de passe saisis doivent être identiques !", 'error')
-        return False
-
-    # Vérifie que le mot de passe a bien été changé
-    if current_user.check_password(form.password1.data) == True:
-        flash(u"Vous ne pouvez pas conserver l'ancien mot de passe !", 'error')
         return False
 
     # Vérifie que le mot de passe est bien formaté
@@ -1818,11 +1940,20 @@ def ValiderModificationPassword(form=None, valider_conditions=True):
     #    flash(u"Le mot de passe doit comporter au moins un caractère spécial (%#:$*@-_!?&) !", 'error')
     #    return False
 
+    # Vérifie que le mot de passe a bien été changé
+    if user == None and current_user.check_password(form.password1.data) == True:
+        flash(u"Vous ne pouvez pas conserver l'ancien mot de passe !", 'error')
+        return False
+
     # Vérifie que la case des conditions d'utilisation a été cochée
     if valider_conditions == True :
         if form.accept.data == False:
             flash(u"Vous devez obligatoirement accepter les conditions d'utilisation !", 'error')
             return False
+
+    # Si besoin de connecter l'user (après reset password)
+    if user != None :
+        login_user(user, remember=False)
 
     # Enregistre le nouveau mot de passe
     current_user.SetCustomPassword(form.password1.data)

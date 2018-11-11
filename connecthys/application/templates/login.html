@@ -87,6 +87,13 @@
         </div>
         <div class="row">
 			<div class="col-xs-8">
+				<div class="checkbox icheck">
+					{% if GetParametre("MDP_AUTORISER_REINITIALISATION", dict_parametres) == 'True' %}
+					<label>
+						<a href="{{ url_for('lost_password') }}">Mot de passe oublié ?</a>
+					</label>
+					{% endif %}
+				</div>
 			</div>
 			<!-- /.col -->
 			<div class="col-xs-4">
