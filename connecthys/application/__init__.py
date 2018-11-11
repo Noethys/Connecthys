@@ -82,6 +82,14 @@ if config_ok == True :
     manager = Manager(app)
     manager.add_command('db', MigrateCommand)
 
+    # Connexion avec Flask_mail
+    try :
+        from flask_mail import Mail
+        mail = Mail(app)
+    except:
+        mail = None
+        app.logger.error("Impossible d'importer flask_mail")
+
     # Connexion avec AdminLTE
     AdminLTE(app)
 
