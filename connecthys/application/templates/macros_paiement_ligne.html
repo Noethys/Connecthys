@@ -7,7 +7,7 @@
 			<h3 class="box-title">Payer en ligne</h3>
 		</div>
 		<div class="box-body">
-			{% if GetParametre('PAIEMENT_EN_LIGNE_SYSTEME', dict_parametres) == "3" %}
+			{% if GetParametre('PAIEMENT_EN_LIGNE_SYSTEME', dict_parametres) in ("3", "4") %}
 				<img src="{{ url_for('static', filename='img/payzen.png') }}" class="pull-right" alt="Logo Payzen">
 				<p>Vous pouvez payer vos factures en ligne à l'aide de votre carte bancaire. Les transactions effectuées sur ce portail sont sécurisées par la plateforme de paiement en ligne PayZen. Cliquez sur le bouton ci-dessous pour sélectionner le montant à régler et accéder au site sécurisé de notre partenaire.</p>
 			{% else %}
@@ -177,6 +177,10 @@ Validation du paiement en ligne
 							// Recharge la page
 							location.href = "{{ url_for('accueil') }}"
 							}
+						if (data.systeme_paiement == "demo") {
+							$('#message_erreur').text('Paiement impossible, vous êtes en mode démo !');
+							}
+
 					} else {
 						// Affiche un message d'erreur dans la fenêtre modale
 						$('#message_erreur').text('Erreur : ' + data.error_msg);

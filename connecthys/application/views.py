@@ -623,6 +623,11 @@ def effectuer_paiement_en_ligne():
         factures_ID_str = ",".join([str(IDfacture) for IDfacture in dict_factures.keys()])
 
 
+        # --------------------------- Mode démo -----------------------------
+
+        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "4":
+            return jsonify(success=1, systeme_paiement="demo")
+
         # ----------------------- Paiement avec TIPI -------------------------
 
         if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "1":
