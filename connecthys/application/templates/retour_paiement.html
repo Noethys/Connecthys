@@ -1,0 +1,43 @@
+{% extends "page.html" %}
+  
+  
+{% block content -%}
+  
+	<p>
+		<a id="retour_factures" href="{{ url_for('factures') }}"><i class="fa fa-arrow-circle-o-left"></i> Revenir à la page des factures</a>
+	</p>
+
+
+	{% if resultat == "cancel" %}
+	<div class="alert alert-danger alert-dismissible">
+		<h4><i class="icon fa fa-ban"></i> Vous avez annulé avant d'avoir procédé au paiement !</h4>
+		Vous pouvez revenir à la page des factures.
+	</div>
+	{% endif %}
+
+	{% if resultat == "error" %}
+	<div class="alert alert-danger alert-dismissible">
+		<h4><i class="icon fa fa-ban"></i> Une erreur a été rencontrée par la plate-forme de paiement !</h4>
+		Vous pouvez revenir à la page des factures.
+	</div>
+	{% endif %}
+
+	{% if resultat == "refused" %}
+	<div class="alert alert-danger alert-dismissible">
+		<h4><i class="icon fa fa-ban"></i> Votre paiement a été refusé !</h4>
+		Vous pouvez revenir à la page des factures.
+	</div>
+	{% endif %}
+
+	{% if resultat == "success" %}
+	<div class="alert alert-success alert-dismissible">
+		<h4><i class="icon fa fa-check"></i> Votre paiement a bien été enregistré !</h4>
+		Vous pouvez revenir à la page des factures.
+	</div>
+	{% endif %}
+
+
+
+
+
+{%- endblock content %}

@@ -4,11 +4,11 @@
 # Application :    Connecthys, le portail internet de Noethys
 # Site internet :  www.noethys.com
 # Auteur:          Ivan LUCAS
-# Copyright:       (c) 2010-16 Ivan LUCAS
+# Copyright:       (c) 2010-18 Ivan LUCAS
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-import random, datetime, traceback, copy, re
+import random, datetime, traceback, copy, re, sys, os
 from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response, send_from_directory
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 try :
@@ -18,7 +18,7 @@ except :
     from flask_wtf import CsrfProtect
 from itsdangerous import URLSafeTimedSerializer
 from flask_wtf.csrf import CSRFError
-from application import app, login_manager, db, mail
+from application import app, login_manager, db, mail, csrf
 from application import models, forms, utils, updater, exemples
 from sqlalchemy import func
 from eopayment import Payment
@@ -28,6 +28,9 @@ try :
 except :
     app.logger.error("Impossible d'importer flask_mail")
 
+import os.path
+REP_APPLICATION = os.path.abspath(os.path.dirname(__file__))
+REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
 
 
 LISTE_PAGES_FAMILLES = [
@@ -82,6 +85,10 @@ CHAMPS_RENSEIGNEMENTS = ["nom", "prenom", "date_naiss", "cp_naiss", "ville_naiss
 
 DICT_RENSEIGNEMENTS = {"nom" : u"Nom", "prenom" : u"Prénom", "date_naiss" : u"Date de naissance", "cp_naiss" : u"CP de naissance", "ville_naiss" : u"Ville de naissance", "rue_resid" : u"Adresse - Rue", "cp_resid" : u"Adresse - CP", "ville_resid" : u"Adresse - Ville", 
                                         "tel_domicile" : u"Tél. Domicile", "tel_mobile" : u"Tél. Mobile", "mail" : u"Email", "profession" : u"Profession", "employeur" : u"Employeur", "travail_tel" : u"Tél. Pro.", "travail_mail" : u"Email Pro."}
+
+ETATS_PAIEMENTS = {1: "RECEIVED", 2: "ACCEPTED", 3: "PAID", 4: "DENIED", 5: "CANCELLED", 6: "WAITING", 99: "ERROR"}
+
+
 
 
 @app.route('/robots.txt')
@@ -276,7 +283,9 @@ def internal_error(exception):
     
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
-    return render_template('csrf_error.html', reason=e.description), 400
+    app.logger.debug(u"Erreur de CSRF :")
+    app.logger.debug(e.description)
+    return render_template('csrf_error.html'), 400
     
     
 # ------------------------- LOGIN et LOGOUT ---------------------------------- 
@@ -451,50 +460,51 @@ def factures():
 
     # Récupération de la liste des factures
     liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
-    
     app.logger.debug("Page FACTURES (%s): famille id(%s) liste_factures:(%s)", current_user.identifiant, current_user.IDfamille, liste_factures)
 
-    if models.GetParametre(nom="PAIEMENT_EN_LIGNE_ACTIF") == "True" :
-	# Récupération de la liste de tous les paiements en ligne de la famille
-	liste_paiements = models.Paiement.query.filter_by(IDfamille=current_user.IDfamille).all()
-        app.logger.debug("Page FACTURES (%s): famille id(%s) liste_paiements:(%s)", current_user.identifiant, current_user.IDfamille, liste_paiements)
-    else :
-        liste_paiements = []
+    # Récupération des montants paiements en ligne en attente de validation
+    liste_paiements = models.Paiement.query.filter_by(IDfamille=current_user.IDfamille).all()
+    dict_paiements_factures = {}
+    if len(liste_paiements) > 0:
+        liste_IDpaiement_attente = [paiement.IDpaiement for paiement in models.Action.query.filter_by(action="paiement_en_ligne", IDfamille=current_user.IDfamille, etat="attente").all()]
+        for paiement in liste_paiements:
+            if paiement.IDpaiement in liste_IDpaiement_attente:
+                paid = False
+                en_cours_paiement = "0"
+
+                # Si le paiement est confirmé
+                if paiement.resultat == "PAID" or paiement.resultrans in ("P", "V"):
+                    paid = True
+
+                # Si le paiement TIPI n'est pas confirmé mais qu'il a été effectué il y a moins de 5 minutes
+                if paid == False and paiement.systeme_paiement == "tipi_regie" and datetime.datetime.strptime(paiement.IDtransaction[:12], "%Y%m%d%H%M") + datetime.timedelta(minutes=5) > datetime.datetime.utcnow():
+                    paid = True
+                    en_cours_paiement = "1"
+
+                if paid == True:
+                    for texte in paiement.ventilation.split(","):
+                        IDfacture, montant = texte[1:].split("#")
+                        IDfacture, montant = int(IDfacture), float(montant)
+                        if dict_paiements_factures.has_key(IDfacture) == False :
+                            dict_paiements_factures[IDfacture] = {"montant": 0.0, "en_cours_paiement": en_cours_paiement}
+                        dict_paiements_factures[IDfacture]["montant"] += montant
 
     # Recherche les factures impayées
     nbre_factures_impayees = 0
     montant_factures_impayees = 0.0
     for facture in liste_factures :
+
+        # Cherche si un paiement en ligne en attente n'a pas déjà réglé la facture
+        if dict_paiements_factures.has_key(facture.IDfacture):
+            facture.montant_regle += dict_paiements_factures[facture.IDfacture]["montant"]
+            facture.montant_solde -= dict_paiements_factures[facture.IDfacture]["montant"]
+            facture.en_cours_paiement = dict_paiements_factures[facture.IDfacture]["en_cours_paiement"]
+
+        # Additionne les factures impayées
         if facture.montant_solde > 0.0 :
             nbre_factures_impayees += 1
             montant_factures_impayees += facture.montant_solde
 
-            if liste_paiements :
-                for paiement in liste_paiements :
-                    # un paiement validé existe pour cette facture
-                    if paiement.refdet == facture.numero and paiement.resultrans == "P" :
-                        facture.en_cours_paiement = "1"
-                        # ce paiement solde la facture
-                        if facture.montant_solde == paiement.montant :
-                            nbre_factures_impayees -= 1
-                            montant_factures_impayees -= paiement.montant
-                            facture.montant_regle += paiement.montant
-                            facture.montant_solde -= paiement.montant
-                        # ce paiement ne regle que partiellement cette facture
-                        else :
-                            montant_factures_impayees -= paiement.montant
-                            facture.montant_regle += paiement.montant
-                            facture.montant_solde -= paiement.montant
-                            app.logger.debug("Page FACTURES (%s): famille id(%s) IDpaiement:(%s) paiement.montant:(%s) facture.montant_solde:(%s)", current_user.identifiant, current_user.IDfamille, paiement.IDpaiement, paiement.montant, facture.montant_solde)
-                            if facture.montant_regle == facture.montant:
-                                nbre_factures_impayees -= 1
-                    elif paiement.refdet == facture.numero and paiement.resultrans == None :
-                        if datetime.datetime.strptime(paiement.IDtransaction[:12], "%Y%m%d%H%M") + datetime.timedelta(minutes=5) > datetime.datetime.utcnow() :
-                            app.logger.debug("Paiement(%s) en cours", paiement.IDpaiement)
-                            facture.en_cours_paiement = "1"
-                        else :
-                            app.logger.debug("Paiement(%s) hors delai", paiement.IDpaiement)
-    
     # Recherche l'historique des demandes liées aux factures
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures")
     
@@ -538,148 +548,300 @@ def envoyer_demande_facture():
     except Exception, erreur:
         return jsonify(success=0, error_msg=str(erreur))
                             
-                            
+
+def GetPaymentPayzen():
+    site_id = models.GetParametre(nom="PAYZEN_SITE_ID")
+    mode = models.GetParametre(nom="PAYZEN_MODE")
+    certificat_test = models.GetParametre(nom="PAYZEN_CERTIFICAT_TEST")
+    certificat_production = models.GetParametre(nom="PAYZEN_CERTIFICAT_PRODUCTION")
+
+    # Envoi de la requete
+    p = Payment("payzen", {
+        'vads_site_id': site_id,
+        'vads_ctx_mode': mode,
+        'secret_test': certificat_test,
+        'secret_production': certificat_production,
+        'vads_url_return': url_for('accueil', _external=True),
+        'vads_url_cancel': url_for('retour_paiement_cancel', _external=True),
+        'vads_url_error': url_for('retour_paiement_error', _external=True),
+        'vads_url_refused': url_for('retour_paiement_refused', _external=True),
+        'vads_url_success': url_for('retour_paiement_success', _external=True),
+        'vads_contrib': 'noethys',
+        })#, logger=app.logger)
+
+    # Modifie le répertoire temp si on est sous Windows
+    if sys.platform.startswith("win"):
+        repertoire_temp = os.path.join(REP_CONNECTHYS, "temp")
+        if os.path.isdir(repertoire_temp) == False:
+            os.mkdir(repertoire_temp)
+        p.backend.PATH = repertoire_temp
+
+    return p
+
+
+
+
 @app.route('/effectuer_paiement_en_ligne')
 @login_required
 def effectuer_paiement_en_ligne():
     if current_user.role != "famille" :
         return redirect(url_for('logout'))
 
-    # Récupération de la liste des factures
-    liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
-    app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) liste_factures(%s)", current_user.identifiant, current_user.IDfamille, liste_factures)
-
-    # Récupération de la liste des paiements 
-    liste_paiements = models.Paiement.query.filter_by(IDfamille=current_user.IDfamille, resultrans="P").all()
-    app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) liste_paiement(%s)", current_user.identifiant, current_user.IDfamille, liste_paiements)
-
-    if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "1" :
-        systeme_paiement = "tipi_regie"
-        liste_regies = models.Regie.query.all()
-        saisie_type = models.GetParametre(nom="PAIEMENT_EN_LIGNE_TIPI_SAISIE")
-        app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) saisie_type(%s)", current_user.identifiant, current_user.IDfamille, saisie_type)
-        # validation
-        if saisie_type == '1':
-            saisie = 'X'
-        # production
-        elif saisie_type == '2':
-            saisie = 'A'
-        else :
-            saisie = 'T'
-        
-        app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) liste_regie(%s)", current_user.identifiant, current_user.IDfamille, liste_regies)
-    else :
-        systeme_paiement = ""
+    app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
 
     try:
-        id = request.args.get("id", 0, type=int)
-        IDfactures_a_debiter = request.args.get("liste_factures", ",", type=str)
+
+        # Récupération des données de la requête
         montant_reglement = request.args.get("montant_reglement", ",", type=float)
+        liste_factures_txt = request.args.get("liste_factures", ",", type=str)
 
-        liste_IDfactures_a_debiter = IDfactures_a_debiter.split(',')
-        liste_IDfactures_a_debiter = map(int, liste_IDfactures_a_debiter)
+        # Vérifie que le montant est supérieur à zéro
+        if montant_reglement == 0.0 :
+            return jsonify(success=0, error_msg=u"Le montant doit être supérieur à zéro !")
 
-        # on cree un dictionnaire avec les infos des factures a debiter
-        dict_facture_a_debiter = {}
-        for facture in liste_factures :
-            for ID_a_debiter in liste_IDfactures_a_debiter :
-                if facture.IDfacture == ID_a_debiter :
-                    if not dict_facture_a_debiter.has_key(ID_a_debiter) :
-                        dict_facture_a_debiter[ID_a_debiter] = {}
-                    dict_facture_a_debiter[ID_a_debiter]['Numero'] = facture.numero
-                    dict_facture_a_debiter[ID_a_debiter]['IDregie'] = facture.IDregie
-                    dict_facture_a_debiter[ID_a_debiter]['en_cours_paiement'] = facture.en_cours_paiement
-                    dict_facture_a_debiter[ID_a_debiter]['date_debut'] = facture.date_debut
-                    if facture.en_cours_paiement == "1" :
-                        for paiement in liste_paiements :
-                            if paiement.IDfacture == facture.IDfacture :
-                                dict_facture_a_debiter[ID_a_debiter]['Solde'] = (facture.montant_solde - paiement.montant)
-                    else :
-                        dict_facture_a_debiter[ID_a_debiter]['Solde'] = facture.montant_solde
+        # Vérifie que le montant est supérieur au montant minimal fixé
+        montant_minimal = float(models.GetParametre(nom="PAIEMENT_EN_LIGNE_MONTANT_MINIMAL"))
+        if montant_reglement < montant_minimal :
+            return jsonify(success=0, error_msg=u"Le paiement en ligne nécessite un montant minimal de %.2f € !" % montant_minimal)
 
-        # il y a plus d une facture sélectionnée
-        if len(dict_facture_a_debiter) > 1 :
-            num = ""
-            montant = 0.00
-            for key, valeur in dict_facture_a_debiter.iteritems() :
-                num += valeur["Numero"] + " // "
-                montant += valeur["Solde"]
-            app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): plus d une facture selectionnee NON TRAITE factures(%s) montant: %s €", current_user.identifiant, num, montant)
-            flash(u"Votre demande de paiement en ligne de plusieurs factures est impossible")
-            return jsonify(success=0, error_msg="Paiement en ligne multi factures impossible")
-        # une seule facture sélectionnée
-        elif len(dict_facture_a_debiter) == 1 :
-            infos_facture = {}
-            infos_facture = dict_facture_a_debiter.values()[0]
-            regie = models.Regie.query.filter_by(IDregie=infos_facture["IDregie"]).first()
+        # Mémorise les numéros de factures et la ventilation
+        dict_factures = {}
+        for texte in liste_factures_txt.split(','):
+            IDfacture, solde = texte.split("##")
+            dict_factures[int(IDfacture)] = float(solde)
 
-            app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE : infos_facture: (%s) regie.nom: (%s) type(regie.nom): (%s) regie.numclitipi: (%s)", infos_facture, regie.nom, type(regie.nom), regie.numclitipi)
+        # Importation des factures
+        liste_factures = models.Facture.query.filter(models.Facture.IDfacture.in_(dict_factures.keys())).order_by(models.Facture.date_debut.desc()).all()
+
+        # On mémorise la ventilation
+        ventilation = []
+        for IDfacture, solde in dict_factures.iteritems():
+            ventilation.append("F%d#%s" % (IDfacture, solde))
+        ventilation_str = ",".join(ventilation)
+
+        # Mémorisation de la liste des ID de facture en str
+        factures_ID_str = ",".join([str(IDfacture) for IDfacture in dict_factures.keys()])
+
+
+        # ----------------------- Paiement avec TIPI -------------------------
+
+        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "1":
+            systeme_paiement = "tipi_regie"
+            liste_regies = models.Regie.query.all()
+            saisie_type = models.GetParametre(nom="PAIEMENT_EN_LIGNE_TIPI_SAISIE")
+            app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) saisie_type(%s)", current_user.identifiant, current_user.IDfamille, saisie_type)
+
+            # validation
+            if saisie_type == '1':
+                saisie = 'X'
+            # production
+            elif saisie_type == '2':
+                saisie = 'A'
+            else:
+                saisie = 'T'
+
+            app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) liste_regie(%s)", current_user.identifiant, current_user.IDfamille, liste_regies)
+
+            # il y a plus d une facture sélectionnée
+            if len(dict_factures) > 1:
+                app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): plus d'une facture selectionnee pour TIPI NON TRAITE", current_user.identifiant)
+                return jsonify(success=0, error_msg="Paiement en ligne multi-factures impossible")
+
+            # Envoi de la requete
+            facture = liste_factures[0]
+            regie = models.Regie.query.filter_by(IDregie=facture.IDregie).first()
+            if regie == None :
+                app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE TIPI (%s): Aucune régie n'a été paramétrée.", current_user.identifiant)
+                return jsonify(success=0, error_msg=u"Aucune régie n'a été paramétrée. Contactez l'administrateur du portail.")
+
+            app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE : IDfacture:%s montant:%s regie.nom: (%s) type(regie.nom): (%s) regie.numclitipi: (%s)", facture.IDfacture, montant_reglement, regie.nom, type(regie.nom), regie.numclitipi)
             p = Payment(systeme_paiement, {'numcli': regie.numclitipi})
             requete = p.request(amount=str(montant_reglement),
-                exer=str(infos_facture["date_debut"].year()),
-                refdet=infos_facture["Numero"],
+                exer=str(facture.date_debut.year),
+                refdet=facture.numero,
                 objet="Paiement " + regie.nom.encode("ascii", 'ignore'),
-                email=current_user.email,
+                email=utils.CallFonction("DecrypteChaine", current_user.email).split(";")[0],
                 urlcl=url_for('retour_tipi', _external=True),
                 saisie=saisie)
-            app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): requete: %s // systeme_paiement(%s)", current_user.identifiant, requete, systeme_paiement)
-            description = u'Paiement en ligne de la facture n° %s pour un montant de %s €: TransactionID %s' % (infos_facture["Numero"], infos_facture["Solde"], requete[0])
+            app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): requete: %s // systeme_paiement(%s)", current_user.identifiant, requete, systeme_paiement)
 
-            m = models.Paiement(IDfamille=current_user.IDfamille, factures_ID=IDfactures_a_debiter, IDtransaction=requete[0], refdet=infos_facture["Numero"], montant=montant_reglement, objet=requete[3], saisie=saisie)
+            # Enregistrement du paiement
+            m = models.Paiement(IDfamille=current_user.IDfamille, systeme_paiement=systeme_paiement, factures_ID=factures_ID_str,
+                                IDtransaction=requete[0], refdet=facture.numero, montant=montant_reglement, objet=requete[3], saisie=saisie,
+                                ventilation=ventilation_str, horodatage=datetime.datetime.now())
             db.session.add(m)
             db.session.commit()
 
-        flash(u"Votre demande de paiement en ligne d une facture est en cours")
-        return jsonify(success=1, urltoredirect=requete[2])
+            flash(u"Votre demande de paiement en ligne d'une facture est en cours")
+            return jsonify(success=1, systeme_paiement="tipi_regie", urltoredirect=requete[2])
+
+        # ----------------------- Paiement avec PAYZEN ----------------------
+        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "3":
+            systeme_paiement = "payzen"
+
+            # Envoi de la requete
+            p = GetPaymentPayzen()
+
+            email = utils.CallFonction("DecrypteChaine", current_user.email).split(";")[0]
+            requete = p.request(amount=montant_reglement, email=email)
+            transaction_id, f, form = requete
+
+            app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE PAYZEN (IDFamille %s) : IDtransaction=%s montant=%s factures_ID=%s", current_user.identifiant, transaction_id, str(montant_reglement), factures_ID_str)
+
+            # Enregistrement du paiement dans la base
+            m = models.Paiement(IDfamille=current_user.IDfamille, systeme_paiement=systeme_paiement, factures_ID=factures_ID_str,
+                                IDtransaction=transaction_id, montant=montant_reglement, saisie=models.GetParametre(nom="PAYZEN_MODE"),
+                                ventilation=ventilation_str, horodatage=datetime.datetime.now())
+            db.session.add(m)
+            db.session.commit()
+
+            # Renvoie le formulaire de paiement au template
+            form = unicode(form)
+            form = form.replace("<form ", "<form id='form_paiement' ")
+            return jsonify(success=1, systeme_paiement=systeme_paiement, form_paiement=form)
+
     except Exception, erreur:
         app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): ERREUR: %s)", current_user.identifiant, erreur)
         return jsonify(success=0, error_msg=str(erreur))
 
 
-# -----------------------RETOUR TIPI REGIE-------------------------------
-from application import csrf
+
+# ---------------------- NOTIFICATION PAYZEN --------------------
+
+@app.route('/ipn_payzen', methods=['POST'])
+@csrf.exempt
+def ipn_payzen():
+    app.logger.debug("Page RETOUR IPN PAYZEN")
+
+    # Extraction des variables post
+    data = request.get_data(as_text=True).encode('ASCII')
+
+    # Récupération des données et calcul de la signature
+    p = GetPaymentPayzen()
+    reponse = p.response(data)
+
+    # Vérifie que la signature de la réponse est correcte
+    if reponse.signed != True :
+        app.logger.debug(u"Paiement en ligne IDtransaction=%s : ATTENTION, erreur de signature dans la réponse !" % reponse.order_id)
+
+    # Recherche l'état du paiement
+    resultat = ETATS_PAIEMENTS[reponse.result]
+
+    # Affichage de la réponse dans le log
+    app.logger.debug(u"Paiement en ligne IDtransaction=%s : signature=%s, resultat=%s" % (reponse.order_id, reponse.signed, resultat))
+
+    # Modification du paiement pré-enregistré
+    paiement = models.Paiement.query.filter_by(IDtransaction=reponse.order_id).first()
+    paiement.resultat = resultat
+    paiement.message = reponse.bank_status.decode("utf8")
+    db.session.commit()
+
+    # Enregistrement de l'action
+    if resultat == "PAID":
+        parametres = u"systeme_paiement=%s#factures_ID=%s#IDpaiement=%s#IDtransaction=%s#montant=%s" % (paiement.systeme_paiement, paiement.factures_ID, paiement.IDpaiement, paiement.IDtransaction, paiement.montant)
+        commentaire = paiement.message
+        description = u"Paiement en ligne - Transaction n°%s de %s" % (paiement.IDtransaction.split("_")[1], utils.Formate_montant(paiement.montant))
+        m = models.Action(IDfamille=paiement.IDfamille, categorie="reglements", action="paiement_en_ligne", IDpaiement=paiement.IDpaiement,
+                          description=description, etat="attente", commentaire=commentaire, parametres=parametres, ventilation=paiement.ventilation)
+        db.session.add(m)
+        db.session.commit()
+
+    app.logger.debug(u"Enregistrement de l'action Paiement en ligne IDtransaction=%s" % paiement.IDtransaction)
+    return 'Notification processed'
+
+
+
+# ---------------------- RETOUR PAIEMENT --------------------
+
+@app.route('/retour_paiement_cancel', methods=['GET'])
+@login_required
+def retour_paiement_cancel():
+    dict_parametres = models.GetDictParametres()
+    return render_template('retour_paiement.html', active_page="factures", resultat="cancel", dict_parametres=dict_parametres)
+
+@app.route('/retour_paiement_error', methods=['GET'])
+@login_required
+def retour_paiement_error():
+    dict_parametres = models.GetDictParametres()
+    return render_template('retour_paiement.html', active_page="factures", resultat="error", dict_parametres=dict_parametres)
+
+@app.route('/retour_paiement_refused', methods=['GET'])
+@login_required
+def retour_paiement_refused():
+    dict_parametres = models.GetDictParametres()
+    return render_template('retour_paiement.html', active_page="factures", resultat="refused", dict_parametres=dict_parametres)
+
+@app.route('/retour_paiement_success', methods=['GET'])
+@login_required
+def retour_paiement_success():
+    dict_parametres = models.GetDictParametres()
+    return render_template('retour_paiement.html', active_page="factures", resultat="success", dict_parametres=dict_parametres)
+
+
+
+# -----------------------RETOUR TIPI REGIE-------------------
+
 @app.route('/retour_tipi', methods=['POST'])
 @csrf.exempt
 def retour_tipi():
-    if current_user.role != "famille" :
-        return redirect(url_for('logout'))
+    # if current_user.role != "famille" :
+    #     return redirect(url_for('logout'))
 
-    try:
-        tipiform = forms.RetourTipi(request.form)
-        resultats = request.form
-        resultat = {}
-        resultat["numcli"] = request.form.get("numcli", 0, type=str)
-        resultat["refdet"] = request.form.get("refdet", 0, type=str)
-        resultat["objet"] = request.form.get("objet", 0, type=str)
-        resultat["resultrans"] = request.form.get("resultrans", 0, type=str)
-        resultat["numauto"] = request.form.get("numauto", 0, type=str)
-        resultat["dattrans"] = request.form.get("dattrans", 0, type=str)
-        resultat["heurtrans"] = request.form.get("heurtrans", 0, type=str)
+    try :
 
-        # Récupération de la liste des paiements
-        liste_paiements = models.Paiement.query.filter_by(refdet=resultat["refdet"], objet=resultat["objet"]).all()
+        # Extraction des variables post
+        data = request.get_data(as_text=True).encode('ASCII')
 
-        for paiement in liste_paiements:
-            if paiement.objet == resultat["objet"]:
-                IDpaiement_a_modif = paiement.IDpaiement
+        # Extraction des champs non traités par eopayment
+        resultrans = request.form.get("resultrans", 0, type=str)
+        numauto = request.form.get("numauto", 0, type=str)
+        dattrans = request.form.get("dattrans", 0, type=str)
+        heurtrans = request.form.get("heurtrans", 0, type=str)
 
-        paiement_a_modif = models.Paiement.query.filter_by(IDpaiement=IDpaiement_a_modif).first()
-        paiement_a_modif.numauto = resultat["numauto"]
-        paiement_a_modif.resultrans = resultat["resultrans"]
-        paiement_a_modif.dattrans = resultat["dattrans"]
-        paiement_a_modif.heurtrans = resultat["heurtrans"]
+        # Récupération des données et calcul de la signature
+        p = Payment("tipi_regie", {})
+        reponse = p.response(data)
+
+        # Recherche l'état du paiement
+        resultat = ETATS_PAIEMENTS[reponse.result]
+
+        # Modification du paiement pré-enregistré
+        paiement = models.Paiement.query.filter_by(IDtransaction=reponse.transaction_id).first()
+        if paiement == None :
+            app.logger.debug("Page RETOUR_TIPI: le paiement pre-enregistre n'a pas ete trouve.)")
+            return jsonify(success=0, error_msg=u"Le paiement pré-enregistré n'a pas été trouvé dans la base.")
+
+        paiement.resultrans = resultrans
+        paiement.resultat = resultat
+        paiement.numauto = numauto
+        paiement.dattrans = dattrans
+        paiement.heurtrans = heurtrans
+        paiement.message = reponse.bank_status.decode("utf8")
         db.session.commit()
 
-        if paiement_a_modif.resultrans == "P" :
-            parametres = u"factures_ID=%s#IDpaiement=%s#IDtransaction=%s#refdet=%s#montant=%s#objet=%s#numauto=%s#dattrans=%s#heurtrans=%s" % (paiement_a_modif.factures_ID, paiement_a_modif.IDpaiement, paiement_a_modif.IDtransaction, paiement_a_modif.refdet, paiement_a_modif.montant, paiement_a_modif.objet, paiement_a_modif.numauto, paiement_a_modif.dattrans, paiement_a_modif.heurtrans)
+        # Réponse dans log
+        app.logger.debug("Page RETOUR_TIPI: reponse:%s refdet: %s)", reponse, paiement.refdet)
+
+        # Enregistrement du résultat et redirection
+        if resultat == "PAID":
+            parametres = u"systeme_paiement=%s#factures_ID=%s#IDpaiement=%s#IDtransaction=%s#refdet=%s#montant=%s#objet=%s#numauto=%s#dattrans=%s#heurtrans=%s" % ("tipi_regie", paiement.factures_ID, paiement.IDpaiement, paiement.IDtransaction, paiement.refdet, paiement.montant, paiement.objet, numauto, dattrans, heurtrans)
             commentaire = ""
-            description = "Paiement en ligne de la facture %s" % paiement_a_modif.refdet
-            m = models.Action(IDfamille=paiement_a_modif.IDfamille, categorie="reglements", action="paiement_en_ligne", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
+            description = "Paiement en ligne de la facture %s" % paiement.refdet
+            m = models.Action(IDfamille=paiement.IDfamille, categorie="reglements", action="paiement_en_ligne", description=description,
+                              IDpaiement=paiement.IDpaiement, etat="attente", commentaire=commentaire, parametres=parametres, ventilation=paiement.ventilation)
             db.session.add(m)
             db.session.commit()
+            app.logger.debug(u"Enregistrement de l'action Paiement en ligne IDtransaction=%s" % paiement.IDtransaction)
 
-        app.logger.debug("Page RETOUR_TIPI: resultats:%s liste_paiements: %s refdet: %s)", resultats, liste_paiements, resultat["refdet"])
-        return render_template('retour_tipi.html', title='Retour TIPI', form=tipiform)
+            return redirect(url_for('retour_paiement_success'))
+
+        elif resultat == "DENIED":
+            return redirect(url_for('retour_paiement_refused'))
+        elif resultat == "CANCELLED":
+            return redirect(url_for('retour_paiement_cancel'))
+        else :
+            return redirect(url_for('retour_paiement_error'))
+
     except Exception, erreur:
         app.logger.debug("Page RETOUR_TIPI: ERREUR: %s", erreur)
         return jsonify(success=0, error_msg=str(erreur))
@@ -695,56 +857,24 @@ def reglements():
 
     # Récupération de la liste des règlements
     liste_reglements = models.Reglement.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Reglement.date.desc()).all()
-    
-    # Paiement en ligne
-    liste_factures = []
-    nbre_factures_impayees = 0
-    montant_factures_impayees = 0.0
-    if models.GetParametre(nom="PAIEMENT_EN_LIGNE_ACTIF") == "True" :
-    
-        # Récupération de la liste des factures pour paiement en ligne
-        liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
-        
-        # Récupération de la liste des paiements validés
-        liste_paiements = models.Paiement.query.filter_by(IDfamille=current_user.IDfamille, resultrans="P").all()
-        app.logger.debug("Page REGLEMENTS (%s): famille id(%s) liste_paiements:(%s)", current_user.identifiant, current_user.IDfamille, liste_paiements)
 
-        # Recherche les factures impayées
-        nbre_factures_impayees = 0
-        montant_factures_impayees = 0.0
-        for facture in liste_factures :
-            if facture.montant_solde > 0.0 :
-                nbre_factures_impayees += 1
-                montant_factures_impayees += facture.montant_solde
-                if liste_paiements :
-                    for paiement in liste_paiements :
-                        # un paiement validé existe pour cette facture
-                        if paiement.refdet == facture.numero:
-                            facture.en_cours_paiement = "1"
-                            # ce paiement solde la facture
-                            if facture.montant_solde == paiement.montant :
-                                nbre_factures_impayees -= 1
-                                montant_factures_impayees -= paiement.montant
-                                facture.montant_regle += paiement.montant
-                                facture.montant_solde -= paiement.montant
-                            # ce paiement ne regle que partiellement cette facture
-                            else :
-                                montant_factures_impayees -= paiement.montant
-                                facture.montant_regle += paiement.montant
-                                facture.montant_solde -= paiement.montant
-                                app.logger.debug("Page REGLEMENTS (%s): famille id(%s) IDpaiement:(%s) paiement.montant:(%s) facture.montant_solde:(%s)", current_user.identifiant, current_user.IDfamille, paiement.IDpaiement, paiement.montant, facture.montant_solde)
-                                if facture.montant_regle == facture.montant:
-                                    nbre_factures_impayees -= 1
-    
+    # Récupération de la liste des paiements en attente
+    liste_paiements_temp = models.Paiement.query.filter_by(IDfamille=current_user.IDfamille, resultat="PAID").order_by(models.Paiement.horodatage.desc()).all()
+    dict_paiements_factures = {}
+    liste_paiements = []
+    if len(liste_paiements_temp) > 0:
+        liste_IDpaiement_attente = [paiement.IDpaiement for paiement in models.Action.query.filter_by(action="paiement_en_ligne", IDfamille=current_user.IDfamille, etat="attente").all()]
+        for paiement in liste_paiements_temp:
+            if paiement.IDpaiement in liste_IDpaiement_attente:
+                liste_paiements.append(paiement)
+
     # Recherche l'historique des demandes liées aux règlements
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reglements")
     dict_parametres = models.GetDictParametres()
     
     app.logger.debug("Page REGLEMENTS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('reglements.html', active_page="reglements", liste_reglements=liste_reglements, \
-                            liste_factures=liste_factures, nbre_factures_impayees=nbre_factures_impayees, \
-                            montant_factures_impayees=montant_factures_impayees, \
-                            historique=historique, dict_parametres=dict_parametres)
+                           liste_paiements=liste_paiements, historique=historique, dict_parametres=dict_parametres)
 
                             
 @app.route('/envoyer_demande_recu')
@@ -1359,7 +1489,7 @@ def GetDictRenseignements(IDfamille=None, IDindividu=None):
             
     return dict_valeurs
     
-    
+
 @app.route('/modifier_renseignements')
 @login_required
 def modifier_renseignements():

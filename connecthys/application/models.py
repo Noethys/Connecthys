@@ -296,10 +296,15 @@ class Paiement(Base):
     numauto = Column(String(10))
     dattrans = Column(String(15))
     heurtrans = Column(String(15))
+    systeme_paiement = Column(String(50))
+    resultat = Column(String(50))
+    message = Column(String(450))
+    ventilation = Column(String(100000))
+    horodatage = Column(DateTime)
 
     def __init__(self, IDpaiement=None, factures_ID=None, IDfamille=None, IDtransaction=None, refdet=None, \
-                        montant = 0.0, objet=None, saisie=None, resultrans=None, numauto=None, \
-                        dattrans=None, heurtrans=None):
+                        montant = 0.0, objet=None, saisie=None, resultrans=None, numauto=None, dattrans=None, \
+                        heurtrans=None, systeme_paiement=None, resultat=None, message=None, ventilation=None, horodatage=None):
         if IDpaiement != None :
             self.IDpaiement = IDpaiement
         self.factures_ID = factures_ID
@@ -313,6 +318,11 @@ class Paiement(Base):
         self.numauto = numauto
         self.dattrans = dattrans
         self.heurtrans = heurtrans
+        self.systeme_paiement = systeme_paiement
+        self.resultat = resultat
+        self.message = message
+        self.ventilation = ventilation
+        self.horodatage = horodatage
 
     def __repr__(self):
         return '<Paiement %d>' % (self.IDpaiement)
@@ -361,12 +371,15 @@ class Action(Base):
     IDperiode = Column(Integer)
     ref_unique = Column(String(50), index=True)
     reponse = Column(String(450))
+    IDpaiement = Column(Integer)
+    ventilation = Column(String(100000))
     
     reservations = relationship("Reservation")
     renseignements = relationship("Renseignement")
     
     def __init__(self, horodatage=None, IDfamille=None, IDindividu=None, IDutilisateur=None, categorie=None, action=None, description=None, \
-                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None, reponse=None):
+                        commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None, reponse=None, \
+                        IDpaiement=None, ventilation=None):
         if horodatage == None :
             self.horodatage = datetime.datetime.now()
         else :
@@ -387,6 +400,8 @@ class Action(Base):
         else :
             self.ref_unique = ref_unique
         self.reponse = reponse
+        self.IDpaiement = IDpaiement
+        self.ventilation = ventilation
         
     def GetRefUnique(self):
         horodatage = self.horodatage.strftime("%Y%m%d%H%M%S%f")
