@@ -68,3 +68,5 @@ version=0.6.2 # exclusions=flask_adminlte # version_min_noethys=1.2.5.2
 version=0.6.3 # exclusions=flask_adminlte # version_min_noethys=1.2.5.2
 version=0.6.4 # exclusions=flask_adminlte # version_min_noethys=1.2.5.2
 version=0.6.5 # exclusions=flask_adminlte # version_min_noethys=1.2.5.2
+version=0.6.6 # exclusions=flask_adminlte # version_min_noethys=1.2.5.3
+version=0.6.7 # exclusions=flask_adminlte # version_min_noethys=1.2.5.3
