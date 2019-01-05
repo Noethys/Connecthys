@@ -42,6 +42,50 @@
 			<!-- /.box -->
 		</div>
 	</div>
-	
+
+
+	<!-- Liste des cotisations -->
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="box box-primary">
+				<div class="box-header with-border">
+					<h3 class="box-title">Liste des dernières cotisations</h3>
+				</div>
+			<!-- /.box-header -->
+				{% if liste_cotisations|length == 0 %}
+					<div class="box-body">
+						Aucune cotisation à afficher
+					</div>
+				{% else %}
+					<div class="box-body table-responsive">
+						<table class="table table-bordered table-striped">
+							<tbody>
+								<tr>
+									<th><center>Du</center></th>
+									<th><center>Au</center></th>
+									<th><center>Intitulé</center></th>
+									<th><center>N°</center></th>
+									<th><center>Bénéficiaire</center></th>
+								</tr>
+
+								{% for cotisation in liste_cotisations %}
+								<tr>
+									<td><center>{{ DateDDEnFr(cotisation.date_debut) }}</center></td>
+									<td><center>{{ DateDDEnFr(cotisation.date_fin) }}</center></td>
+									<td><center>{{ cotisation.GetNomComplet() }}</center></td>
+									<td><center>{{ cotisation.GetNumero() }}</center></td>
+									<td><center>{{ cotisation.GetBeneficiaire() }}</center></td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				{% endif %}
+			<!-- /.box-body -->
+			</div>
+			<!-- /.box -->
+		</div>
+	</div>
+
 		
 {%- endblock content %}

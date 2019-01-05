@@ -537,7 +537,52 @@ class Cotisation_manquante(Base):
     def __repr__(self):
         return '<IDcotisation_manquante %d>' % (self.IDcotisation_manquante)
 
-        
+
+
+class Cotisation(Base):
+    __tablename__ = "%sportail_cotisations" % PREFIXE_TABLES
+    IDcotisation = Column(Integer, primary_key=True)
+    IDfamille = Column(Integer, index=True)
+    IDindividu = Column(Integer)
+    numero = Column(String(50))
+    date_debut = Column(Date)
+    date_fin = Column(Date)
+    nom_cotisation = Column(String(200))
+    nom_unite = Column(String(200))
+    prenom_individu = Column(String(200))
+
+    def __init__(self, IDcotisation=None, IDfamille=None, IDindividu=None, numero=None, date_debut=None, date_fin=None,
+                 nom_cotisation=None, nom_unite=None, prenom_individu=None):
+        if IDcotisation != None:
+            self.IDcotisation = IDcotisation
+        self.IDfamille = IDfamille
+        self.IDindividu = IDindividu
+        self.numero = numero
+        self.date_debut = date_debut
+        self.date_fin = date_fin
+        self.nom_cotisation = nom_cotisation
+        self.nom_unite = nom_unite
+        self.prenom_individu = prenom_individu
+
+    def __repr__(self):
+        return '<IDcotisation %d>' % (self.IDcotisation)
+
+    def GetNumero(self):
+        if self.numero != None :
+            return self.numero
+        else :
+            return ""
+
+    def GetNomComplet(self):
+        return u"%s - %s" % (self.nom_cotisation, self.nom_unite)
+
+    def GetBeneficiaire(self):
+        if self.prenom_individu != None:
+            return utils.CallFonction("DecrypteChaine", self.prenom_individu)
+        else:
+            return u"Famille"
+
+
 class Activite(Base):
     __tablename__ = "%sportail_activites" % PREFIXE_TABLES
     IDactivite = Column(Integer, primary_key=True)

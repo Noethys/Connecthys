@@ -157,7 +157,7 @@ def Importation(secret=0):
     # Liste des autres tables à transférer
     app.logger.debug("Traitement des autres tables...")
     tables = [
-        "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
+        "cotisations_manquantes", "cotisations", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "consommations", "periodes", "ouvertures", "feries", "unites", "inscriptions",
         "groupes", "activites", "individus", "messages", "regies", "pages", "blocs", "elements",
         ]
@@ -200,7 +200,7 @@ def Importation(secret=0):
     app.logger.debug("Remplissage des autres tables...")
     
     tables = [
-        "activites", "unites", "cotisations_manquantes", "factures", "types_pieces", "pieces_manquantes",
+        "activites", "unites", "cotisations_manquantes", "cotisations", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures",
         "feries", "messages", "regies", "pages", "blocs", "elements",
         ]

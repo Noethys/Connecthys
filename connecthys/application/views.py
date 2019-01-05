@@ -20,7 +20,7 @@ from itsdangerous import URLSafeTimedSerializer
 from flask_wtf.csrf import CSRFError
 from application import app, login_manager, db, mail, csrf
 from application import models, forms, utils, updater, exemples
-from sqlalchemy import func
+from sqlalchemy import or_
 from eopayment import Payment
 
 try :
@@ -960,9 +960,15 @@ def cotisations():
 
     # Récupération de la liste des cotisations manquantes
     liste_cotisations_manquantes = models.Cotisation_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Cotisation_manquante.nom).all()
+
+    # Récupération de la liste des cotisations
+    liste_individus = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).all()
+    liste_IDindividu = [individu.IDindividu for individu in liste_individus]
+    liste_cotisations = models.Cotisation.query.filter(or_(models.Cotisation.IDindividu.in_(liste_IDindividu), models.Cotisation.IDfamille == current_user.IDfamille)).order_by(models.Cotisation.date_debut.desc()).all()
+
     dict_parametres = models.GetDictParametres()
-    app.logger.debug("Page COTISATIONS (%s): famille id(%s) - liste_cotisations_manquante: %s", current_user.identifiant, current_user.IDfamille, liste_cotisations_manquantes)
-    return render_template('cotisations.html', active_page="cotisations", \
+    app.logger.debug("Page COTISATIONS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
+    return render_template('cotisations.html', active_page="cotisations", liste_cotisations=liste_cotisations, \
                             liste_cotisations_manquantes=liste_cotisations_manquantes, dict_parametres=dict_parametres)
     
                             
