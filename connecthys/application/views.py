@@ -311,7 +311,12 @@ def inscription_noethys():
             if exist:
                 break
         if not exist:
-            flash(u'tout est OK','error')
+            conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
+            if conditions_utilisation == None :
+                conditions_utilisation = ""
+            else :
+                conditions_utilisation = utils.FusionDonneesOrganisateur(conditions_utilisation.texte_html, dict_parametres)
+            return render_template('create_password.html', form=forms.CreatePassword(), dict_parametres=dict_parametres,conditions_utilisation=conditions_utilisation)
     return render_template('inscription_noethys.html', form=form, dict_parametres=dict_parametres)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -380,11 +385,24 @@ def logout():
     flash(u"Vous avez été déconnecté", "error")
     return redirect(url_for('login'))
 
+@app.route('/create_password', methods=['GET', 'POST'])
+def create_password():
+    form=forms.CreatePassword()
+    dict_parametres = models.GetDictParametres()
+    if form.validate_on_submit():
+        if ValiderModificationPassword(form=form) != True :
+            conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
+            if conditions_utilisation == None :
+                conditions_utilisation = ""
+            else :
+                conditions_utilisation = utils.FusionDonneesOrganisateur(conditions_utilisation.texte_html, dict_parametres)
+            return render_template('create_password.html', form=forms.CreatePassword(), dict_parametres=dict_parametres,conditions_utilisation=conditions_utilisation)
+        return redirect(url_for('login'))
+    return redirect(url_for('inscription_noethys'))
 
 # ------------------------- FORCE CHANGE PASSWORD ----------------------------------
 
 @app.route('/force_change_password', methods=['GET', 'POST'])
-@login_required
 def force_change_password():
     # Si l'utilisateur n'est pas connecté, on le renvoie vers l'accueil
     if not current_user.is_authenticated or "custom" in current_user.password :

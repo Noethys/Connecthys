@@ -22,6 +22,23 @@ class LoginForm(FlaskForm):
     password = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=20)])
     remember = BooleanField("remember", default=False)
 
+class CreatePassword(FlaskForm):
+    password1 = PasswordField('password1',  [validators.Required(), validators.Length(min=0, max=20)])
+    password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
+    accept = BooleanField("accept", default=False)
+    nom = HiddenField('nom')
+    prenom = HiddenField('prenom')
+    date_naiss = HiddenField('date_naiss')
+    cp_naiss = HiddenField('cp_naiss')
+    ville_naiss = HiddenField('ville_naiss')
+    rue_resid = HiddenField('rue_resid')
+    cp_resid = HiddenField('cp_resid')
+    ville_resid = HiddenField('ville_resid')
+    tel_domicile = HiddenField('tel_domicile')
+    tel_mobile = HiddenField('tel_mobile')
+    mail = HiddenField('mail')
+    identifiant = HiddenField('identifiant')
+
 class ChangePassword(FlaskForm):
     password1 = PasswordField('password1',  [validators.Required(), validators.Length(min=0, max=20)])
     password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
