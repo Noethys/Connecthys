@@ -79,44 +79,44 @@
             {{ form.csrf_token }}
         <div class="row">
             <div class="form-group col-xs-6">
-                <label for="nom">Nom</label>
+                <label for="nom">Nom *</label>
                 {{ form.nom(class='form-control', placeholder='Nom', type='text', required='true') }} 
             </div>
             <div class="form-group col-xs-6">
-                <label for="prenom">Prénom</label>
+                <label for="prenom">Prénom *</label>
                 {{ form.prenom(class='form-control', placeholder='Prénom', type='text', required='true') }} 
             </div>
         </div>
         <div class="form-group">
-            <label for="date_naiss">Date de Naissance</label>
+            <label for="date_naiss">Date de Naissance *</label>
             {{ form.date_naiss(class='form-control', placeholder='"DD-MM-YYYY"', type='date', format="dd/mm/yyyy", required='true') }} 
         </div>
         <div class="form-group">
-             <label for="rue_resid">Adresse</label>
+             <label for="rue_resid">Adresse *</label>
             {{ form.rue_resid(class='form-control', placeholder='Adresse', type='text', required='true') }} 
         </div>
         <div class="row">
             <div class="form-group col-xs-4">
-                 <label for="cp_resid">CP</label>
-                {{ form.cp_resid(class='form-control', placeholder='CP', type='text', required='true') }} 
+                 <label for="cp_resid">CP *</label>
+                {{ form.cp_resid(class='form-control', placeholder='xxxxx', type='text', required='true') }} 
             </div>
             <div class="form-group has-feedback col-xs-8">
-                <label for="ville_resid">Ville</label>
-                {{ form.ville_resid(class='form-control', placeholder='CP', type='text', required='true') }} 
+                <label for="ville_resid">Ville *</label>
+                {{ form.ville_resid(class='form-control', placeholder='Ville', type='text', required='true') }} 
             </div>
         </div>
         <div class="row">
             <div class="form-group col-xs-6">
                 <label for="tel_domicile">Fixe</label>
-                {{ form.tel_domicile(class='form-control', placeholder='Fixe', type='tel') }} 
+                {{ form.tel_domicile(class='form-control', placeholder='xx.xx.xx.xx.xx', type='tel') }} 
             </div>
             <div class="form-group has-feedback col-xs-6">
                 <label for="tel_mobile">Portable</label>
-                {{ form.tel_mobile(class='form-control', placeholder='Mobile', type='tel') }} 
+                {{ form.tel_mobile(class='form-control', placeholder='xx.xx.xx.xx.xx', type='tel') }} 
             </div>
         </div>
         <div class="form-group has-feedback">
-            <label for="mail">Mail</label>
+            <label for="mail">Mail *</label>
             {{ form.mail(class='form-control', placeholder='xxxxxx@xxxx.fr', type='tel') }} 
         </div>
         <div class="row">
