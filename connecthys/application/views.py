@@ -294,6 +294,24 @@ def handle_csrf_error(e):
 def inscription_noethys():
     form = forms.InscriptionFamille()
     dict_parametres = models.GetDictParametres()
+    if form.validate_on_submit():
+        liste = models.Individu.query.all()
+        exist=False
+        nomS = form.nom.data.lower()
+        prenomS = form.prenom.data.lower()
+        adresseS = form.rue_resid.data.lower()
+
+        for indiv in liste:
+            if utils.CallFonction("DecrypteChaine",indiv.nom).lower() == nomS and utils.CallFonction("DecrypteChaine",indiv.prenom).lower() == prenomS:
+                exist=True
+                flash(u'Nous avons retrouve votre nom et prenom dans notre base de donnees. Merci de contacter un administrateur' , 'error')
+            if utils.CallFonction("DecrypteChaine",indiv.rue_resid).lower() == adresseS:
+                exist=True
+                flash(u'Nous avons trouve une correspondance avec votre adresse dans notre base de donnees. Merci de contacter un administrateur.' , 'error')
+            if exist:
+                break
+        if not exist:
+            flash(u'tout est OK','error')
     return render_template('inscription_noethys.html', form=form, dict_parametres=dict_parametres)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -315,6 +333,7 @@ def login():
     
         # Recherche l'identifiant
         registered_user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
+        
         
         # Codes d'accès corrects
         if registered_user is not None:

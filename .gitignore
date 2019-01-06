@@ -152,3 +152,5 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 *.zip
+connecthys/debug.log.1
+connecthys/journal.log.1
