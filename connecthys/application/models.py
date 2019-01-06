@@ -279,9 +279,38 @@ class Facture(Base):
  
     def __repr__(self):
         return '<Facture %d>' % (self.IDfacture)
-        
-    
-   
+
+
+class Prefacturation(Base):
+    __tablename__ = "%sportail_prefacturation" % PREFIXE_TABLES
+    IDprefacturation = Column(Integer, primary_key=True)
+    IDfamille = Column(Integer, index=True)
+    IDperiode = Column(Integer)
+    montant = Column(Float)
+    montant_regle = Column(Float)
+    montant_solde = Column(Float)
+
+    def __init__(self, IDprefacturation=None, IDfamille=None, IDperiode=None, montant=0.0, montant_regle=0.0, montant_solde=0.0):
+        if IDprefacturation != None:
+            self.IDprefacturation = IDprefacturation
+        self.IDfamille = IDfamille
+        self.IDperiode = IDperiode
+        self.montant = montant
+        self.montant_regle = montant_regle
+        self.montant_solde = montant_solde
+
+    def __repr__(self):
+        return '<Prefacturation %d>' % (self.IDprefacturation)
+
+    def get_periode(self):
+        periode = Periode.query.filter_by(IDperiode=self.IDperiode).first()
+        return periode
+
+    def get_activite(self, periode=None):
+        activite = Activite.query.filter_by(IDactivite=periode.IDactivite).first()
+        return activite
+
+
 class Paiement(Base):
     __tablename__ = "%sportail_paiements" % PREFIXE_TABLES
     IDpaiement = Column(Integer, primary_key=True)
@@ -811,12 +840,13 @@ class Periode(Base):
     affichage_date_debut = Column(DateTime)
     affichage_date_fin = Column(DateTime)
     introduction = Column(String(1000))
+    prefacturation = Column(Integer)
     
     IDactivite = Column(Integer, ForeignKey("%sportail_activites.IDactivite" % PREFIXE_TABLES))
     activite = relationship("Activite")  
     
     def __init__(self , IDperiode=None, IDactivite=None, nom=None, date_debut=None, date_fin=None, \
-                        affichage_date_debut=None, affichage_date_fin=None, introduction=None):
+                        affichage_date_debut=None, affichage_date_fin=None, introduction=None, prefacturation=None):
         if IDperiode != None :
             self.IDperiode = IDperiode
         self.IDactivite = IDactivite
@@ -826,6 +856,7 @@ class Periode(Base):
         self.affichage_date_debut = affichage_date_debut
         self.affichage_date_fin = affichage_date_fin
         self.introduction = introduction
+        self.prefacturation = prefacturation
         
     def __repr__(self):
         return '<IDperiode %d>' % (self.IDperiode)

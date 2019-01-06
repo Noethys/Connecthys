@@ -15,16 +15,53 @@
 	<div class="row">
 		<div class="col-xs-12">
 			
-			{% if nbre_factures_impayees > 0 %}
-			<div class="callout callout-danger">
-				<h5><i class="icon fa fa-warning"></i>  Il reste {{ nbre_factures_impayees }} facture{% if nbre_factures_impayees > 1 %}s{% endif %} à régler pour un montant total de <strong>{{ Formate_montant(montant_factures_impayees) }}</strong></h5>
-			</div>
-			
-			
-			{# Paiement en ligne #}
-			{{ macros_paiement_ligne.paiement_ligne_body() }}
+			{% if texte_impayes != None %}
+				<div class="callout callout-danger">
+					<h5><i class="icon fa fa-warning"></i>  {{ texte_impayes|safe }}</h5>
+				</div>
+
+				{# Paiement en ligne #}
+				{{ macros_paiement_ligne.paiement_ligne_body() }}
 
 			{% endif %}
+
+			{% if liste_prefacturation|length > 0 %}
+				<div class="row">
+					<div class="col-xs-12">
+						<div class="box box-danger">
+							<div class="box-header with-border">
+								<h3 class="box-title">Liste des prestations à régler en avance</h3>
+							</div>
+							<div class="box-body table-responsive">
+								<table class="table table-bordered table-striped">
+									<tbody>
+										<tr>
+											<th><center>Intitulé</center></th>
+											<th><center>Activité</center></th>
+											<th><center>Montant</center></th>
+											<th><center>Déjà réglé</center></th>
+											<th><center>Reste à régler</center></th>
+										</tr>
+										{% for prefacturation in liste_prefacturation %}
+										<tr>
+											{% set periode = prefacturation.get_periode() %}
+											<td><center>{{ periode.nom }}</center></td>
+											<td><center>{{ periode.activite.nom }}</center></td>
+											<td><center>{{ Formate_montant(prefacturation.montant) }}</center></td>
+											<td><center>{{ Formate_montant(prefacturation.montant_regle) }}</center></td>
+											<td><center><span class="badge bg-{% if prefacturation.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(prefacturation.montant_solde) }}</span></center></td>
+										</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+								<span class="text-muted"><small><i class="fa fa-info-circle"></i> Cette liste ne tient pas compte des demandes non traitées ni des prestations qui apparaissent déjà dans des factures.</small></span>
+							</div>
+						</div>
+						<!-- /.box -->
+					</div>
+				</div>
+			{% endif %}
+
 				  
 			<div class="box box-primary">
 				<div class="box-header with-border">

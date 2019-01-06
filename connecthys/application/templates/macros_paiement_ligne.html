@@ -9,9 +9,9 @@
 		<div class="box-body">
 			{% if GetParametre('PAIEMENT_EN_LIGNE_SYSTEME', dict_parametres) in ("3", "4") %}
 				<img src="{{ url_for('static', filename='img/payzen.png') }}" class="pull-right" alt="Logo Payzen">
-				<p>Vous pouvez payer vos factures en ligne à l'aide de votre carte bancaire. Les transactions effectuées sur ce portail sont sécurisées par la plateforme de paiement en ligne PayZen. Cliquez sur le bouton ci-dessous pour sélectionner le montant à régler et accéder au site sécurisé de notre partenaire.</p>
+				<p>Vous pouvez payer en ligne à l'aide de votre carte bancaire. Les transactions effectuées sur ce portail sont sécurisées par la plateforme de paiement en ligne PayZen. Cliquez sur le bouton ci-dessous pour sélectionner le montant à régler et accéder au site sécurisé de notre partenaire.</p>
 			{% else %}
-				<p>Vous pouvez payer vos factures en ligne à l'aide de votre carte bancaire. Les transactions effectuées sur ce portail sont sécurisées par la plateforme de paiement en ligne TIPI. Cliquez sur le bouton ci-dessous pour sélectionner le montant à régler et accéder au site sécurisé de notre partenaire.</p>
+				<p>Vous pouvez payer en ligne à l'aide de votre carte bancaire. Les transactions effectuées sur ce portail sont sécurisées par la plateforme de paiement en ligne TIPI. Cliquez sur le bouton ci-dessous pour sélectionner le montant à régler et accéder au site sécurisé de notre partenaire.</p>
 			{% endif %}
 			<div>
 				<a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal_selection_factures" title="Payer en ligne avec une carte bancaire"><i class="fa fa-credit-card"></i> &nbsp;&nbsp;&nbsp;Payer en ligne&nbsp;&nbsp;</a>
@@ -30,7 +30,7 @@
 			<h4 class="modal-title" id="myModalLabel">Paiement en ligne</h4>
 		  </div>
 		  <div class="modal-body">
-			<p>Cochez les factures à payer et cliquez sur le bouton Payer pour accéder à la page de paiement sécurisée de notre partenaire.</p>
+			<p>Cochez les sommes à payer et cliquez sur le bouton Payer pour accéder à la page de paiement sécurisée de notre partenaire.</p>
 			<div id="message_erreur" class="text-red"></div>
 			<div class="box-body table-responsive">
 				
@@ -38,9 +38,7 @@
 					<tbody>
 						<tr>
 							<th><center>Sélection</center></th>
-							<th><center>Du</center></th>
-							<th><center>Au</center></th>
-							<th><center>N°</center></th>
+							<th><center>Intitulé</center></th>
 							<th><center>Montant</center></th>
 							<th><center>Déjà réglé</center></th>
 							<th><center>Reste à régler</center></th>
@@ -49,16 +47,26 @@
 						{% for facture in liste_factures %}
 							{% if facture.montant_solde > 0.0 and facture.en_cours_paiement != "1" %}
 							<tr>
-								<td><center><input type="checkbox" name="check_facture" class="flat-green" value={{ facture.montant_solde }} unchecked data-id={{ facture.IDfacture }} data-num={{ facture.numero }} data-solde={{ facture.montant_solde }}></center></td>
-								<td><center>{{ DateDDEnFr(facture.date_debut) }}</center></td>
-								<td><center>{{ DateDDEnFr(facture.date_fin) }}</center></td>
-								<td><center>{{ facture.numero }}</center></td>
+								<td><center><input type="checkbox" name="check_impaye" class="flat-green" value={{ facture.montant_solde }} unchecked data-type='facture' data-id={{ facture.IDfacture }} data-num={{ facture.numero }} data-solde={{ facture.montant_solde }}></center></td>
+								<td><center>Facture n°{{ facture.numero }}</center></td>
 								<td><center>{{ Formate_montant(facture.montant) }}</center></td>
 								<td><center>{% if facture.en_cours_paiement == "1" %}<span class="badge bg-yellow">{{ Formate_montant(facture.montant_regle) }}</span>{% else %}{{ Formate_montant(facture.montant_regle) }}{% endif %}</center></td>
 								<td><center><span class="badge bg-{% if facture.en_cours_paiement %}yellow{% elif facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
 							</tr>
 							{% endif %}
 						{% endfor %}
+
+						{% for prefacturation in liste_prefacturation %}
+						<tr>
+							{% set periode = prefacturation.get_periode() %}
+							<td><center><input type="checkbox" name="check_impaye" class="flat-green" value={{ prefacturation.montant_solde }} unchecked data-type='periode' data-id={{ prefacturation.IDperiode }} data-num="" data-solde={{ prefacturation.montant_solde }}></center></td>
+							<td><center>{{ periode.nom }}</center></td>
+							<td><center>{{ Formate_montant(prefacturation.montant) }}</center></td>
+							<td><center>{{ Formate_montant(prefacturation.montant_regle) }}</center></td>
+							<td><center><span class="badge bg-{% if prefacturation.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(prefacturation.montant_solde) }}</span></center></td>
+						</tr>
+						{% endfor %}
+
 					</tbody>
 				</table>
 				
@@ -106,7 +114,7 @@ Mise à jour du bandeau sur la page factures
 		    // Mise à jour du montant total du règlement
 		    $('input').on('ifToggled', function(event){
 			var montant_reglement = 0.0;
-			$("input[name='check_facture']:checked").each(function() {
+			$("input[name='check_impaye']:checked").each(function() {
 				montant_reglement += parseFloat($(this).val());
 				});
 			var montant_reglement = parseFloat(montant_reglement).toFixed(2) + " €";
@@ -122,10 +130,10 @@ Sélection d une seule facture si multi factures non actif
 -->
 	<script type="text/javascript">
 		$(document).ready(function() {
-			$("#modal_selection_factures input[name='check_facture']:not(checked)").on('ifClicked', function(e) {
+			$("#modal_selection_factures input[name='check_impaye']:not(checked)").on('ifClicked', function(e) {
 				clickedCheckbox = $(this); // Sauvegarde de l'élément cliqué/tapé
 
-				$("#modal_selection_factures input[name='check_facture']:checked").iCheck('uncheck'); // Selecteur sur les checkboxes deja checked et retrait du check
+				$("#modal_selection_factures input[name='check_impaye']:checked").iCheck('uncheck'); // Selecteur sur les checkboxes deja checked et retrait du check
 				clickedCheckbox.iCheck('check'); // Check du checkbox cliqué/tapé
 			});
 		});
@@ -134,23 +142,21 @@ Sélection d une seule facture si multi factures non actif
 {% endif %}
 
 <!--
-Mise à jour du montant sur le modal Sélection factures
+Mise à jour du montant sur le modal Sélection impayes
 Validation du paiement en ligne
 -->
 	<script type="text/javascript">
 		$(document).ready(function() {
 		    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 		    $('#valider_montant').on('tap click', function(event) {
-			var nbr_selected_factures = 0;
-			var selected_factures = [];
-			var message = ''
+			var nbr_selected_impayes = 0;
+			var selected_impayes = [];
 			var montant_reglement = 0;
 			$('#message_erreur').text('');
-			$("input[name='check_facture']:checked").each(function() {
-				nbr_selected_factures += 1;
-				selected_factures.push($(this).attr("data-id") + "##" + $(this).attr("data-solde"));
+			$("input[name='check_impaye']:checked").each(function() {
+				nbr_selected_impayes += 1;
+				selected_impayes.push($(this).attr("data-type") + "##" + $(this).attr("data-id") + "##" + $(this).attr("data-solde"));
 				montant_reglement += parseFloat($(this).attr("data-solde"));
-				message += "Vous allez être redirigé vers notre partenaire afin de régler la facture " + $(this).attr("data-num") +" pour un montant de " + $(this).attr("data-solde") + " €\n";
 			});
 
 			$.ajax({
@@ -161,7 +167,7 @@ Validation du paiement en ligne
 				contentType: "application/json; charset=utf-8",
 				url: $SCRIPT_ROOT + '{{ route }}',
 				data: {
-					liste_factures: selected_factures.toString(),
+					liste_impayes: selected_impayes.toString(),
 					montant_reglement: montant_reglement,
 				},
 				success: function(data) {

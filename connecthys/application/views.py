@@ -464,7 +464,7 @@ def factures():
 
     # Récupération des montants paiements en ligne en attente de validation
     liste_paiements = models.Paiement.query.filter_by(IDfamille=current_user.IDfamille).all()
-    dict_paiements_factures = {}
+    dict_paiements = {"facture": {}, "periode": {}}
     if len(liste_paiements) > 0:
         liste_IDpaiement_attente = [paiement.IDpaiement for paiement in models.Action.query.filter_by(action="paiement_en_ligne", IDfamille=current_user.IDfamille, etat="attente").all()]
         for paiement in liste_paiements:
@@ -483,37 +483,67 @@ def factures():
 
                 if paid == True:
                     for texte in paiement.ventilation.split(","):
-                        IDfacture, montant = texte[1:].split("#")
-                        IDfacture, montant = int(IDfacture), float(montant)
-                        if dict_paiements_factures.has_key(IDfacture) == False :
-                            dict_paiements_factures[IDfacture] = {"montant": 0.0, "en_cours_paiement": en_cours_paiement}
-                        dict_paiements_factures[IDfacture]["montant"] += montant
+                        if texte[0] == "F": type_impaye = "facture"
+                        if texte[0] == "P": type_impaye = "periode"
+                        ID, montant = texte[1:].split("#")
+                        ID, montant = int(ID), float(montant)
+                        if dict_paiements[type_impaye].has_key(ID) == False :
+                            dict_paiements[type_impaye][ID] = {"montant": 0.0, "en_cours_paiement": en_cours_paiement}
+                        dict_paiements[type_impaye][ID]["montant"] += montant
 
     # Recherche les factures impayées
     nbre_factures_impayees = 0
-    montant_factures_impayees = 0.0
+    montant_impaye = 0.0
     for facture in liste_factures :
 
         # Cherche si un paiement en ligne en attente n'a pas déjà réglé la facture
-        if dict_paiements_factures.has_key(facture.IDfacture):
-            facture.montant_regle += dict_paiements_factures[facture.IDfacture]["montant"]
-            facture.montant_solde -= dict_paiements_factures[facture.IDfacture]["montant"]
-            facture.en_cours_paiement = dict_paiements_factures[facture.IDfacture]["en_cours_paiement"]
+        if dict_paiements["facture"].has_key(facture.IDfacture):
+            facture.montant_regle += dict_paiements["facture"][facture.IDfacture]["montant"]
+            facture.montant_solde -= dict_paiements["facture"][facture.IDfacture]["montant"]
+            facture.en_cours_paiement = dict_paiements["facture"][facture.IDfacture]["en_cours_paiement"]
 
         # Additionne les factures impayées
         if facture.montant_solde > 0.0 :
             nbre_factures_impayees += 1
-            montant_factures_impayees += facture.montant_solde
+            montant_impaye += facture.montant_solde
+
+    # Recherche la préfacturation
+    liste_prefacturation = []
+    prefacturation_has_impaye = False
+    if models.GetParametre(nom="FACTURES_PREFACTURATION") == "True":
+        liste_prefacturation = models.Prefacturation.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Prefacturation.IDperiode.desc()).all()
+        for prefacturation in liste_prefacturation :
+
+            # Cherche si un paiement en ligne en attente n'a pas déjà réglé la période
+            if dict_paiements["periode"].has_key(prefacturation.IDperiode):
+                prefacturation.montant_regle += dict_paiements["periode"][prefacturation.IDperiode]["montant"]
+                prefacturation.montant_solde -= dict_paiements["periode"][prefacturation.IDperiode]["montant"]
+
+            if prefacturation.montant_solde > 0.0 :
+                montant_impaye += prefacturation.montant_solde
+                prefacturation_has_impaye = True
+
+    # Création du texte de rappel des impayés
+    texte_impayes = None
+    if montant_impaye > 0.0 :
+        texte_impayes = u"Il reste "
+        if nbre_factures_impayees == 1 :
+            texte_impayes += u"1 facture à régler "
+        if nbre_factures_impayees > 1 :
+            texte_impayes += u"%d factures à régler " % nbre_factures_impayees
+        if prefacturation_has_impaye == True :
+            if nbre_factures_impayees > 0 :
+                texte_impayes += u"et "
+            texte_impayes += u"des prestations à régler en avance "
+        texte_impayes += u"pour un total de <strong>%s</strong>" % utils.CallFonction("Formate_montant", montant_impaye)
 
     # Recherche l'historique des demandes liées aux factures
     historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures")
     
     dict_parametres = models.GetDictParametres()
     app.logger.debug("Page FACTURES (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
-    return render_template('factures.html', active_page="factures", liste_factures=liste_factures, \
-                            nbre_factures_impayees=nbre_factures_impayees, \
-                            montant_factures_impayees=montant_factures_impayees, \
-                            liste_paiements=liste_paiements, \
+    return render_template('factures.html', active_page="factures", liste_factures=liste_factures, texte_impayes=texte_impayes, \
+                            liste_paiements=liste_paiements, liste_prefacturation=liste_prefacturation, \
                             historique=historique, dict_parametres=dict_parametres)
 
                             
@@ -593,7 +623,7 @@ def effectuer_paiement_en_ligne():
 
         # Récupération des données de la requête
         montant_reglement = request.args.get("montant_reglement", ",", type=float)
-        liste_factures_txt = request.args.get("liste_factures", ",", type=str)
+        liste_impayes_txt = request.args.get("liste_impayes", ",", type=str)
 
         # Vérifie que le montant est supérieur à zéro
         if montant_reglement == 0.0 :
@@ -605,28 +635,32 @@ def effectuer_paiement_en_ligne():
             return jsonify(success=0, error_msg=u"Le paiement en ligne nécessite un montant minimal de %.2f € !" % montant_minimal)
 
         # Mémorise les numéros de factures et la ventilation
-        dict_factures = {}
-        for texte in liste_factures_txt.split(','):
-            IDfacture, solde = texte.split("##")
-            dict_factures[int(IDfacture)] = float(solde)
+        dict_ventilation = {"facture": {}, "periode": {}}
+        for texte in liste_impayes_txt.split(','):
+            type_impaye, ID, solde = texte.split("##")
+            dict_ventilation[type_impaye][int(ID)] = float(solde)
 
         # Importation des factures
-        liste_factures = models.Facture.query.filter(models.Facture.IDfacture.in_(dict_factures.keys())).order_by(models.Facture.date_debut.desc()).all()
+        liste_factures = models.Facture.query.filter(models.Facture.IDfacture.in_(dict_ventilation["facture"].keys())).order_by(models.Facture.date_debut.desc()).all()
 
         # On mémorise la ventilation
         ventilation = []
-        for IDfacture, solde in dict_factures.iteritems():
-            ventilation.append("F%d#%s" % (IDfacture, solde))
+        for type_impaye in ["facture", "periode"]:
+            for ID, solde in dict_ventilation[type_impaye].iteritems():
+                if type_impaye == "facture" : prefixe = "F"
+                if type_impaye == "periode": prefixe = "P"
+                ventilation.append("%s%d#%s" % (prefixe, ID, solde))
         ventilation_str = ",".join(ventilation)
 
         # Mémorisation de la liste des ID de facture en str
-        factures_ID_str = ",".join([str(IDfacture) for IDfacture in dict_factures.keys()])
+        factures_ID_str = ",".join([str(IDfacture) for IDfacture in dict_ventilation["facture"].keys()])
 
 
         # --------------------------- Mode démo -----------------------------
 
         if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "4":
             return jsonify(success=1, systeme_paiement="demo")
+
 
         # ----------------------- Paiement avec TIPI -------------------------
 
@@ -648,9 +682,14 @@ def effectuer_paiement_en_ligne():
             app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) liste_regie(%s)", current_user.identifiant, current_user.IDfamille, liste_regies)
 
             # il y a plus d une facture sélectionnée
-            if len(dict_factures) > 1:
+            if len(dict_ventilation["facture"]) > 1:
                 app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): plus d'une facture selectionnee pour TIPI NON TRAITE", current_user.identifiant)
                 return jsonify(success=0, error_msg="Paiement en ligne multi-factures impossible")
+
+            # Vérifie qu'il n'y a pas de préfacturation dedans
+            if len(dict_ventilation["periode"]) > 0 :
+                app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): Il n'est pas possible de régler de la préfacturation avec TIPI", current_user.identifiant)
+                return jsonify(success=0, error_msg="Paiement de la prefacturation impossible avec TIPI")
 
             # Envoi de la requete
             facture = liste_factures[0]
