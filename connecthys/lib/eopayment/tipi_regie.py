@@ -156,14 +156,14 @@ class Payment(PaymentCommon):
         refdet = fields.get('refdet')
         if refdet is None:
             raise ValueError('refdet is missing')
-        if 'objet' in fields:
-            iso_now = fields['objet']
-        else:
-            iso_now = isonow()
-        transaction_id = '%s_%s' % (iso_now, refdet)
+        # if 'objet' in fields:
+        #     iso_now = fields['objet'][-20:]
+        # else:
+        #     iso_now = isonow()
+        transaction_id = fields['objet'][-20:] #'%s%s' % (iso_now, refdet)
 
         result = fields.get('resultrans')
-        if result == 'P':
+        if result in ('P', 'V'):
             result = PAID
             bank_status = ''
         elif result == 'R':

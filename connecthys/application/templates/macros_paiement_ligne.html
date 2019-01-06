@@ -7,29 +7,31 @@
 			<h3 class="box-title">Payer en ligne</h3>
 		</div>
 		<div class="box-body">
-			<p>Vous pouvez payer une ou plusieurs factures en ligne à l'aide de votre carte bancaire. Le paiement est sécurisé. Cliquez sur le bouton ci-dessous pour accéder au site de notre partenaire.</p>
+			{% if GetParametre('PAIEMENT_EN_LIGNE_SYSTEME', dict_parametres) in ("3", "4") %}
+				<img src="{{ url_for('static', filename='img/payzen.png') }}" class="pull-right" alt="Logo Payzen">
+				<p>Vous pouvez payer vos factures en ligne à l'aide de votre carte bancaire. Les transactions effectuées sur ce portail sont sécurisées par la plateforme de paiement en ligne PayZen. Cliquez sur le bouton ci-dessous pour sélectionner le montant à régler et accéder au site sécurisé de notre partenaire.</p>
+			{% else %}
+				<p>Vous pouvez payer vos factures en ligne à l'aide de votre carte bancaire. Les transactions effectuées sur ce portail sont sécurisées par la plateforme de paiement en ligne TIPI. Cliquez sur le bouton ci-dessous pour sélectionner le montant à régler et accéder au site sécurisé de notre partenaire.</p>
+			{% endif %}
 			<div>
-				<a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal_selection_factures" title="Payer en ligne avec une carte bancaire"><i class="fa fa-credit-card"></i> Payer en ligne</a>
+				<a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal_selection_factures" title="Payer en ligne avec une carte bancaire"><i class="fa fa-credit-card"></i> &nbsp;&nbsp;&nbsp;Payer en ligne&nbsp;&nbsp;</a>
 			</div>
 		</div>
 	</div>
 	{% endif %}
 
 
-	<!-- Modal : Sélection de factures-->
+	<!-- Modal : Sélection de factures -->
 	<div class="modal fade" id="modal_selection_factures" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
 	  <div class="modal-dialog" role="document">
 		<div class="modal-content">
 		  <div class="modal-header bg-light-blue">
 			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-			{% if GetParametre('PAIEMENT_EN_LIGNE_MULTI_FACTURES', dict_parametres) == 'True' %}
-			    <h4 class="modal-title" id="myModalLabel">Sélectionnez les factures à payer</h4>
-			{% else %}
-			    <h4 class="modal-title" id="myModalLabel">Sélectionnez la facture à payer</h4>
-			{% endif %}
+			<h4 class="modal-title" id="myModalLabel">Paiement en ligne</h4>
 		  </div>
 		  <div class="modal-body">
-			
+			<p>Cochez les factures à payer et cliquez sur le bouton Payer pour accéder à la page de paiement sécurisée de notre partenaire.</p>
+			<div id="message_erreur" class="text-red"></div>
 			<div class="box-body table-responsive">
 				
 				<table class="table table-bordered table-striped">
@@ -62,13 +64,14 @@
 				
 				</br>
 				<div>
-				    Montant du règlement : <strong><span class="total">{% if montant_reglement is defined %}{{ Formate_montant(montant_reglement) }}{% endif %}</span></strong>
+				    Montant du règlement : <strong><span class="total">0.00 €</span></strong>
 				</div>
 			</div>
 		  </div>
 		  <div class="modal-footer">
+			<div id="div_form_paiement" style="visibility:hidden"></div>
 			<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
-			<a target='_blank' href='' class='btn btn-primary' id='validation-paiement-en-ligne'>Valider</a>
+			<a class='btn btn-primary' id="valider_montant">Payer</a>
 		  </div>
 		</div>
 	  </div>
@@ -81,6 +84,20 @@
 
 
 {% if GetParametre('PAIEMENT_EN_LIGNE_ACTIF', dict_parametres) == 'True' %}
+
+
+	<script>
+		// Reset des champs de saisie de la fenêtre modale
+		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		$('#modal_selection_factures').on('show.bs.modal', function (event) {
+			var modal = $(this);
+			// Reset de champs
+			$('#message_erreur').text('')
+			$('#div_form_paiement').hide();
+			$('#div_form_paiement').html('');
+		})
+	</script>
+
 <!--
 Mise à jour du bandeau sur la page factures
 -->
@@ -123,7 +140,7 @@ Validation du paiement en ligne
 	<script type="text/javascript">
 		$(document).ready(function() {
 		    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-		    $('#validation-paiement-en-ligne').on('tap click', function(event) {
+		    $('#valider_montant').on('tap click', function(event) {
 			var nbr_selected_factures = 0;
 			var selected_factures = [];
 			var message = ''
@@ -131,7 +148,7 @@ Validation du paiement en ligne
 			$('#message_erreur').text('');
 			$("input[name='check_facture']:checked").each(function() {
 				nbr_selected_factures += 1;
-				selected_factures.push($(this).attr("data-id"));
+				selected_factures.push($(this).attr("data-id") + "##" + $(this).attr("data-solde"));
 				montant_reglement += parseFloat($(this).attr("data-solde"));
 				message += "Vous allez être redirigé vers notre partenaire afin de régler la facture " + $(this).attr("data-num") +" pour un montant de " + $(this).attr("data-solde") + " €\n";
 			});
@@ -143,24 +160,31 @@ Validation du paiement en ligne
 				dataType: "json",
 				contentType: "application/json; charset=utf-8",
 				url: $SCRIPT_ROOT + '{{ route }}',
-
 				data: {
-					id: 0,
 					liste_factures: selected_factures.toString(),
 					montant_reglement: montant_reglement,
 				},
 				success: function(data) {
-					$('#modal_paiement_factures').modal('hide');
-					$('#validation-paiement-en-ligne').attr('href', data.urltoredirect);
-					// Recharge la page
-					location.href = "{{ url_for('accueil') }}"
-				},
-				error: function(data) {
-					// Affiche un message d'erreur dans la fenêtre modale
-					$('#message_erreur').text('Erreur: ' + data.error_msg);
-					event.stopPropagtion();
-					event.preventDefault();
-					return false;
+					if (data.success) {
+						if (data.systeme_paiement == "payzen") {
+							$('#div_form_paiement').html(data.form_paiement);
+							$('#div_form_paiement').hide();
+							$("#form_paiement").submit()
+							}
+						if (data.systeme_paiement == "tipi_regie") {
+							$('#modal_paiement_factures').modal('hide');
+							$('#valider_montant').attr('href', data.urltoredirect);
+							// Recharge la page
+							location.href = "{{ url_for('accueil') }}"
+							}
+						if (data.systeme_paiement == "demo") {
+							$('#message_erreur').text('Paiement impossible, vous êtes en mode démo !');
+							}
+
+					} else {
+						// Affiche un message d'erreur dans la fenêtre modale
+						$('#message_erreur').text('Erreur : ' + data.error_msg);
+					}
 				}
 			});
 		    });

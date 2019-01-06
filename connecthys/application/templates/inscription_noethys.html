@@ -65,7 +65,7 @@
       Le <strong>Portail</strong> Famille
     </div>
     <div class="login-box-body">
-      <p>Saisissez vos codes personnels</p>
+      <p>Saisissez les informations d'un parent référent.</p>
       {# Display errors (if there are any). #}
       {% with messages = get_flashed_messages(category_filter=["error"]) %}
         {% if messages %}
@@ -74,43 +74,62 @@
             {% endfor %}
         {% endif %}
       {% endwith %}
-      {# Render the login form. #}
-      <form action="{{ url_for('login') }}" method="post">
-	    {{ form.csrf_token }}
-        <div class="form-group has-feedback">
-          {{ form.identifiant(class='form-control', placeholder='Identifiant', type='text', required='true') }} 
-          <span class="glyphicon glyphicon-user form-control-feedback"></span>
+      {# Render the subscribe form. #}
+      <form action="{{ url_for('inscription_noethys') }}" method="post">
+            {{ form.csrf_token }}
+        <div class="row">
+            <div class="form-group col-xs-6">
+                <label for="nom">Nom</label>
+                {{ form.nom(class='form-control', placeholder='Nom', type='text', required='true') }} 
+            </div>
+            <div class="form-group col-xs-6">
+                <label for="prenom">Prénom</label>
+                {{ form.prenom(class='form-control', placeholder='Prénom', type='text', required='true') }} 
+            </div>
         </div>
-        <div class="form-group has-feedback">
-		  {{ form.password(class='form-control', placeholder='Mot de passe', type='password', required='true') }} 
-          <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+        <div class="form-group">
+            <label for="date_naiss">Date de Naissance</label>
+            {{ form.date_naiss(class='form-control', placeholder='"DD-MM-YYYY"', type='date', format="dd/mm/yyyy", required='true') }} 
+        </div>
+        <div class="form-group">
+             <label for="rue_resid">Adresse</label>
+            {{ form.rue_resid(class='form-control', placeholder='Adresse', type='text', required='true') }} 
         </div>
         <div class="row">
-			<div class="col-xs-8">
-				<div class="checkbox icheck">
-					{% if GetParametre("MDP_AUTORISER_REINITIALISATION", dict_parametres) == 'True' %}
-					<label>
-						<a href="{{ url_for('lost_password') }}">Mot de passe oublié ?</a>
-					</label>
-					{% endif %}
-				</div>
+            <div class="form-group col-xs-4">
+                 <label for="cp_resid">CP</label>
+                {{ form.cp_resid(class='form-control', placeholder='CP', type='text', required='true') }} 
+            </div>
+            <div class="form-group has-feedback col-xs-8">
+                <label for="ville_resid">Ville</label>
+                {{ form.ville_resid(class='form-control', placeholder='CP', type='text', required='true') }} 
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-xs-6">
+                <label for="tel_domicile">Fixe</label>
+                {{ form.tel_domicile(class='form-control', placeholder='Fixe', type='tel') }} 
+            </div>
+            <div class="form-group has-feedback col-xs-6">
+                <label for="tel_mobile">Portable</label>
+                {{ form.tel_mobile(class='form-control', placeholder='Mobile', type='tel') }} 
+            </div>
+        </div>
+        <div class="form-group has-feedback">
+            <label for="mail">Mail</label>
+            {{ form.mail(class='form-control', placeholder='xxxxxx@xxxx.fr', type='tel') }} 
+        </div>
+        <div class="row">
+			<div class="col-xs-7">
+				
 			</div>
 			<!-- /.col -->
-			<div class="col-xs-4">
-			  <button type="submit" class="btn btn-primary btn-block btn-flat">Valider</button>
+			<div class="col-xs-5">
+			  <button type="submit" class="btn btn-primary btn-block btn-flat">Continuer >></button>
 			</div>
 			<!-- /.col -->
         </div>
       </form>
-    </div>
-	
-	<div class="login-box">
-    <div style="color: black" class="login-logo">
-      Pas <strong>Encore</strong> Inscrit?
-    </div>
-    <div class="login-box-body">
-      <p>Cliquez sur le bouton ci-dessous pour pouvoir accéder à l'interface d'inscription.</p>
-      <a href="{{ url_for('inscription_noethys') }}">Inscription à la plateforme</a>
     </div>
   </div>
 

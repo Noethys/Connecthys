@@ -1,6 +1,5 @@
 {% extends "page.html" %}
 {% import "macros_historique.html" as macros_historique with context %}
-{% import "macros_paiement_ligne.html" as macros_paiement_ligne with context %}
 {% import "macros_recevoir_document.html" as macros_recevoir_document with context %}
 
 
@@ -12,14 +11,40 @@
 		</h4>
 	{% endif %}
 
+	{% if liste_paiements|length > 0 %}
 	<div class="row">
 		<div class="col-xs-12">
-						
-			<!--
-			{# Paiement en ligne #}
-			{{ macros_paiement_ligne.paiement_ligne_body() }}
-			-->
-				  
+			<div class="box box-warning">
+				<div class="box-header with-border">
+					<h3 class="box-title">Liste des paiements en ligne en attente de validation</h3>
+				</div>
+				<div class="box-body table-responsive">
+					<table class="table table-bordered table-striped">
+						<tbody>
+							<tr>
+								<th><center>Date</center></th>
+								<th><center>N° de transaction</center></th>
+								<th><center>Montant</center></th>
+							</tr>
+
+							{% for paiement in liste_paiements %}
+							<tr>
+								<td><center>{{ DateDTEnFr(paiement.horodatage) }}</center></td>
+								<td><center>{{ paiement.IDtransaction.split("_")[1] }}</center></td>
+								<td><center>{{ Formate_montant(paiement.montant) }}</center></td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<!-- /.box -->
+		</div>
+	</div>
+	{% endif %}
+
+	<div class="row">
+		<div class="col-xs-12">
 			<div class="box box-primary">
 				<div class="box-header with-border">
 					<h3 class="box-title">Liste des derniers règlements</h3>
@@ -85,9 +110,6 @@
 {% block scripts %}
 
 	{{ super() }}
-
-	{# Paiement en ligne #}
-	{{ macros_paiement_ligne.paiement_ligne_scripts() }}
 
 	{# Recevoir document #}
 	{{ macros_recevoir_document.recevoir_document_scripts(route='/envoyer_demande_recu') }}

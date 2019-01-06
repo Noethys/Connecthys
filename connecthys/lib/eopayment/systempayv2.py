@@ -8,6 +8,10 @@ import urlparse
 import warnings
 from gettext import gettext as _
 
+# Imports pour signature HMAC-SHA-256
+import hmac
+import base64
+
 from common import (PaymentCommon, PaymentResponse, PAID, ERROR, FORM, Form,
                     ResponseError, force_text, force_byte)
 from cb import CB_RESPONSE_CODES
@@ -420,6 +424,14 @@ class Payment(PaymentCommon):
         signed_data = '+'.join(ordered_fields)
         signed_data = '%s+%s' % (signed_data, force_byte(secret))
         self.logger.debug(u'generating signature on «%s»', signed_data)
-        sign = hashlib.sha1(signed_data).hexdigest()
+        # Version SHA-1
+        #sign = hashlib.sha256(signed_data).hexdigest()
+        # Version HMAC-SHA-256
+        sign = self.create_sha256_signature(force_byte(secret), signed_data)
         self.logger.debug(u'signature «%s»', sign)
         return sign
+
+    def create_sha256_signature(self, secret, message):
+        """ Code rajouté pour obtenir une signature HMAC-SHA-256 """
+        digest = hmac.new(secret, msg=message, digestmod=hashlib.sha256).digest()
+        return base64.b64encode(digest).decode()

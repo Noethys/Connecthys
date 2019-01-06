@@ -63,9 +63,21 @@ class Renseignements(FlaskForm):
     tel_domicile = TextField('tel_domicile')
     tel_mobile = TextField('tel_mobile')
     mail = TextField('mail')
+    
+class InscriptionFamille(FlaskForm):
+    nom = TextField('nom')
+    prenom = TextField('prenom')
+    date_naiss = TextField('date_naiss')
+    cp_naiss = TextField('cp_naiss')
+    ville_naiss = TextField('ville_naiss')
+    rue_resid = TextField('rue_resid')
+    cp_resid = TextField('cp_resid')
+    ville_resid = TextField('ville_resid')
+    tel_domicile = TextField('tel_domicile')
+    tel_mobile = TextField('tel_mobile')
+    mail = TextField('mail')
     profession = TextField('profession')
     employeur = TextField('employeur')
     travail_tel = TextField('travail_tel')
     travail_mail = TextField('travail_mail')
     adresse_auto = SelectField('adresse_auto', coerce=int)
-    
