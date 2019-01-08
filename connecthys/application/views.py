@@ -390,14 +390,19 @@ def create_password():
     form=forms.CreatePassword()
     dict_parametres = models.GetDictParametres()
     if form.validate_on_submit():
-        if ValiderModificationPassword(form=form) != True :
+        if not ValiderModificationPassword(form=form, valider_conditions=True, user=None, modifExistant=False) :
             conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
             if conditions_utilisation == None :
                 conditions_utilisation = ""
             else :
                 conditions_utilisation = utils.FusionDonneesOrganisateur(conditions_utilisation.texte_html, dict_parametres)
             return render_template('create_password.html', form=forms.CreatePassword(), dict_parametres=dict_parametres,conditions_utilisation=conditions_utilisation)
-        return redirect(url_for('login'))
+        param = u'civilite='+form.civilite.data+'##nom='+form.nom.data+'##prenom='+form.prenom.data+'##date_naiss='+form.date_naiss.data+'##rue_resid='+form.rue_resid.data+'##cp_resid='+form.cp_resid.data+'##ville_resid='+form.ville_resid.data+'##tel_domicile='+form.tel_domicile.data+'##tel_mobile='+form.tel_mobile.data+'##mail='+form.mail.data+'##identifiant='+form.identifiant.data+'##password1='+form.password1.data
+        desc = u'civilite='+form.civilite.data+'##nom = '+form.nom.data+'\nprenom='+form.prenom.data+'##date_naiss='+form.date_naiss.data+'##rue_resid='+form.rue_resid.data+'##cp_resid='+form.cp_resid.data+'##ville_resid='+form.ville_resid.data+'##tel_domicile='+form.tel_domicile.data+'##tel_mobile='+form.tel_mobile.data+'##mail='+form.mail.data+'##identifiant='+form.identifiant.data+'##password1='+form.password1.data
+        action = models.Action( IDfamille=1, IDutilisateur=1, categorie="inscription_noethys", action="envoyer", description=desc, etat="attente",commentaire="demande d'inscription", parametres=param)
+        db.session.add(action)
+        db.session.commit()
+        return render_template('finalisation_inscription.html', form=forms.CreatePassword(), dict_parametres=dict_parametres)
     return redirect(url_for('inscription_noethys'))
 
 # ------------------------- FORCE CHANGE PASSWORD ----------------------------------
@@ -2091,7 +2096,7 @@ def GetHistorique(IDfamille=None, categorie=None):
     return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro, "categorie" : categorie}
 
 
-def ValiderModificationPassword(form=None, valider_conditions=True, user=None):
+def ValiderModificationPassword(form=None, valider_conditions=True, user=None, modifExistant=True):
     # Vérifie que les mots de passe sont identiques
     if form.password1.data != form.password2.data:
         flash(u"Les deux mots de passe saisis doivent être identiques !", 'error')
@@ -2118,28 +2123,29 @@ def ValiderModificationPassword(form=None, valider_conditions=True, user=None):
     #    flash(u"Le mot de passe doit comporter au moins un caractère spécial (%#:$*@-_!?&) !", 'error')
     #    return False
 
-    # Vérifie que le mot de passe a bien été changé
-    if user == None and current_user.check_password(form.password1.data) == True:
-        flash(u"Vous ne pouvez pas conserver l'ancien mot de passe !", 'error')
-        return False
-
     # Vérifie que la case des conditions d'utilisation a été cochée
     if valider_conditions == True :
         if form.accept.data == False:
             flash(u"Vous devez obligatoirement accepter les conditions d'utilisation !", 'error')
             return False
+    
+    if modifExistant:
+        # Vérifie que le mot de passe a bien été changé
+        if user == None and current_user.check_password(form.password1.data) == True:
+            flash(u"Vous ne pouvez pas conserver l'ancien mot de passe !", 'error')
+            return False
 
-    # Si besoin de connecter l'user (après reset password)
-    if user != None :
-        login_user(user, remember=False)
+        # Si besoin de connecter l'user (après reset password)
+        if user != None :
+            login_user(user, remember=False)
 
-    # Enregistre le nouveau mot de passe
-    current_user.SetCustomPassword(form.password1.data)
-    app.logger.debug("Nouveau mot de passe enregistre pour %s", current_user.identifiant)
+        # Enregistre le nouveau mot de passe
+        current_user.SetCustomPassword(form.password1.data)
+        app.logger.debug("Nouveau mot de passe enregistre pour %s", current_user.identifiant)
 
-    # Enregistre l'action
-    m = models.Action(IDfamille=current_user.IDfamille, IDutilisateur=current_user.IDutilisateur, categorie="compte", action="maj_password", description=u"Mise à jour du mot de passe", etat="attente", parametres=current_user.password)
-    db.session.add(m)
-    db.session.commit()
+        # Enregistre l'action
+        m = models.Action(IDfamille=current_user.IDfamille, IDutilisateur=current_user.IDutilisateur, categorie="compte", action="maj_password", description=u"Mise à jour du mot de passe", etat="attente", parametres=current_user.password)
+        db.session.add(m)
+        db.session.commit()
 
     return True

@@ -1,0 +1,105 @@
+{% extends "adminlte/base_without_nav.html" %}
+
+{% block title %}Connexion{% endblock %}
+{% block description %}Connexion{% endblock %}
+{% block bodytag %}login-page {% block skin %}{{ GetParametre('SKIN', dict_parametres, 'skin-blue') }}{% endblock %}{% endblock %}
+
+{% block head %}
+	{{ super() }}
+	<link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+	<!-- iCheck -->
+	<link href="{{ adminlte_find_resource('plugins/iCheck/all.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">
+	
+	{# Affichage de l'image de fond #}
+	{% set IMAGE_FOND = GetParametre("IMAGE_FOND", dict_parametres) %}
+	{% if IMAGE_FOND == "" %}
+		{% set IMAGE_FOND = "bleu.jpg" %}
+	{% endif %}
+	
+	<style type="text/css" media="screen">
+	
+		html, body {
+			background-size: cover;
+			background: center fixed;
+			background-image:url({{ url_for('static', filename="fonds/" + IMAGE_FOND) }});
+		}
+		.login-page {
+			background-color:transparent;
+		}
+		.login-box-body
+		{
+		  background:rgba(255, 255, 255, 0.8);	
+		}
+		
+	
+.login-footer {
+	position: fixed;
+    bottom: 0;
+    width: 100%;
+	display: block;
+	background-color: #222d32;
+    padding: 15px;
+	color: #fff;
+	font-size: 15px;
+    border-top: 1px solid #d2d6de;
+    -webkit-transition: -webkit-transform .3s ease-in-out,margin .3s ease-in-out;
+    -moz-transition: -moz-transform .3s ease-in-out,margin .3s ease-in-out;
+    -o-transition: -o-transform .3s ease-in-out,margin .3s ease-in-out;
+    transition: transform .3s ease-in-out,margin .3s ease-in-out;
+    z-index: 820;
+	}
+	
+	
+	</style>
+	
+	
+{% endblock %}
+
+
+
+{% block body %}
+
+
+  <div class="login-box">
+    <div style="color: black" class="login-logo">
+      Le <strong>Portail</strong> Famille
+    </div>
+    <div class="login-box-body">
+        <p>Bienvenue dans votre portail famille !</p>
+      <p><b>Votre inscription a ete pris en compte</b></p>
+      <p>Un administrateur va etudier votre demande dans les plus bref delais. Au moment de la validation par celui-ci, vous recevrez un mail vous confirmant votre acces a la plateforme.</p>
+      <a href="{{ url_for('login') }}">Retour a l'accueil</a>
+    </div>
+  </div>
+
+
+
+<footer class="login-footer">
+
+	<div class="pull-right hidden-xs">
+		{% block version %}
+		<b><a href="https://connecthys.com" title="Connecthys, le portail internet de Noethys">Connecthys</a></b> {{ config["VERSION_APPLICATION"] }}
+		{% endblock %}
+	</div>
+	
+	{% block copyright %}{% if GetParametre('ORGANISATEUR_NOM', dict_parametres) != '' %}{{ GetParametre('ORGANISATEUR_NOM', dict_parametres) }}{% endif %}{% endblock %}
+
+</footer>
+
+{% endblock %}
+
+
+{% block scripts %}
+	{{ super() }}
+	<!-- iCheck -->
+	<script src="{{ adminlte_find_resource('plugins/iCheck/icheck.min.js', cdn='local', use_minified=False)}}"></script>
+	<script>
+	  $(function () {
+		$('input').iCheck({
+		  checkboxClass: 'icheckbox_square-blue',
+		  radioClass: 'iradio_square-blue',
+		  increaseArea: '20%' // optional
+		});
+	  });
+	</script>
+{%- endblock scripts %}
