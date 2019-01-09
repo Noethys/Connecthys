@@ -294,7 +294,9 @@ def handle_csrf_error(e):
 def inscription_noethys():
     form = forms.InscriptionFamille()
     dict_parametres = models.GetDictParametres()
+    print form.validate()
     if form.validate_on_submit():
+        print "OK"
         liste = models.Individu.query.all()
         exist=False
         nomS = form.nom.data.lower()
@@ -302,6 +304,7 @@ def inscription_noethys():
         adresseS = form.rue_resid.data.lower()
 
         for indiv in liste:
+            print "OK2"
             if utils.CallFonction("DecrypteChaine",indiv.nom).lower() == nomS and utils.CallFonction("DecrypteChaine",indiv.prenom).lower() == prenomS:
                 exist=True
                 flash(u'Nous avons retrouve votre nom et prenom dans notre base de donnees. Merci de contacter un administrateur' , 'error')
@@ -310,6 +313,7 @@ def inscription_noethys():
                 flash(u'Nous avons trouve une correspondance avec votre adresse dans notre base de donnees. Merci de contacter un administrateur.' , 'error')
             if exist:
                 break
+        print exist
         if not exist:
             conditions_utilisation = models.Element.query.filter_by(categorie="conditions_utilisation").first()
             if conditions_utilisation == None :
@@ -397,8 +401,8 @@ def create_password():
             else :
                 conditions_utilisation = utils.FusionDonneesOrganisateur(conditions_utilisation.texte_html, dict_parametres)
             return render_template('create_password.html', form=forms.CreatePassword(), dict_parametres=dict_parametres,conditions_utilisation=conditions_utilisation)
-        param = u'civilite='+form.civilite.data+'##nom='+form.nom.data+'##prenom='+form.prenom.data+'##date_naiss='+form.date_naiss.data+'##rue_resid='+form.rue_resid.data+'##cp_resid='+form.cp_resid.data+'##ville_resid='+form.ville_resid.data+'##tel_domicile='+form.tel_domicile.data+'##tel_mobile='+form.tel_mobile.data+'##mail='+form.mail.data+'##identifiant='+form.identifiant.data+'##password1='+form.password1.data
-        desc = u'civilite='+form.civilite.data+'##nom = '+form.nom.data+'\nprenom='+form.prenom.data+'##date_naiss='+form.date_naiss.data+'##rue_resid='+form.rue_resid.data+'##cp_resid='+form.cp_resid.data+'##ville_resid='+form.ville_resid.data+'##tel_domicile='+form.tel_domicile.data+'##tel_mobile='+form.tel_mobile.data+'##mail='+form.mail.data+'##identifiant='+form.identifiant.data+'##password1='+form.password1.data
+        param = u'civilite=1##nom='+form.nom.data+'##prenom='+form.prenom.data+'##date_naiss='+form.date_naiss.data+'##rue='+form.rue_resid.data+'##cp='+form.cp_resid.data+'##ville='+form.ville_resid.data+'##tel_domicile='+form.tel_domicile.data+'##tel_mobile='+form.tel_mobile.data+'##mail='+form.mail.data+'##identifiant='+form.identifiant.data+'##password1='+form.password1.data
+        desc = u'civilite=1##nom = '+form.nom.data+'\nprenom='+form.prenom.data+'##date_naiss='+form.date_naiss.data+'##rue='+form.rue_resid.data+'##cp='+form.cp_resid.data+'##ville='+form.ville_resid.data+'##tel_domicile='+form.tel_domicile.data+'##tel_mobile='+form.tel_mobile.data+'##mail='+form.mail.data+'##identifiant='+form.identifiant.data+'##password1='+form.password1.data
         action = models.Action( IDfamille=1, IDutilisateur=1, categorie="inscription_noethys", action="envoyer", description=desc, etat="attente",commentaire="demande d'inscription", parametres=param)
         db.session.add(action)
         db.session.commit()

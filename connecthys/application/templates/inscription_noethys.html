@@ -78,10 +78,6 @@
       {# Render the subscribe form. #}
       <form action="{{ url_for('inscription_noethys') }}" method="post">
             {{ form.csrf_token }}
-         <div class="form-group">
-                <label for="nom">Civilite *</label>
-                {{ form.civilite(class='form-control', type='select', required='true') }} 
-         </div>
             <div class="row">
             <div class="form-group col-xs-6">
                 <label for="nom">Nom *</label>

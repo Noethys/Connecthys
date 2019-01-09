@@ -27,7 +27,7 @@ class CreatePassword(FlaskForm):
     password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
     accept = BooleanField("accept", default=False)
     nom = HiddenField('nom')
-    civilite = HiddenField('civilite')
+    #civilite = HiddenField('civilite')
     prenom = HiddenField('prenom')
     date_naiss = HiddenField('date_naiss')
     rue_resid = HiddenField('rue_resid')
@@ -87,7 +87,7 @@ class Renseignements(FlaskForm):
 class InscriptionFamille(FlaskForm):
     nom = TextField('nom')
     prenom = TextField('prenom')
-    civilite = SelectField('civilite', choices=[(0, "Mme"), (1, "Mr")])
+    #civilite = SelectField('civilite', choices=[(1, "Mme"), (2, "Mr")])
     date_naiss = TextField('date_naiss')
     cp_naiss = TextField('cp_naiss')
     ville_naiss = TextField('ville_naiss')
