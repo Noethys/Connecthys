@@ -483,13 +483,18 @@ def factures():
 
                 if paid == True:
                     for texte in paiement.ventilation.split(","):
-                        if texte[0] == "F": type_impaye = "facture"
-                        if texte[0] == "P": type_impaye = "periode"
-                        ID, montant = texte[1:].split("#")
-                        ID, montant = int(ID), float(montant)
-                        if dict_paiements[type_impaye].has_key(ID) == False :
-                            dict_paiements[type_impaye][ID] = {"montant": 0.0, "en_cours_paiement": en_cours_paiement}
-                        dict_paiements[type_impaye][ID]["montant"] += montant
+                        if texte[0] == "F":
+                            type_impaye = "facture"
+                        elif texte[0] == "P":
+                            type_impaye = "periode"
+                        else :
+                            type_impaye = None
+                        if type_impaye != None:
+                            ID, montant = texte[1:].split("#")
+                            ID, montant = int(ID), float(montant)
+                            if dict_paiements[type_impaye].has_key(ID) == False :
+                                dict_paiements[type_impaye][ID] = {"montant": 0.0, "en_cours_paiement": en_cours_paiement}
+                            dict_paiements[type_impaye][ID]["montant"] += montant
 
     # Recherche les factures impayées
     nbre_factures_impayees = 0
@@ -759,6 +764,7 @@ def ipn_payzen():
 
     # Extraction des variables post
     data = request.get_data(as_text=True).encode('ASCII')
+    app.logger.debug(data)
 
     # Récupération des données et calcul de la signature
     p = GetPaymentPayzen()
@@ -770,6 +776,13 @@ def ipn_payzen():
 
     # Recherche l'état du paiement
     resultat = ETATS_PAIEMENTS[reponse.result]
+
+    # Recherche s'il s'agit un paiement MULTI
+    if resultat == "ERROR":
+        vads_card_brand = request.form.get("vads_card_brand", 0, type=str)
+        vads_result = request.form.get("vads_result", 0, type=str)
+        if reponse.signed == True and vads_card_brand == "MULTI" and vads_result == "00":
+            resultat = "PAID"
 
     # Affichage de la réponse dans le log
     app.logger.debug(u"Paiement en ligne IDtransaction=%s : signature=%s, resultat=%s" % (reponse.order_id, reponse.signed, resultat))
