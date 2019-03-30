@@ -48,4 +48,4 @@ Installation sur un hébergement internet dédié ou sur Google App Engine
 -------------------------
 
 Connecthys peut être installé de plusieurs façons sur un hébergement internet. 
-Consultez la page http://flask.pocoo.org/docs/0.11/deploying/ pour découvrir ces possibilités.
+Consultez la page http://flask.pocoo.org/docs/1.0/deploying/ pour découvrir ces possibilités.
