@@ -538,11 +538,10 @@
 				var valeur = date + "#" + IDunite.toString();
 				liste_resultats.push(valeur);
 			});
-			
+
 			$.ajax({
-			  type: 'GET',
+			  type: 'POST',
 			  dataType: "json",
-			  contentType: "application/json; charset=utf-8",
 			  url: $SCRIPT_ROOT + '/envoyer_reservations',
 			  data: {
 				resultats: liste_resultats.join(","),

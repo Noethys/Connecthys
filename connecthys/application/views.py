@@ -1305,7 +1305,7 @@ def imprimer_reservations():
     return render_template('imprimer_reservations.html', dict_planning=dict_planning, dict_parametres=dict_parametres)
     
               
-@app.route('/envoyer_reservations')
+@app.route('/envoyer_reservations', methods=['POST'])
 @login_required
 def envoyer_reservations():
     if current_user.role != "famille" :
@@ -1313,17 +1313,17 @@ def envoyer_reservations():
 
     try:
         # Récupération de la liste des cases cochées
-        resultats = request.args.get("resultats", "", type=str)
-        IDinscription = request.args.get("IDinscription", None, type=int)
-        IDperiode = request.args.get("IDperiode", None, type=int)
-        IDactivite = request.args.get("IDactivite", None, type=int)
-        activite_nom = request.args.get("activite_nom", None, type=unicode)
-        IDindividu = request.args.get("IDindividu", None, type=int)
-        individu_prenom = request.args.get("individu_prenom", None, type=unicode)
-        date_debut_periode = request.args.get("date_debut_periode", "", type=str)
-        date_fin_periode = request.args.get("date_fin_periode", "", type=str)
-        commentaire = request.args.get("commentaire", None, type=unicode)
-        liste_reservations_initiale = request.args.get("liste_reservations_initiale", "", type=str)
+        resultats = request.form.get("resultats", "", type=str)
+        IDinscription = request.form.get("IDinscription", None, type=int)
+        IDperiode = request.form.get("IDperiode", None, type=int)
+        IDactivite = request.form.get("IDactivite", None, type=int)
+        activite_nom = request.form.get("activite_nom", None, type=unicode)
+        IDindividu = request.form.get("IDindividu", None, type=int)
+        individu_prenom = request.form.get("individu_prenom", None, type=unicode)
+        date_debut_periode = request.form.get("date_debut_periode", "", type=str)
+        date_fin_periode = request.form.get("date_fin_periode", "", type=str)
+        commentaire = request.form.get("commentaire", None, type=unicode)
+        liste_reservations_initiale = request.form.get("liste_reservations_initiale", "", type=str)
         
         # Paramètres
         parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, date_debut_periode, date_fin_periode)
@@ -1365,6 +1365,7 @@ def envoyer_reservations():
             
     except Exception, erreur:
         app.logger.debug("[ERREUR] Demande de reservations (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
+        app.logger.debug(erreur)
         return jsonify(success=0, error_msg=str(erreur))
 
         
