@@ -470,11 +470,24 @@
 				liste_resultats.push(valeur);
 			});
 
+			var csrf_token = "{{ csrf_token() }}";
+			$.ajaxSetup({
+				beforeSend: function(xhr, settings) {
+					if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+						xhr.setRequestHeader("X-CSRFToken", csrf_token);
+					}
+				}
+			});
+
 			// Demande le détail au serveur
-			$.getJSON($SCRIPT_ROOT + '/detail_envoi_reservations', {
-				IDactivite: {{ dict_planning["inscription"].IDactivite }},
-				resultats: liste_resultats.join(","),
-				liste_reservations_initiale: '{{ dict_planning["liste_reservations_initiale"] }}',
+			$.getJSON({
+				url: $SCRIPT_ROOT + "/detail_envoi_reservations",
+				data: {
+					IDactivite: {{ dict_planning["inscription"].IDactivite }},
+					resultats: liste_resultats.join(","),
+					liste_reservations_initiale: '{{ dict_planning["liste_reservations_initiale"] }}',
+				},
+				type: 'POST',
 			}, function(data) {
 				if (data.success) {
 					modal.find('#detail_reservations').val(data.detail)

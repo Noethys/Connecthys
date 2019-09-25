@@ -286,8 +286,8 @@ def handle_csrf_error(e):
     app.logger.debug(u"Erreur de CSRF :")
     app.logger.debug(e.description)
     return render_template('csrf_error.html'), 400
-    
-    
+
+
 # ------------------------- LOGIN et LOGOUT ---------------------------------- 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -1407,7 +1407,7 @@ def GetModificationsReservations(liste_reservations_initiale=[], resultats=[]):
     
     
         
-@app.route('/detail_envoi_reservations')
+@app.route('/detail_envoi_reservations', methods=['POST'])
 @login_required
 def detail_envoi_reservations():
     if current_user.role != "famille" :
@@ -1415,9 +1415,9 @@ def detail_envoi_reservations():
 
     try:
         # Détail des réservations
-        IDactivite = request.args.get("IDactivite", None, type=int)
-        resultats = request.args.get("resultats", "", type=str)
-        liste_reservations_initiale = request.args.get("liste_reservations_initiale", "", type=str)
+        IDactivite = request.form.get("IDactivite", None, type=int)
+        resultats = request.form.get("resultats", "", type=str)
+        liste_reservations_initiale = request.form.get("liste_reservations_initiale", "", type=str)
         liste_reservations_finale, nbre_ajouts, nbre_suppressions = GetModificationsReservations(liste_reservations_initiale, resultats)
         
         # Liste des unités
