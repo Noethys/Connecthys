@@ -22,6 +22,7 @@ from application import app, login_manager, db, mail, csrf
 from application import models, forms, utils, updater, exemples
 from sqlalchemy import or_
 from eopayment import Payment
+import six
 
 try :
     from flask_mail import Message
@@ -90,6 +91,16 @@ ETATS_PAIEMENTS = {1: "RECEIVED", 2: "ACCEPTED", 3: "PAID", 4: "DENIED", 5: "CAN
 
 
 
+def VerifyKey(secret=0):
+    # Codage et vérification de la clé de sécurité
+    secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
+    for caract in app.config['SECRET_KEY']:
+        if caract in "0123456789":
+            secret_key += caract
+    secret_key = int(secret_key)
+    resultat = secret_key == secret
+    return resultat
+
 
 @app.route('/robots.txt')
 def static_from_root():
@@ -98,15 +109,9 @@ def static_from_root():
     
 @app.route('/update/<int:secret>/<int:version_noethys>/<int:mode>')
 def update(secret=0, version_noethys=0, mode=0):
-    # Codage et vérification de la clé de sécurité
-    secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
-    for caract in app.config['SECRET_KEY'] :
-        if caract in "0123456789" :
-            secret_key += caract
-    secret_key = int(secret_key) 
-    if secret_key != secret :
+    if not VerifyKey(secret):
         dict_resultat = {"resultat" : "erreur", "erreur" : u"Cle de securite erronee."}
-        app.logger.debug("Demande update: secretkey=%s - Mauvaise cle de securite !" % secret_key)
+        app.logger.debug("Demande update: secretkey=%s - Mauvaise cle de securite !", secret)
         return Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
     
     # Recherche le mode
@@ -118,12 +123,12 @@ def update(secret=0, version_noethys=0, mode=0):
         mode = "wsgi"
     else :
         dict_resultat = {"resultat" : "erreur", "erreur" : u"Mode inconnu"}
-        app.logger.debug("Demande update: secretkey=%s - Mode inconnu : %s" % (secret_key, mode))
+        app.logger.debug("Demande update: Mode inconnu : %s", mode)
         return Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
     
     # Décode le numéro de version de Noethys
     version_noethys = updater.GetVersionFromInt(version_noethys)
-    app.logger.debug("Demande update: secretkey=%s - Version Noethys=%s" % (secret_key, version_noethys))
+    app.logger.debug("Demande update: Version Noethys=%s", version_noethys)
     resultat = updater.Recherche_update(version_noethys, mode, app)
     
     dict_resultat = {"resultat" : resultat}
@@ -132,55 +137,62 @@ def update(secret=0, version_noethys=0, mode=0):
 
 @app.route('/upgrade/<int:secret>')
 def upgrade(secret=0):
-    # Codage et vérification de la clé de sécurité
-    secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
-    for caract in app.config['SECRET_KEY'] :
-        if caract in "0123456789" :
-            secret_key += caract
-    secret_key = int(secret_key) 
-    
-    if secret_key != secret :
-        dict_resultat = {"resultat" : "erreur", "erreur" : u"Clé de sécurité erronée."}
-        
+    app.logger.debug("Demande upgrade")
+    if not VerifyKey(secret):
+        dict_resultat = {"resultat": "erreur", "erreur": u"Clé de sécurité erronée."}
     else :
         try :
             models.UpgradeDB()
             dict_resultat = {"resultat" : "ok"}
-        except Exception, err:
+        except Exception as err:
             dict_resultat = {"resultat" : "erreur", "erreur" : str(err), "trace" : traceback.format_exc()}
         
         if dict_resultat["resultat"] != "ok" :
             app.logger.error("Erreur dans l'upgrade : %s" % traceback.format_exc())
     
     reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
-    app.logger.debug("Demande upgrade: secretkey(%s)", secret_key)
     return reponse
+
 
 
 @app.route('/repairdb/<int:secret>')
 def repairdb(secret=0):
-    # Codage et vérification de la clé de sécurité
-    secret_key = str(datetime.datetime.now().strftime("%Y%m%d"))
-    for caract in app.config['SECRET_KEY']:
-        if caract in "0123456789":
-            secret_key += caract
-    secret_key = int(secret_key)
-
-    if secret_key != secret:
+    app.logger.debug("Demande repairdb.")
+    if not VerifyKey(secret):
         dict_resultat = {"resultat": "erreur", "erreur": u"Clé de sécurité erronée."}
-
     else:
         try:
             models.RepairDB()
             dict_resultat = {"resultat": "ok"}
-        except Exception, err:
+        except Exception as err:
             dict_resultat = {"resultat": "erreur", "erreur": str(err), "trace": traceback.format_exc()}
 
         if dict_resultat["resultat"] != "ok":
             app.logger.error("Erreur dans le repairdb : %s" % traceback.format_exc())
 
     reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
-    app.logger.debug("Demande repairdb: secretkey(%s)", secret_key)
+    return reponse
+
+
+@app.route('/cleardb/<int:secret>')
+def cleardb(secret=0):
+    if not VerifyKey(secret):
+        dict_resultat = {"resultat": "erreur", "erreur": u"Clé de sécurité erronée."}
+    else:
+        app.logger.debug("Effacement de la base...")
+        to_db = app.config['SQLALCHEMY_DATABASE_URI']
+        if "mysql" in to_db:
+            db.engine.execute("SET foreign_key_checks = 0;")
+        for table in reversed(db.metadata.sorted_tables):
+            app.logger.debug("Effacement de la table %s", table)
+            db.session.execute(table.delete())
+        db.session.commit()
+        if "mysql" in to_db:
+            db.engine.execute("SET foreign_key_checks = 1;")
+        app.logger.debug("Effacement de la base fini.")
+        dict_resultat = {"resultat": "ok"}
+
+    reponse = Response(json.dumps(dict_resultat), status=200, mimetype='application/json', content_type='application/json; charset=utf-8')
     return reponse
 
 
@@ -266,14 +278,14 @@ def index():
 def syncup(secret=0):
     import importation
     resultat = importation.Importation(secret=secret)
-    app.logger.debug("Syncho depuis Noethys: secret(%s)", secret)
+    app.logger.debug("Syncho depuis Noethys")
     return str(resultat)
     
 @app.route('/syncdown/<int:secret>/<int:last>')
 def syncdown(secret=0, last=0):
     import exportation
     resultat = exportation.Exportation(secret=secret, last=last)
-    app.logger.debug("Recuperation des demandes: secret(%s) - last(%s)", secret, last)
+    app.logger.debug("Recuperation des demandes: last(%s)", last)
     return resultat
 
 @app.errorhandler(500)
@@ -492,7 +504,7 @@ def factures():
                         if type_impaye != None:
                             ID, montant = texte[1:].split("#")
                             ID, montant = int(ID), float(montant)
-                            if dict_paiements[type_impaye].has_key(ID) == False :
+                            if (ID in dict_paiements[type_impaye]) == False :
                                 dict_paiements[type_impaye][ID] = {"montant": 0.0, "en_cours_paiement": en_cours_paiement}
                             dict_paiements[type_impaye][ID]["montant"] += montant
 
@@ -502,7 +514,7 @@ def factures():
     for facture in liste_factures :
 
         # Cherche si un paiement en ligne en attente n'a pas déjà réglé la facture
-        if dict_paiements["facture"].has_key(facture.IDfacture):
+        if facture.IDfacture in dict_paiements["facture"]:
             facture.montant_regle += dict_paiements["facture"][facture.IDfacture]["montant"]
             facture.montant_solde -= dict_paiements["facture"][facture.IDfacture]["montant"]
             facture.en_cours_paiement = dict_paiements["facture"][facture.IDfacture]["en_cours_paiement"]
@@ -520,7 +532,7 @@ def factures():
         for prefacturation in liste_prefacturation :
 
             # Cherche si un paiement en ligne en attente n'a pas déjà réglé la période
-            if dict_paiements["periode"].has_key(prefacturation.IDperiode):
+            if prefacturation.IDperiode in dict_paiements["periode"]:
                 prefacturation.montant_regle += dict_paiements["periode"][prefacturation.IDperiode]["montant"]
                 prefacturation.montant_solde -= dict_paiements["periode"][prefacturation.IDperiode]["montant"]
 
@@ -562,7 +574,7 @@ def envoyer_demande_facture():
         id = request.args.get("id", 0, type=int)
         numfacture = request.args.get("info", "", type=str)
         methode_envoi = request.args.get("methode_envoi", "", type=str)
-        commentaire = request.args.get("commentaire", "", type=unicode)
+        commentaire = request.args.get("commentaire", "", type=six.text_type)
         
         # Enregistrement action
         parametres = u"IDfacture=%d#methode_envoi=%s" % (id, methode_envoi)
@@ -580,7 +592,7 @@ def envoyer_demande_facture():
         
         flash(u"Votre demande d'une facture a bien été enregistrée")
         return jsonify(success=1)
-    except Exception, erreur:
+    except Exception as erreur:
         return jsonify(success=0, error_msg=str(erreur))
                             
 
@@ -646,19 +658,19 @@ def effectuer_paiement_en_ligne():
             dict_ventilation[type_impaye][int(ID)] = float(solde)
 
         # Importation des factures
-        liste_factures = models.Facture.query.filter(models.Facture.IDfacture.in_(dict_ventilation["facture"].keys())).order_by(models.Facture.date_debut.desc()).all()
+        liste_factures = models.Facture.query.filter(models.Facture.IDfacture.in_(list(dict_ventilation["facture"].keys()))).order_by(models.Facture.date_debut.desc()).all()
 
         # On mémorise la ventilation
         ventilation = []
         for type_impaye in ["facture", "periode"]:
-            for ID, solde in dict_ventilation[type_impaye].iteritems():
+            for ID, solde in dict_ventilation[type_impaye].items():
                 if type_impaye == "facture" : prefixe = "F"
                 if type_impaye == "periode": prefixe = "P"
                 ventilation.append("%s%d#%s" % (prefixe, ID, solde))
         ventilation_str = ",".join(ventilation)
 
         # Mémorisation de la liste des ID de facture en str
-        factures_ID_str = ",".join([str(IDfacture) for IDfacture in dict_ventilation["facture"].keys()])
+        factures_ID_str = ",".join([str(IDfacture) for IDfacture in list(dict_ventilation["facture"].keys())])
 
 
         # --------------------------- Mode démo -----------------------------
@@ -745,11 +757,11 @@ def effectuer_paiement_en_ligne():
             db.session.commit()
 
             # Renvoie le formulaire de paiement au template
-            form = unicode(form)
+            form = six.text_type(form)
             form = form.replace("<form ", "<form id='form_paiement' ")
             return jsonify(success=1, systeme_paiement=systeme_paiement, form_paiement=form)
 
-    except Exception, erreur:
+    except Exception as erreur:
         app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): ERREUR: %s)", current_user.identifiant, erreur)
         return jsonify(success=0, error_msg=str(erreur))
 
@@ -803,7 +815,7 @@ def ipn_payzen():
         db.session.add(m)
         db.session.commit()
 
-    app.logger.debug(u"Enregistrement de l'action Paiement en ligne IDtransaction=%s" % paiement.IDtransaction)
+    app.logger.debug(u"Enregistrement de l'action Paiement en ligne IDtransaction=%s", paiement.IDtransaction)
     return 'Notification processed'
 
 
@@ -888,7 +900,7 @@ def retour_tipi():
                               IDpaiement=paiement.IDpaiement, etat="attente", commentaire=commentaire, parametres=parametres, ventilation=paiement.ventilation)
             db.session.add(m)
             db.session.commit()
-            app.logger.debug(u"Enregistrement de l'action Paiement en ligne IDtransaction=%s" % paiement.IDtransaction)
+            app.logger.debug(u"Enregistrement de l'action Paiement en ligne IDtransaction=%s", paiement.IDtransaction)
 
             return redirect(url_for('retour_paiement_success'))
 
@@ -899,7 +911,7 @@ def retour_tipi():
         else :
             return redirect(url_for('retour_paiement_error'))
 
-    except Exception, erreur:
+    except Exception as erreur:
         app.logger.debug("Page RETOUR_TIPI: ERREUR: %s", erreur)
         return jsonify(success=0, error_msg=str(erreur))
 
@@ -944,7 +956,7 @@ def envoyer_demande_recu():
         id = request.args.get("id", 0, type=int)
         info = request.args.get("info", "", type=str)
         methode_envoi = request.args.get("methode_envoi", "", type=str)
-        commentaire = request.args.get("commentaire", "", type=unicode)
+        commentaire = request.args.get("commentaire", "", type=six.text_type)
         
         # Enregistrement action
         parametres = u"IDreglement=%d#methode_envoi=%s" % (id, methode_envoi)
@@ -962,7 +974,7 @@ def envoyer_demande_recu():
         
         flash(u"Votre demande d'un reçu de règlement a bien été enregistrée")
         return jsonify(success=1)
-    except Exception, erreur:
+    except Exception as erreur:
         return jsonify(success=0, error_msg=str(erreur))
                           
                             
@@ -1041,7 +1053,7 @@ def supprimer_demande():
         flash(u"Votre suppression a bien été enregistrée")
         app.logger.debug("SUPPRESSION DEMANDE (%s): famille id(%s) - demande(%s)", current_user.identifiant, current_user.IDfamille, IDaction)
         return jsonify(success=1)
-    except Exception, erreur:
+    except Exception as erreur:
         app.logger.debug("[ERREUR] SUPPRESSION DEMANDE (%s): famille id(%s) - demande(%s)", current_user.identifiant, current_user.IDfamille, IDaction)
         return jsonify(success=0, error_msg=str(erreur))
 
@@ -1126,7 +1138,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
             liste_dates.append(ouverture.date)
         
         # Mémorisation de l'ouverture des unités
-        if not dict_ouvertures.has_key(ouverture.date) :
+        if ouverture.date not in dict_ouvertures :
             dict_ouvertures[ouverture.date] = []
         dict_ouvertures[ouverture.date].append(ouverture.IDunite)
         
@@ -1139,7 +1151,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
         for action in actions :
             liste_reservations = models.Reservation.query.filter_by(IDaction=action.IDaction).all()
             for reservation in liste_reservations :
-                if not dict_reservations.has_key(reservation.date) :
+                if reservation.date not in dict_reservations :
                     dict_reservations[reservation.date] = {}
                 dict_reservations[reservation.date][reservation.IDunite] = reservation.etat
     else :
@@ -1155,13 +1167,13 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
 
                 # Coche les nouvelles réservations
                 if dict_reservations != None :
-                    if not dict_reservations.has_key(date) :
+                    if date not in dict_reservations :
                         dict_reservations[date] = {}
                     dict_reservations[date][IDunite] = 1
             
             # Décoche les anciennes réservations
-            for date, dict_unites_temp in dict_reservations.iteritems() :
-                for IDunite, etat in dict_unites_temp.iteritems() :
+            for date, dict_unites_temp in dict_reservations.items() :
+                for IDunite, etat in dict_unites_temp.items() :
                     if (date, IDunite) not in liste_coches :
                         dict_reservations[date][IDunite] = 0
 
@@ -1169,7 +1181,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
     liste_consommations = models.Consommation.query.filter_by(IDinscription=inscription.IDinscription).all()
     dict_consommations = {}
     for consommation in liste_consommations :
-        if not dict_consommations.has_key(consommation.date) :
+        if consommation.date not in dict_consommations :
             dict_consommations[consommation.date] = {}
         dict_consommations[consommation.date][consommation.IDunite] = consommation.etat
     
@@ -1197,12 +1209,12 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
                 
                 liste_etats = []
                 for IDunite_conso in liste_unites_principales :
-                    if dict_consommations.has_key(date) :
-                        if dict_consommations[date].has_key(IDunite_conso) :
+                    if date in dict_consommations :
+                        if IDunite_conso in dict_consommations[date] :
                             liste_etats.append(dict_consommations[date][IDunite_conso])
                     
                 if len(liste_etats) == nbre_unites_principales :
-                    if not dict_conso_par_unite_resa.has_key(date) :
+                    if date not in dict_conso_par_unite_resa :
                         dict_conso_par_unite_resa[date] = {}
                     
                     if "attente" in liste_etats :
@@ -1317,12 +1329,12 @@ def envoyer_reservations():
         IDinscription = request.form.get("IDinscription", None, type=int)
         IDperiode = request.form.get("IDperiode", None, type=int)
         IDactivite = request.form.get("IDactivite", None, type=int)
-        activite_nom = request.form.get("activite_nom", None, type=unicode)
+        activite_nom = request.form.get("activite_nom", None, type=six.text_type)
         IDindividu = request.form.get("IDindividu", None, type=int)
-        individu_prenom = request.form.get("individu_prenom", None, type=unicode)
+        individu_prenom = request.form.get("individu_prenom", None, type=six.text_type)
         date_debut_periode = request.form.get("date_debut_periode", "", type=str)
         date_fin_periode = request.form.get("date_fin_periode", "", type=str)
-        commentaire = request.form.get("commentaire", None, type=unicode)
+        commentaire = request.form.get("commentaire", None, type=six.text_type)
         liste_reservations_initiale = request.form.get("liste_reservations_initiale", "", type=str)
         
         # Paramètres
@@ -1363,7 +1375,7 @@ def envoyer_reservations():
             app.logger.debug("Demande de reservations (%s): famille id(%s) Individu id(%s) pour la periode id(%s)\nliste_reservations: %s", current_user.identifiant, current_user.IDfamille, IDindividu, IDperiode ,liste_reservations_finale)
             return jsonify(success=1)
             
-    except Exception, erreur:
+    except Exception as erreur:
         app.logger.debug("[ERREUR] Demande de reservations (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
         app.logger.debug(erreur)
         return jsonify(success=0, error_msg=str(erreur))
@@ -1442,7 +1454,7 @@ def detail_envoi_reservations():
             detail = u"Aucune modification demandée."        
         
         return jsonify(success=1, detail=detail)
-    except Exception, erreur:
+    except Exception as erreur:
         return jsonify(success=0, error_msg=str(erreur))
    
    
@@ -1497,14 +1509,14 @@ def GetDictRenseignements(IDfamille=None, IDindividu=None):
     dict_valeurs = {"liste_choix_adresses" : []}
     liste_choix_adresses = []
     for individu in liste_individus :
-        if dict_valeurs.has_key(IDindividu) == False :
+        if (IDindividu in dict_valeurs) == False :
             dict_valeurs[individu.IDindividu] = {"individu" : individu, "champs_modifies" : []}
             
         for champ in CHAMPS_RENSEIGNEMENTS :
             valeur = getattr(individu, champ)
             valeur = utils.CallFonction("DecrypteChaine", valeur)
             if "date" in champ :
-                if isinstance(valeur, unicode) or isinstance(valeur, str):
+                if isinstance(valeur, six.text_type) or isinstance(valeur, str):
                     valeur = utils.CallFonction("DateEngEnDD", valeur)
                 valeur = utils.CallFonction("DateDDEnFr", valeur)
             elif "adresse_auto" in champ :
@@ -1530,12 +1542,12 @@ def GetDictRenseignements(IDfamille=None, IDindividu=None):
             dict_valeurs[action.IDindividu][renseignement.champ] = valeur
             dict_valeurs[action.IDindividu]["champs_modifies"].append(renseignement.champ)
     
-    for IDindividu, dictChamps in dict_valeurs.iteritems() :
+    for IDindividu, dictChamps in dict_valeurs.items() :
         if type(dictChamps) == dict :
             adresse_rattachee = False
             if dictChamps["adresse_auto"] != 0 :
                 IDindividuTemp = int(dictChamps["adresse_auto"])
-                if dict_valeurs.has_key(IDindividuTemp):
+                if IDindividuTemp in dict_valeurs:
                     rue =  dict_valeurs[IDindividuTemp]["rue_resid"]
                     cp = dict_valeurs[IDindividuTemp]["cp_resid"]
                     ville = dict_valeurs[IDindividuTemp]["ville_resid"]
@@ -1659,7 +1671,7 @@ def envoyer_modification_renseignements():
         db.session.flush()
         
         # Enregistrement des renseignements
-        for champ, valeur in dict_champs_modifies.iteritems():
+        for champ, valeur in dict_champs_modifies.items():
             if champ == "adresse_auto" and valeur == 0 :
                 valeur = None
             valeur = utils.CallFonction("CrypteChaine", valeur)
@@ -1672,7 +1684,7 @@ def envoyer_modification_renseignements():
         flash(u"Votre demande de modification a bien été enregistrée")
         return jsonify(success=1)
         
-    except Exception, erreur:
+    except Exception as erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
         
@@ -1703,7 +1715,7 @@ def inscriptions():
     liste_groupes = models.Groupe.query.filter_by().order_by(models.Groupe.ordre).all()
     dict_groupes = {}
     for groupe in liste_groupes :
-        if not dict_groupes.has_key(groupe.IDactivite) :
+        if groupe.IDactivite not in dict_groupes :
             dict_groupes[groupe.IDactivite] = []
         dict_groupes[groupe.IDactivite].append(groupe)
     
@@ -1731,7 +1743,7 @@ def envoyer_demande_inscription():
             return jsonify(success=0, error_msg=u"Aucune activité n'a été sélectionnée")
         IDactivite = int(activite.split("-")[0])
         IDgroupe = int(activite.split("-")[1])
-        commentaire = request.args.get("commentaire", "", type=unicode)
+        commentaire = request.args.get("commentaire", "", type=six.text_type)
         
         # Vérifie que l'individu n'est pas déjà inscrit
         inscription = models.Inscription.query.filter_by(IDindividu=IDindividu, IDactivite=IDactivite).first()
@@ -1750,7 +1762,7 @@ def envoyer_demande_inscription():
         
         flash(u"Votre demande d'inscription à une activité a bien été enregistrée")
         return jsonify(success=1)
-    except Exception, erreur:
+    except Exception as erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
    
@@ -1828,7 +1840,7 @@ def compte():
 @login_required
 def page_perso(num_page=0):
     # Vérifie que la page existe bien
-    if g.dict_pages.has_key("page_perso%d" % num_page) == False :
+    if ("page_perso%d" % num_page in g.dict_pages) == False :
         return redirect(url_for('accueil'))
 
     # Importation des blocs et des éléments de blocs
@@ -1837,7 +1849,7 @@ def page_perso(num_page=0):
     liste_elements = models.Element.query.filter(models.Element.IDbloc.in_(listeIDblocs)).order_by(models.Element.ordre).all()
     dict_elements = {}
     for element in liste_elements :
-        if dict_elements.has_key(element.IDbloc) == False :
+        if (element.IDbloc in dict_elements) == False :
             dict_elements[element.IDbloc] = []
         dict_elements[element.IDbloc].append(element)
 
@@ -1933,7 +1945,7 @@ def detail_demande():
                 valeur = utils.CallFonction("DecrypteChaine", renseignement.valeur)
             
                 label = None
-                if DICT_RENSEIGNEMENTS.has_key(renseignement.champ) :
+                if renseignement.champ in DICT_RENSEIGNEMENTS :
                     label = u"- %s : %s\n" % (DICT_RENSEIGNEMENTS[renseignement.champ], valeur)
                     
                 if renseignement.champ == "adresse_auto" and renseignement.valeur != None :
@@ -1946,7 +1958,7 @@ def detail_demande():
             detail = "".join(liste_lignes)
 
         return jsonify(success=1, detail=detail)
-    except Exception, erreur:
+    except Exception as erreur:
         return jsonify(success=0, error_msg=str(erreur))
 
 
@@ -2007,7 +2019,7 @@ def lost_password():
         msg.html = render_template("email/lost_password.html", confirm_url=confirm_url, dict_parametres=dict_parametres)
         try :
             mail.send(msg)
-        except Exception, err:
+        except Exception as err:
             app.logger.debug("Demande reinit password identifiant=%s email=%s : ERREUR dans l'envoi de l'email.", form.identifiant.data, form.email.data)
             app.logger.debug(err)
             flash(u"L'email n'a pas pu être envoyé. Merci de contacter l'administrateur du portail !", 'error')
@@ -2096,12 +2108,12 @@ def GetHistorique(IDfamille=None, categorie=None):
         horodatage = utils.CallFonction("DateDDEnFr", action.horodatage)
         if horodatage not in liste_dates_actions :
             liste_dates_actions.append(horodatage)
-        if not dict_actions.has_key(horodatage) :
+        if horodatage not in dict_actions :
             dict_actions[horodatage] = []
         dict_actions[horodatage].append(action)
         
         if action.categorie == "reservations" :
-            if not dict_dernieres_reservations.has_key(action.IDperiode) or (action.horodatage > dict_dernieres_reservations[action.IDperiode].horodatage and action.etat != "suppression") :
+            if action.IDperiode not in dict_dernieres_reservations or (action.horodatage > dict_dernieres_reservations[action.IDperiode].horodatage and action.etat != "suppression") :
                 dict_dernieres_reservations[action.IDperiode] = action
     
     return {"liste_dates" : liste_dates_actions, "dict_actions" : dict_actions, "derniere_synchro" : derniere_synchro, "categorie" : categorie}

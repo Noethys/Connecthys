@@ -59,7 +59,7 @@ def Importation(secret=0):
     # Décompression du fichier
     import zipfile
     if zipfile.is_zipfile(nomFichierZIP) == False :
-        return "Le fichier n'est pas une archive valide"        
+        return "Le fichier n'est pas une archive valide"
     
     nomFichierDB = nomFichierZIP.replace(".zip", ".db")
     fichierZip = zipfile.ZipFile(nomFichierZIP, "r")
@@ -94,7 +94,7 @@ def Importation(secret=0):
     for parametre in liste_parametres_source :
 
         # Mémorisation du paramètre
-        if dict_parametres_destination.has_key(parametre.nom) :
+        if parametre.nom in dict_parametres_destination :
             # Modification si besoin d'un paramètre existant
             if dict_parametres_destination[parametre.nom].parametre != parametre.parametre :
                 dict_parametres_destination[parametre.nom].parametre = parametre.parametre
@@ -127,10 +127,10 @@ def Importation(secret=0):
         
         # Recherche si l'user existe déjà dans la base destination
         if user_source.IDfamille != None :
-            if dict_users_destination["familles"].has_key(user_source.IDfamille) :
+            if user_source.IDfamille in dict_users_destination["familles"] :
                 user_destination = dict_users_destination["familles"][user_source.IDfamille]
         if user_source.IDutilisateur != None :
-            if dict_users_destination["utilisateurs"].has_key(user_source.IDutilisateur) :
+            if user_source.IDutilisateur in dict_users_destination["utilisateurs"] :
                 user_destination = dict_users_destination["utilisateurs"][user_source.IDutilisateur]
         
         # Si l'user existe déjà, on le modifie si besoin
@@ -213,7 +213,7 @@ def Importation(secret=0):
             dtable = Table("%sportail_%s" % (PREFIXE_TABLES, nom_table), dmeta, autoload=True)
             stable = Table("portail_%s" % nom_table, smeta, autoload=True)
             NewRecord = quick_mapper(stable)
-            columns = stable.columns.keys()
+            columns = list(stable.columns.keys())
             data = source.query(stable).all()
             listeDonnees = []
             for record in data :

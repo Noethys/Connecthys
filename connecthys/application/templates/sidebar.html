@@ -47,7 +47,7 @@
 					{% else %}
 						<li>
 					{% endif %}
-						<a class="item_sidemenu" href="{% if dict_menu.has_key('num_page') %}{{ url_for('page_perso', num_page=dict_menu['num_page']) }}{% else %}{{ url_for(page) }}{% endif %}">
+						<a class="item_sidemenu" href="{% if 'num_page' in dict_menu %}{{ url_for('page_perso', num_page=dict_menu['num_page']) }}{% else %}{{ url_for(page) }}{% endif %}">
 							<i class="fa {{ g.dict_pages[page]['icone'] }}"></i> {# Pour avoir la couleur, ajouter : text-{{ g.dict_pages[page]['couleur'] }}  #}
 							<span>{{ g.dict_pages[page]['nom'] }}</span>
 						</a>

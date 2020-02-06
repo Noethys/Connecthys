@@ -18,7 +18,7 @@
 				{# ------------ BLOC TEXTE ------------ #}
 				{% if bloc.categorie == "bloc_texte" %}
 					<div class="box-body">
-					{% if dict_elements.has_key(bloc.IDbloc) %}
+					{% if bloc.IDbloc in dict_elements %}
 						{% for element in dict_elements[bloc.IDbloc] %}
 							{{ element.texte_html|safe }}
 						{% endfor %}
@@ -29,7 +29,7 @@
 				{# ------------ BLOC ONGLETS ------------ #}
 				{% if bloc.categorie == "bloc_onglets" %}
 					<div class="box-body no-padding">
-					{% if dict_elements.has_key(bloc.IDbloc) %}
+					{% if bloc.IDbloc in dict_elements %}
 						<div class="nav-tabs-custom no-margin">
 							<ul class="nav nav-tabs">
 								{% for element in dict_elements[bloc.IDbloc] %}
@@ -53,7 +53,7 @@
 				{# ------------ BLOC BLOG ------------ #}
 				{% if bloc.categorie == "bloc_blog" %}
 					<div class="box-body">
-					{% if dict_elements.has_key(bloc.IDbloc) %}
+					{% if bloc.IDbloc in dict_elements %}
 						{% set liste_elements = TriElementsPourBlog(dict_elements[bloc.IDbloc]) %}
 						{% for date_debut, element in liste_elements %}
 							<div class="post">
@@ -76,7 +76,7 @@
 				{# ------------ BLOC TROMBI ------------ #}
 				{% if bloc.categorie == "bloc_trombi" %}
 					<div class="box-body">
-						{% if dict_elements.has_key(bloc.IDbloc) %}
+						{% if bloc.IDbloc in dict_elements %}
 							<ul class="users-list clearfix">
 							{% for element in dict_elements[bloc.IDbloc] %}
 								<li>

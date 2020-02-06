@@ -12,9 +12,8 @@ import os
 import os.path
 REP_APPLICATION = os.path.abspath(os.path.dirname(__file__))
 REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
-
-import urllib
-import urllib2
+import six
+from six.moves.urllib.request import urlopen, urlretrieve
 import zipfile
 import codecs
 import datetime
@@ -44,6 +43,8 @@ def LectureFichierVersion(liste_lignes=[]):
     """ Lit un fichier de versions """
     liste_versions = []
     for ligne in liste_lignes :
+        if six.PY3 and isinstance(ligne, bytes):
+            ligne = ligne.decode("utf-8")
         if ligne.startswith("version") :
             ligne = ligne.replace("\n", "")
             dict_elements = {}
@@ -78,10 +79,10 @@ def GetVersionActuelle(format_version=str):
     
 def GetListeVersionOnline():
     # Recherche la version de Connecthys disponible sur Github
-    fichier = urllib2.urlopen("https://raw.githubusercontent.com/Noethys/Connecthys/master/connecthys/versions.txt", timeout=5)
+    fichier = urlopen("https://raw.githubusercontent.com/Noethys/Connecthys/master/connecthys/versions.txt", timeout=5)
     liste_lignes_online = fichier.readlines()
     fichier.close()
-    
+
     # Formatage du fichier des versions en dict
     liste_versions_online = LectureFichierVersion(liste_lignes_online)
     return liste_versions_online
@@ -97,7 +98,7 @@ def Recherche_update(version_noethys=[], mode="", app=None):
     # Recherche la liste des version en ligne sur Github
     try :
         liste_versions_online = GetListeVersionOnline()
-    except Exception, err :
+    except Exception as err:
         app.logger.debug("La liste des versions n'a pas pu etre telechargee sur Github.")
         app.logger.debug(err)
         return u"La liste des versions n'a pas pu être téléchargée."
@@ -105,7 +106,7 @@ def Recherche_update(version_noethys=[], mode="", app=None):
     # Analyse la liste pour trouver la version la plus adaptée
     version_ideale = [0, 0, 0]
     for ligne in liste_versions_online :
-        if ligne.has_key("version") and ligne.has_key("version_min_noethys") :
+        if "version" in ligne and "version_min_noethys" in ligne :
             version_ligne = GetVersionTuple(ligne["version"])
             version_min_noethys = GetVersionTuple(ligne["version_min_noethys"])
             if version_noethys >= version_min_noethys :
@@ -126,8 +127,8 @@ def Update(version=[], mode="", app=None):
         app.logger.debug("Telechargement de la version %s sur Github..." % GetVersionStr(version))
         url_telechargement = "https://github.com/Noethys/Connecthys/archive/%s.zip" % GetVersionStr(version)
         fichier_zip = os.path.join(REP_CONNECTHYS, "connecthys.zip")
-        urllib.urlretrieve(url_telechargement, fichier_zip)
-    except Exception, err :
+        urlretrieve(url_telechargement, fichier_zip)
+    except Exception as err :
         app.logger.debug("La nouvelle version '%s' n'a pas pu etre telechargee." % GetVersionStr(version))
         app.logger.debug(err)
         return "La nouvelle version %s n'a pas pu etre téléchargée." % GetVersionStr(version)

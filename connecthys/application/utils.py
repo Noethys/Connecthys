@@ -11,6 +11,7 @@
 import datetime
 from application import app
 from cryptage import AESCipher
+import six
 
     
 def GetNow():
@@ -69,8 +70,8 @@ def IsUniteOuverte(unite=None, date=None, dict_planning={}):
 def GetEvenementsOuverts(unite=None, date=None, dict_planning={}):
     liste_evenements = []
     for IDunite_conso in unite.Get_unites_principales() :
-        if dict_planning["dict_evenements"].has_key(date) :
-            if dict_planning["dict_evenements"][date].has_key(IDunite_conso):
+        if date in dict_planning["dict_evenements"] :
+            if IDunite_conso in dict_planning["dict_evenements"][date]:
                 for evenement in dict_planning["dict_evenements"][date][IDunite_conso]:
                     liste_evenements.append(evenement)
     return liste_evenements
@@ -94,8 +95,8 @@ def IsUniteModifiable(unite=None, date=None, dict_planning={}):
 
 def GetEtatFondCase(unite=None, date=None, dict_planning={}):
     dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
-    if dict_conso_par_unite_resa.has_key(date) :
-        if dict_conso_par_unite_resa[date].has_key(unite) :
+    if date in dict_conso_par_unite_resa :
+        if unite in dict_conso_par_unite_resa[date] :
             etat = dict_conso_par_unite_resa[date][unite]
             return etat
     return None
@@ -105,8 +106,8 @@ def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
     if dict_reservations != None :
         
         # Recherche dans le dictionnaire des réservations si la case est cochée
-        if dict_reservations.has_key(date) :
-            if dict_reservations[date].has_key(unite.IDunite) :
+        if date in dict_reservations :
+            if unite.IDunite in dict_reservations[date] :
                 if dict_reservations[date][unite.IDunite] == 1:
                     return True
                 else :
@@ -121,10 +122,10 @@ def GetEtatCocheCase(unite=None, date=None, dict_planning={}):
 def GetDictDatesAttente(dict_planning={}):
     dict_conso_par_unite_resa = dict_planning["dict_conso_par_unite_resa"]
     dict_dates_attente = {}
-    for date, dict_unites in dict_conso_par_unite_resa.iteritems() :
-        for unite, etat in dict_unites.iteritems() :
+    for date, dict_unites in dict_conso_par_unite_resa.items() :
+        for unite, etat in dict_unites.items() :
             if etat == "attente" or etat == "refus" :
-                if not dict_dates_attente.has_key(date) :
+                if date not in dict_dates_attente :
                     dict_dates_attente[date] = 0
                 dict_dates_attente[date] += 1
     return dict_dates_attente
@@ -161,7 +162,7 @@ def GetParametre(nom="", dict_parametres=None, defaut=""):
     parametre = None
     # Si un dict_parametre est donné
     if dict_parametres != None :
-        if dict_parametres.has_key(nom) :
+        if nom in dict_parametres :
             parametre = dict_parametres[nom]
     if parametre == None :
         return defaut
@@ -222,7 +223,7 @@ def IsRenseignementDisabled(dict_parametres=None, individu=None, categorie="", c
     return False
 
 def DecrypteChaine(liste_chaines=[]):
-    if isinstance(liste_chaines, unicode) or isinstance(liste_chaines, str) :
+    if isinstance(liste_chaines, six.text_type) or isinstance(liste_chaines, str) :
         type_donnee = "CHAINE"
         liste_chaines = [liste_chaines,]
     elif isinstance(liste_chaines, list) :
@@ -255,9 +256,12 @@ def TriElementsPourBlog(liste_elements=[]):
     return liste_temp
 
 def FusionDonneesOrganisateur(texte="", dict_parametres={}):
-    for key, valeur in dict_parametres.iteritems():
+    for key, valeur in dict_parametres.items():
         if key.startswith("ORGANISATEUR_") :
-            texte = texte.replace(u"{%s}" % key, valeur)
+            if six.PY3:
+                texte = texte.replace(b"{%s}" % key.encode('utf-8'), valeur.encode('utf-8'))
+            else:
+                texte = texte.replace(u"{%s}" % key, valeur)
     return texte
 
 

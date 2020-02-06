@@ -13,6 +13,7 @@ from Crypto.Hash import SHA256
 import shutil
 import os.path
 import traceback
+import six
 
 
 try :
@@ -37,7 +38,7 @@ try :
     REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
     REP_MIGRATIONS = os.path.join(REP_CONNECTHYS, "migrations")
     
-except Exception, err:
+except Exception as err:
     # Imports Sqlalchemy pour Noethys
     from sqlalchemy import create_engine, ForeignKey, Column, Date, Integer, String, Float, DateTime
     from sqlalchemy.orm import relationship, sessionmaker
@@ -49,7 +50,7 @@ except Exception, err:
 def GetVersionDB():
     try :
         version = Parametre.query.filter_by(nom="version").first().parametre
-    except Exception, err :
+    except Exception as err :
         return None
     return version
     
@@ -98,7 +99,7 @@ def UpgradeDB():
         except SystemExit as e:
             app.logger.info("SystemQuit -> Erreur dans migration > migrate")
             app.logger.info(traceback.format_exc())
-        except Exception, err :
+        except Exception as err :
             app.logger.info("Erreur dans migration > migrate.")
             app.logger.info(err)
 
@@ -109,7 +110,7 @@ def UpgradeDB():
         except SystemExit as e:
             app.logger.info("SystemQuit -> Erreur dans migration > upgrade.")
             app.logger.info(traceback.format_exc())
-        except Exception, err :
+        except Exception as err :
             app.logger.info("Erreur dans migration > upgrade.")
             app.logger.info(err)
             
@@ -138,7 +139,7 @@ def RepairDB():
                 flask_migrate.init(directory=REP_MIGRATIONS)
             except SystemExit as e:
                 pass
-            except Exception, err:
+            except Exception as err:
                 pass
 
         # Enregistre la dernière num_version dans la table alembic
@@ -223,8 +224,7 @@ class User(Base):
         return False
  
     def get_id(self):
-        #return unicode(self.IDuser)
-        return unicode(self.session_token)        
+        return six.text_type(self.session_token)
  
     def __repr__(self):
         return '<User %d>' % (self.IDuser)
@@ -238,7 +238,7 @@ class User(Base):
         self.infos[key] = valeur
         
     def GetInfos(self, key=""):
-        if self.infos.has_key(key) :
+        if key in self.infos :
             return self.infos[key]
         return None
 
@@ -757,7 +757,7 @@ class Individu(Base):
         if self.date_naiss in (None, "") :
             return ""
         today = datetime.date.today()
-        if isinstance(self.date_naiss, unicode) or isinstance(self.date_naiss, str) :
+        if isinstance(self.date_naiss, six.text_type) or isinstance(self.date_naiss, str) :
             datenaiss = utils.CallFonction("DecrypteChaine", self.date_naiss)
             datenaiss = utils.CallFonction("DateEngEnDD", datenaiss)
         else :
@@ -1219,7 +1219,7 @@ def GetParametre(nom="", dict_parametres=None, defaut=""):
     parametre = None
     # Si un dict_parametre est donné
     if dict_parametres != None :
-        if dict_parametres.has_key(nom) :
+        if nom in dict_parametres :
             parametre = dict_parametres[nom]
     else :
         # Sinon on cherche directement dans la base

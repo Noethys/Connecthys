@@ -53,10 +53,10 @@ import imports
 try:
     opts, args = getopt.getopt(sys.argv[1:], "s:h:p:", ["serveur=", "host=", "port="])
 except getopt.GetoptError:
-    print "run.py -s <serveur> -h <host> -p <port>"
-    print "serveur = None | tornado | gevent"
-    print "host = 0.0.0.0"
-    print "port = 5000"
+    print("run.py -s <serveur> -h <host> -p <port>")
+    print("serveur = None | tornado | gevent")
+    print("host = 127.0.0.1")
+    print("port = 5000")
     sys.exit(2)
 
 # Serveur = None (serveur intégré à Flask) | tornado | gevent
@@ -77,8 +77,8 @@ for opt, arg in opts:
     if opt in ("-p", "--port"):
         port = int(arg)    
 
-print "Lancement de Connecthys..."
-print "serveur=%s host=%s port=%s" % (serveur, host, port)
+print("Lancement de Connecthys...")
+print("serveur=%s host=%s port=%s" % (serveur, host, port))
 
 # Ajoute au path le chemin des librairies
 imports.AjouteCheminLibs()
