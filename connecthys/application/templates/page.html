@@ -118,7 +118,7 @@
 			{% block brand %}
 			  <a href="#" class="logo">
 				  <span class="logo-mini"></span>
-				  <span class="logo-lg">Le <strong>portail</strong> Famille</span>
+				  <span class="logo-lg">{{ GetParametre("ACCUEIL_TITRE", dict_parametres)|safe }}</span>
 			  </a>
 			{% endblock %}
 
