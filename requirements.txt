@@ -1,1 +1,9 @@
 pycrypto>=2.1
+flask
+flask-migrate
+flask-sqlalchemy
+flask-wtf
+flask-login
+flask-mail
+flask-script
+flask-debugtoolbar
