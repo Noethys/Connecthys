@@ -672,10 +672,11 @@ def effectuer_paiement_en_ligne():
         # Mémorisation de la liste des ID de facture en str
         factures_ID_str = ",".join([str(IDfacture) for IDfacture in list(dict_ventilation["facture"].keys())])
 
-
         # --------------------------- Mode démo -----------------------------
 
         if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "4":
+            app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE MODE DEMO (IDFamille %s) : montant=%s factures_ID=%s", current_user.identifiant, str(montant_reglement), factures_ID_str)
+
             return jsonify(success=1, systeme_paiement="demo")
 
 
