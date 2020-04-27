@@ -17,7 +17,7 @@ Installation depuis Noethys (sur Windows ou Linux)
 Installation sur Windows
 ------------------------
 
-- Installez python 2.7 (http://www.python.org)
+- Installez python 2.7 32 bits (http://www.python.org)
 - Installez pycrypto (http://www.voidspace.org.uk/downloads/pycrypto26/pycrypto-2.6.win32-py2.7.exe)
 - Placez-vous dans le répertoire connecthys 
 - Chargez l'invite de commandes de Windows et tapez "C:\Python27\python.exe run.py"
