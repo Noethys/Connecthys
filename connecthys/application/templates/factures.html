@@ -25,6 +25,18 @@
 
 			{% endif %}
 
+			{# Prélèvement automatique #}
+			{% if current_user.GetParametres().get("prelevement_auto", "0") == "1" %}
+				<div class="box box-success ">
+					<div class="box-header with-border">
+						<h3 class="box-title">Information</h3>
+					</div>
+					<div class="box-body">
+						<p>Vous êtes abonné au prélèvement automatique.</p>
+					</div>
+				</div>
+			{% endif %}
+
 			{% if liste_prefacturation|length > 0 %}
 				<div class="row">
 					<div class="col-xs-12">

@@ -1,6 +1,6 @@
 {% macro paiement_ligne_body() %}
 		
-	{% if GetParametre('PAIEMENT_EN_LIGNE_ACTIF', dict_parametres) == 'True' %}
+	{% if current_user.Is_paiement_ligne_actif() == True %}
 	{% if current_user.email !="" %}
 	<div class="box box-success ">
 		<div class="box-header with-border">
@@ -91,7 +91,7 @@
 {%  macro paiement_ligne_scripts(liste_dates_actions=[], route='/effectuer_paiement_en_ligne', page='factures') %}
 
 
-{% if GetParametre('PAIEMENT_EN_LIGNE_ACTIF', dict_parametres) == 'True' %}
+{% if current_user.Is_paiement_ligne_actif() == True %}
 
 
 	<script>
