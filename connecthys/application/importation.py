@@ -141,12 +141,13 @@ def Importation(secret=0):
             if user_destination.email != user_source.email : user_destination.email = user_source.email
             if user_destination.actif != user_source.actif : user_destination.actif = user_source.actif
             if user_destination.session_token != user_source.session_token : user_destination.session_token = user_source.session_token
+            if user_destination.parametres != user_source.parametres: user_destination.parametres = user_source.parametres
             
         # Si l'utilisateur n'existe pas, on le créé :
         if user_destination == None :
             destination.add(models.User(identifiant=user_source.identifiant, cryptpassword=user_source.password, nom=user_source.nom, email=user_source.email,  \
                                                         role=user_source.role, IDfamille=user_source.IDfamille, IDutilisateur=user_source.IDutilisateur, actif=user_source.actif, \
-                                                        session_token=user_source.session_token))
+                                                        session_token=user_source.session_token, parametres=user_source.parametres))
     
     app.logger.debug("Enregistrement de la table users...")
 
@@ -160,6 +161,7 @@ def Importation(secret=0):
         "cotisations_manquantes", "cotisations", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "consommations", "periodes", "prefacturation", "ouvertures", "feries", "unites", "inscriptions",
         "groupes", "activites", "individus", "messages", "regies", "pages", "blocs", "elements",
+        "categories_produits", "produits", "locations",
         ]
     
     # Recherche si des actions sont présentes
@@ -202,7 +204,7 @@ def Importation(secret=0):
     tables = [
         "activites", "unites", "cotisations_manquantes", "cotisations", "factures", "types_pieces", "pieces_manquantes",
         "reglements", "individus", "groupes", "inscriptions", "consommations", "periodes", "ouvertures", "prefacturation",
-        "feries", "messages", "regies", "pages", "blocs", "elements",
+        "feries", "messages", "regies", "pages", "blocs", "elements", "categories_produits", "produits", "locations",
         ]
     
     if "mysql" in to_db :

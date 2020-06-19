@@ -264,6 +264,15 @@ def FusionDonneesOrganisateur(texte="", dict_parametres={}):
                 texte = texte.replace(u"{%s}" % key, valeur)
     return texte
 
+def Convert_liste_to_texte_virgules(liste=[]):
+    """ Convertit un liste ['a', 'b', 'c'] en un texte 'a, b et c' """
+    if len(liste) == 0:
+        return ""
+    elif len(liste) == 1:
+        return liste[0]
+    else:
+        return ", ".join(liste[:-1]) + " et " + liste[-1]
+
 
 
 
@@ -307,5 +316,5 @@ def utility_processor():
         CrypteChaine=CrypteChaine,
         TriElementsPourBlog=TriElementsPourBlog,
         FusionDonneesOrganisateur=FusionDonneesOrganisateur,
+        Convert_liste_to_texte_virgules=Convert_liste_to_texte_virgules,
         )
-    

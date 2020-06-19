@@ -22,6 +22,7 @@ from application import app, login_manager, db, mail, csrf
 from application import models, forms, utils, updater, exemples
 from sqlalchemy import or_
 from eopayment import Payment
+from operator import itemgetter
 import six
 
 try :
@@ -44,7 +45,8 @@ LISTE_PAGES_FAMILLES = [
         {"type" : "page", "page" : "factures", "raccourci" : True, "affichage" : "FACTURES_AFFICHER"}, 
         {"type" : "page", "page" : "reglements", "raccourci" : True, "affichage" : "REGLEMENTS_AFFICHER"}, 
         {"type" : "page", "page" : "pieces", "raccourci" : True, "affichage" : "PIECES_AFFICHER"}, 
-        {"type" : "page", "page" : "cotisations", "raccourci" : True, "affichage" : "COTISATIONS_AFFICHER"}, 
+        {"type" : "page", "page" : "cotisations", "raccourci" : True, "affichage" : "COTISATIONS_AFFICHER"},
+        {"type" : "page", "page" : "locations", "raccourci" : True, "affichage" : "LOCATIONS_AFFICHER"},
         {"type" : "page", "page" : "historique", "raccourci" : True, "affichage" : "HISTORIQUE_AFFICHER"},
     {"type" : "label", "label" : u"DIVERS"},
         {"type" : "page", "page" : "contact", "raccourci" : True, "affichage" : "CONTACT_AFFICHER"}, 
@@ -68,6 +70,7 @@ DICT_PAGES = {
     "reglements" : {"nom" : u"Règlements", "icone" : "fa-money", "description" : u"Consulter les règlements", "couleur" : "red"},
     "pieces" : {"nom" : u"Pièces", "icone" : "fa-files-o", "description" : u"Consulter et télécharger des pièces", "couleur" : "blue"},
     "cotisations" : {"nom" : u"Cotisations", "icone" : "fa-folder-o", "description" : u"Consulter les cotisations", "couleur" : "olive"},
+    "locations" : {"nom" : u"Locations", "icone" : "fa-shopping-cart", "description" : u"Consulter et modifier des locations", "couleur" : "aqua"},
     "historique" : {"nom" : u"Historique", "icone" : "fa-clock-o", "description" : u"Consulter l'historique des demandes", "couleur" : "purple"},
     "contact" : {"nom" : u"Contact", "icone" : "fa-envelope-o", "description" : u"Contacter l'organisateur", "couleur" : "yellow"},
     "mentions" : {"nom" : u"Mentions légales", "icone" : "fa-info-circle", "description" : u"Consulter les mentions légales"},
@@ -1035,8 +1038,289 @@ def cotisations():
     app.logger.debug("Page COTISATIONS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('cotisations.html', active_page="cotisations", liste_cotisations=liste_cotisations, \
                             liste_cotisations_manquantes=liste_cotisations_manquantes, dict_parametres=dict_parametres)
-    
-                            
+
+
+
+# ------------------------- LOCATIONS ----------------------------------
+
+@app.route('/locations')
+@login_required
+def locations():
+    if current_user.role != "famille" :
+        return redirect(url_for('logout'))
+
+    # Récupération de la liste des locations
+    liste_locations = models.Location.query.filter(models.Location.IDfamille==current_user.IDfamille, models.Location.date_debut >= datetime.date.today()).all()
+    liste_reservations = models.Reservation_location.query.filter(
+        models.Reservation_location.action.has(IDfamille=current_user.IDfamille),
+        models.Reservation_location.action.has(etat="attente"),
+        models.Reservation_location.date_debut >= datetime.date.today()
+        ).all()
+
+    dict_locations = {}
+    for location in liste_locations:
+        dict_locations[location.IDlocation] = {"debut": location.date_debut, "fin": location.date_fin, "IDproduit": location.IDproduit, "etat": "valide"}
+    for reservation in liste_reservations:
+        etat = "attente"
+        if reservation.etat == "supprimer":
+            etat = "suppr"
+        dict_locations[reservation.IDlocation] = {"debut": reservation.date_debut, "fin": reservation.date_fin, "IDproduit": reservation.IDproduit, "etat": etat}
+    prochaines_locations = sorted(list(dict_locations.values()), key=itemgetter('debut'))
+
+    # Récupération du dict des produits
+    liste_produits = models.Produit.query.order_by(models.Produit.nom).all()
+    dict_produits = {}
+    for produit in liste_produits:
+        dict_produits[produit.IDproduit] = produit.nom
+
+    # Recherche l'historique des demandes liées aux réservations
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="locations")
+
+    dict_parametres = models.GetDictParametres()
+    app.logger.debug("Page LOCATIONS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
+    return render_template('locations.html', active_page="locations", prochaines_locations=prochaines_locations, dict_produits=dict_produits, \
+                           dict_parametres=dict_parametres, historique=historique)
+
+
+@app.route('/planning_locations')
+@login_required
+def planning_locations():
+    if current_user.role != "famille":
+        return redirect(url_for('logout'))
+
+    dict_parametres = models.GetDictParametres()
+    return render_template('planning_locations.html', active_page="locations", dict_parametres=dict_parametres)
+
+
+@app.route('/get_produits')
+@login_required
+def get_produits():
+    liste_produits = models.Produit.query.order_by(models.Produit.nom).all()
+    liste_finale = []
+    for produit in liste_produits:
+        dictProduit = {
+            "id": str(produit.IDproduit),
+            "groupId": produit.nom_categorie,
+            "title": produit.nom,
+            "eventColor": 'green'
+        }
+        liste_finale.append(dictProduit)
+    return jsonify(liste_finale)
+
+
+@app.route('/get_locations/<int:idfamille>')
+@login_required
+def get_locations(idfamille=None):
+    if current_user.IDfamille != idfamille:
+        return jsonify([])
+
+    if len(request.args['start']) == 10:
+        start = datetime.datetime.strptime(request.args['start'], '%Y-%m-%d')
+        end = datetime.datetime.strptime(request.args['end'], '%Y-%m-%d')
+    else:
+        start = datetime.datetime.strptime(request.args['start'], '%Y-%m-%dT%H:%M:%S')
+        end = datetime.datetime.strptime(request.args['end'], '%Y-%m-%dT%H:%M:%S')
+
+    # Importation des produits
+    liste_produits = models.Produit.query.all()
+    dict_produits = {}
+    for produit in liste_produits:
+        dict_produits[produit.IDproduit] = produit.nom
+
+    # Importation des locations existantes
+    liste_locations = models.Location.query.filter(models.Location.date_debut <= end, models.Location.date_fin >= start).all()
+
+    # Importation des réservations
+    actions = models.Action.query.filter_by(categorie="locations", IDfamille=current_user.IDfamille, etat="attente").order_by(models.Action.horodatage).all()
+    if actions != None :
+        dict_reservations = {}
+        for action in actions :
+            liste_reservations = models.Reservation_location.query.filter_by(IDaction=action.IDaction).all()
+            for reservation in liste_reservations:
+                dict_reservations[str(reservation.IDlocation)] = reservation
+    else :
+        dict_reservations = None
+
+    # Ajout des locations existantes
+    liste_events = []
+    for location in liste_locations:
+        dictEvent = {
+            "allDay": "",
+            "title": dict_produits[location.IDproduit],
+            "id": str(location.IDlocation),
+            "start": str(location.date_debut),
+            "end": str(location.date_fin),
+            "resourceId": str(location.IDproduit),
+            'overlap': False,
+            'color': "green",
+        }
+
+        # Si la location a déjà commencé, on empêche la modification
+        if location.date_debut <= datetime.datetime.now():
+            dictEvent["editable"] = False
+
+        # Affichage des locations des autres usagers
+        if location.IDfamille != idfamille:
+            dictEvent["backgroundColor"] = "#f29da6"
+            dictEvent["rendering"] = 'background'
+
+        valide = True
+        if str(location.IDlocation) in dict_reservations:
+            reservation = dict_reservations[str(location.IDlocation)]
+            if reservation == 0:
+                valide = False
+            else:
+                dictEvent["start"] = str(reservation.date_debut)
+                dictEvent["end"] = str(reservation.date_fin)
+                dictEvent["resourceId"] = str(reservation.IDproduit)
+
+        if valide:
+            liste_events.append(dictEvent)
+
+    # Ajout des nouvelles réservations en attente de validation
+    for id, reservation in dict_reservations.items():
+        if "-" in id and reservation.etat != "supprimer":
+            dictEvent = {
+                "allDay": "",
+                "title": dict_produits[reservation.IDproduit],
+                "id": str(reservation.IDlocation),
+                "start": str(reservation.date_debut),
+                "end": str(reservation.date_fin),
+                "resourceId": str(reservation.IDproduit),
+                "overlap": False,
+                "color": "orange",
+            }
+            liste_events.append(dictEvent)
+
+    return jsonify(liste_events)
+
+
+@app.route('/detail_envoi_locations', methods=['POST'])
+@login_required
+def detail_envoi_locations():
+    if current_user.role != "famille":
+        return redirect(url_for('logout'))
+
+    dict_modifications = request.form.get("dict_modifications", "", type=str)
+
+    try:
+        liste_modifications = []
+        for id_event, dict_event in json.loads(dict_modifications).items():
+            liste_modifications.append({
+                "etat": dict_event["etat"],
+                "title": dict_event["event"]["title"],
+                "start": datetime.datetime.strptime(dict_event["event"]["start"], '%Y-%m-%d %H:%M:%S'),
+                "end": datetime.datetime.strptime(dict_event["event"]["end"], '%Y-%m-%d %H:%M:%S'),
+                "resourceId": dict_event["event"]["resourceId"],
+                "nom_ressource": dict_event["event"]["nom_ressource"],
+                "id": dict_event["event"]["id"],
+            })
+
+        liste_modifications = sorted(liste_modifications, key=itemgetter('start'))
+
+        liste_lignes = []
+        for dict_event in liste_modifications:
+            if dict_event["etat"] == "ajouter":
+                ligne = u"- Ajout"
+            elif dict_event["etat"] == "modifier":
+                ligne = u"- Modification"
+            else:
+                ligne = u"- Suppression"
+
+            start = dict_event["start"].strftime("%d/%m/%Y-%Hh%M")
+            end = dict_event["end"].strftime("%d/%m/%Y-%Hh%M")
+            nom_ressource = dict_event["nom_ressource"]
+            ligne += u" du %s au %s : %s\n" % (start, end, nom_ressource)
+            liste_lignes.append(ligne)
+
+        if len(liste_lignes) > 0:
+            detail = "".join(liste_lignes)
+        else:
+            detail = u"Aucune modification demandée."
+
+        return jsonify(success=1, detail=detail)
+    except Exception as erreur:
+        return jsonify(success=0, error_msg=str(erreur))
+
+
+@app.route('/envoyer_locations', methods=['POST'])
+@login_required
+def envoyer_locations():
+    if current_user.role != "famille":
+        return redirect(url_for('logout'))
+
+    dict_modifications = request.form.get("dict_modifications", "", type=str)
+    commentaire = request.form.get("commentaire", None, type=six.text_type)
+
+    liste_modifications = []
+    liste_dates = []
+    nbre_ajouts, nbre_modifications, nbre_suppressions = 0, 0, 0
+    for id_event, dict_event in json.loads(dict_modifications).items():
+        start = datetime.datetime.strptime(dict_event["event"]["start"], '%Y-%m-%d %H:%M:%S')
+        end = datetime.datetime.strptime(dict_event["event"]["end"], '%Y-%m-%d %H:%M:%S')
+        liste_modifications.append({
+            "etat": dict_event["etat"],
+            "title": dict_event["event"]["title"],
+            "debut": start,
+            "fin": end,
+            "IDproduit": int(dict_event["event"]["resourceId"]),
+            "nom_produit": dict_event["event"]["nom_ressource"],
+            "id": dict_event["event"]["id"],
+        })
+        liste_dates.append(start)
+        liste_dates.append(end)
+        if dict_event["etat"] == "ajouter": nbre_ajouts += 1
+        if dict_event["etat"] == "modifier": nbre_modifications += 1
+        if dict_event["etat"] == "supprimer": nbre_suppressions += 1
+
+    liste_dates.sort()
+
+    # Si aucune réservation
+    if len(liste_modifications) == 0:
+        # Retourne un message d'erreur si aucune modification par rapport aux réservations initiales
+        return jsonify(success=0, error_msg=u"Vous n'avez effectué aucune modification dans vos réservations !")
+
+    try:
+
+        # Description
+        temp = []
+        if nbre_ajouts == 1: temp.append(u"1 ajout")
+        if nbre_ajouts > 1: temp.append(u"%d ajouts" % nbre_ajouts)
+        if nbre_modifications == 1: temp.append(u"1 modification")
+        if nbre_modifications > 1: temp.append(u"%d modifications" % nbre_modifications)
+        if nbre_suppressions == 1: temp.append(u"1 suppression")
+        if nbre_suppressions > 1: temp.append(u"%d suppressions" % nbre_suppressions)
+        txt_actions = utils.Convert_liste_to_texte_virgules(temp)
+
+        description = u"Réservations de locations sur la période du %s au %s (%s)" % (min(liste_dates).strftime("%d/%m/%Y"), max(liste_dates).strftime("%d/%m/%Y"), txt_actions)
+
+        # Enregistrement de l'action
+        action = models.Action(IDfamille=current_user.IDfamille, categorie="locations", action="envoyer",
+                               description=description, etat="attente", commentaire=commentaire, parametres=None)
+        db.session.add(action)
+        db.session.flush()
+
+        # Enregistrement des réservations
+        for dict_event in liste_modifications:
+            reservation = models.Reservation_location(IDlocation=str(dict_event["id"]), date_debut=dict_event["debut"], date_fin=dict_event["fin"], IDproduit=dict_event["IDproduit"], IDaction=action.IDaction, etat=dict_event["etat"])
+            db.session.add(reservation)
+
+        db.session.commit()
+
+        flash(u"Votre demande de réservations a bien été enregistrée")
+        app.logger.debug("Demande de locations (%s): famille id(%s) liste_reservations: %s", current_user.identifiant, current_user.IDfamille, liste_modifications)
+        return jsonify(success=1)
+
+    except Exception as erreur:
+        app.logger.debug("[ERREUR] Demande de locations (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
+        app.logger.debug(erreur)
+        return jsonify(success=0, error_msg=str(erreur))
+
+
+
+
+# -----------------------------------------------------------------------
+
 @app.route('/supprimer_demande')
 @login_required
 def supprimer_demande():
@@ -1296,8 +1580,7 @@ def planning():
         return redirect(url_for('reservations'))
     
     dict_parametres = models.GetDictParametres()
-    return render_template('planning.html', active_page="reservations", \
-                            dict_planning = dict_planning, dict_parametres=dict_parametres)
+    return render_template('planning.html', active_page="reservations", dict_planning = dict_planning, dict_parametres=dict_parametres)
 
     
 @app.route('/imprimer_reservations')
@@ -1956,6 +2239,32 @@ def detail_demande():
                 if label != None :
                     liste_lignes.append(label)
                     
+            detail = "".join(liste_lignes)
+
+        # Détail des locations
+        if categorie == "locations":
+
+            liste_locations = models.Reservation_location.query.filter_by(IDaction=IDaction).order_by(models.Reservation_location.date_debut, models.Reservation_location.etat).all()
+
+            liste_produits = models.Produit.query.all()
+            dict_produits = {}
+            for produit in liste_produits:
+                dict_produits[produit.IDproduit] = produit.nom
+
+            liste_lignes = []
+            for location in liste_locations:
+                if location.etat == "supprimer":
+                    ligne = u"- Suppression"
+                elif location.etat == "modifier":
+                    ligne = u"- Modification"
+                else:
+                    ligne = u"- Ajout"
+                start = location.date_debut.strftime("%d/%m/%Y-%Hh%M")
+                end = location.date_fin.strftime("%d/%m/%Y-%Hh%M")
+                nom_ressource = dict_produits[location.IDproduit]
+                ligne += u" du %s au %s : %s\n" % (start, end, nom_ressource)
+                liste_lignes.append(ligne)
+
             detail = "".join(liste_lignes)
 
         return jsonify(success=1, detail=detail)

@@ -34,7 +34,7 @@
 						{% if action.action != "maj_password" %}
 						<div class="timeline-footer">
 						
-							{% if action.categorie in ("reservations", "renseignements") %}
+							{% if action.categorie in ("reservations", "renseignements", "locations") %}
 								<span class="pull-right"><a href="#" id="detail_action" data-toggle="modal" data-target="#modal_detail_demande" data-idaction="{{ action.IDaction }}" data-categorie="{{ action.categorie }}" data-description="{{ action.description }}" class="btn btn-default btn-xs" title="Afficher le détail de cette demande">Détail</a></span>
 							{% endif %}
 							
@@ -43,7 +43,7 @@
 									<span class="text-yellow">Votre demande a été transmise et sera traitée prochainement.</span>
 								{% else %}
 								
-									{% if action.categorie in ("reservations", "renseignements") %}
+									{% if action.categorie in ("reservations", "renseignements", "locations") %}
 										<span class="pull-right">&nbsp;&nbsp;</span>
 									{% endif %}
 

@@ -143,6 +143,24 @@
 		</div>
 		{% endif %}
 
+		{%if GetParametre("LOCATIONS_AFFICHER", dict_parametres) == 'True' %}
+		<div class="panel box box-danger">
+			<div class="box-header with-border">
+				<h4 class="box-title">
+					<a data-toggle="collapse" data-parent="#accordion" href="#collapse6">
+					Locations
+					</a>
+				</h4>
+			</div>
+			<div id="collapse6" class="panel-collapse collapse">
+				<div class="box-body">
+					La page <i>Locations</i> liste la ou vos locations.
+					Vous pouvez également formuler des demandes de locations.
+				</div>
+			</div>
+		</div>
+		{% endif %}
+
 		{%if GetParametre("HISTORIQUE_AFFICHER", dict_parametres) == 'True' %}
 		<div class="panel box box-success">
 			<div class="box-header with-border">

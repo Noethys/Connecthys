@@ -179,9 +179,10 @@ class User(Base):
     actif = Column(Integer)
     session_token = Column(String(200))
     last_maj_password = Column(DateTime)
+    parametres = Column(String(400))
     infos = {}
     
-    def __init__(self , IDuser=None, identifiant=None, decryptpassword=None, cryptpassword=None, nom=None, email=None, role="famille", IDfamille=None, IDutilisateur=None, actif=1, session_token=None):
+    def __init__(self , IDuser=None, identifiant=None, decryptpassword=None, cryptpassword=None, nom=None, email=None, role="famille", IDfamille=None, IDutilisateur=None, actif=1, session_token=None, parametres=None):
         if IDuser != None :
             self.IDuser = IDuser
         self.identifiant = identifiant
@@ -197,6 +198,7 @@ class User(Base):
         self.IDutilisateur = IDutilisateur
         self.actif = actif
         self.session_token = session_token
+        self.parametres = parametres
 
     def SetCustomPassword(self, password=""):
         self.password = "custom" + SHA256.new(password.encode('utf-8')).hexdigest()
@@ -245,7 +247,22 @@ class User(Base):
     def GetNom(self):
         return utils.CallFonction("DecrypteChaine", self.nom)
 
-        
+    def GetParametres(self):
+        dict_parametres = {}
+        if self.parametres:
+            for parametre in self.parametres.split("##"):
+                nom, valeur = parametre.split("==")
+                dict_parametres[nom] = valeur
+        return dict_parametres
+
+    def Is_paiement_ligne_actif(self):
+        if GetParametre(nom="PAIEMENT_EN_LIGNE_ACTIF", defaut="False") == "True":
+            if GetParametre(nom="PAIEMENT_OFF_SI_PRELEVEMENT", defaut="False") == "True" and self.GetParametres().get("prelevement_auto", "0") == "1":
+                return False
+            return True
+        return False
+
+
         
 class Facture(Base):
     __tablename__ = "%sportail_factures" % PREFIXE_TABLES
@@ -405,6 +422,7 @@ class Action(Base):
     
     reservations = relationship("Reservation")
     renseignements = relationship("Renseignement")
+    reservations_locations = relationship("Reservation_location")
     
     def __init__(self, horodatage=None, IDfamille=None, IDindividu=None, IDutilisateur=None, categorie=None, action=None, description=None, \
                         commentaire=None, parametres=None, etat=None, traitement_date=None, IDperiode=None, ref_unique=None, reponse=None, \
@@ -458,6 +476,11 @@ class Action(Base):
         dict_temp["renseignements"] = []
         for renseignement in self.renseignements :
             dict_temp["renseignements"].append(renseignement.as_dict())
+
+        # Ajout des locations dans le dict
+        dict_temp["locations"] = []
+        for reservation_location in self.reservations_locations :
+            dict_temp["locations"].append(reservation_location.as_dict())
 
         return dict_temp
 
@@ -610,6 +633,95 @@ class Cotisation(Base):
             return utils.CallFonction("DecrypteChaine", self.prenom_individu)
         else:
             return u"Famille"
+
+
+class Categorie_produit(Base):
+    __tablename__ = "%sportail_categories_produits" % PREFIXE_TABLES
+    IDcategorie = Column(Integer, primary_key=True)
+    nom = Column(String(200))
+
+    def __init__(self, IDcategorie=None, nom=None):
+        if IDcategorie != None:
+            self.IDcategorie = IDcategorie
+        self.nom = nom
+
+    def __repr__(self):
+        return '<IDcategorie %d>' % (self.IDcategorie)
+
+
+class Produit(Base):
+    __tablename__ = "%sportail_produits" % PREFIXE_TABLES
+    IDproduit = Column(Integer, primary_key=True)
+    IDcategorie = Column(Integer, index=True)
+    nom = Column(String(200))
+    quantite = Column(Integer)
+    montant = Column(Float)
+    nom_categorie = Column(String(200))
+
+    def __init__(self, IDproduit=None, IDcategorie=None, nom=None, quantite=None, montant=None, nom_categorie=None):
+        if IDproduit != None:
+            self.IDproduit = IDproduit
+        self.IDcategorie = IDcategorie
+        self.nom = nom
+        self.quantite = quantite
+        self.montant = montant
+        self.nom_categorie = nom_categorie
+
+    def __repr__(self):
+        return '<IDproduit %d>' % (self.IDproduit)
+
+
+class Location(Base):
+    __tablename__ = "%sportail_locations" % PREFIXE_TABLES
+    IDlocation = Column(Integer, primary_key=True)
+    IDfamille = Column(Integer, index=True)
+    IDproduit = Column(Integer)
+    date_debut = Column(DateTime)
+    date_fin = Column(DateTime)
+    quantite = Column(Integer)
+
+    def __init__(self, IDlocation=None, IDfamille=None, IDproduit=None, date_debut=None, date_fin=None, quantite=None):
+        if IDlocation != None:
+            self.IDlocation = IDlocation
+        self.IDfamille = IDfamille
+        self.IDproduit = IDproduit
+        self.date_debut = date_debut
+        self.date_fin = date_fin
+        self.quantite = quantite
+
+    def __repr__(self):
+        return '<IDlocation %d>' % (self.IDlocation)
+
+
+class Reservation_location(Base):
+    __tablename__ = "%sportail_reservations_locations" % PREFIXE_TABLES
+    IDreservation = Column(Integer, primary_key=True)
+    IDlocation = Column(Integer)
+    date_debut = Column(DateTime)
+    date_fin = Column(DateTime)
+    IDproduit = Column(Integer)
+    etat = Column(String(100))
+    IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
+    action = relationship("Action")
+
+    def __init__(self, IDreservation=None, IDlocation=None, date_debut=None, date_fin=None, IDproduit=None, etat=None, IDaction=None):
+        if IDreservation != None:
+            self.IDreservation = IDreservation
+        self.IDlocation = IDlocation
+        self.date_debut = date_debut
+        self.date_fin = date_fin
+        self.IDproduit = IDproduit
+        self.etat = etat
+        self.IDaction = IDaction
+
+    def __repr__(self):
+        return '<IDreservation %d>' % (self.IDreservation)
+
+    def as_dict(self):
+        dict_temp = {}
+        for c in self.__table__.columns:
+            dict_temp[c.name] = getattr(self, c.name)
+        return dict_temp
 
 
 class Activite(Base):

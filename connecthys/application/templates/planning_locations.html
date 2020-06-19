@@ -1,0 +1,503 @@
+{% extends "page.html" %}
+
+{%- block styles %}
+	{{ super() }}
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.min.css', cdn='local', use_minified=False) }}" rel="stylesheet">
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.print.min.css', cdn='local', use_minified=False) }}" rel="stylesheet"  media="print">
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/scheduler.min.css', cdn='local', use_minified=False) }}" rel="stylesheet">
+{%- endblock styles %}
+
+
+{% block content -%}
+	
+	{% if GetParametre("PLANNING_LOCATIONS_INTRO", dict_parametres) != '' %}
+		<h4 class="page-header">
+			<small><i class="fa fa-info-circle"></i> {{ GetParametre("PLANNING_LOCATIONS_INTRO", dict_parametres) }}</small>
+		</h4>
+	{% endif %}
+
+	<p>
+	<a id="retour_locations" href="{{ url_for('locations') }}"><i class="fa fa-arrow-circle-o-left"></i> Revenir à la liste des locations</a>
+	</p>
+
+	<!-- Calendrier des locations -->
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="box box-primary">
+
+				<div class="box-header with-border">
+					<h3 class="box-title">Calendrier des locations</h3>
+				</div>
+
+				<div class="box-body no-padding">
+					<div id="calendrier_locations"></div>
+				</div>
+
+				<div class="box-footer clearfix">
+					<ul class="pagination pagination-sm no-margin pull-right">
+						<li>
+							<button type="button" id="annuler" class="btn btn-danger" href="{{ url_for('locations') }}" disabled>Annuler</button>
+						</li>
+						<li>
+							<button type="button" id="envoyer" class="btn btn-primary" data-toggle="modal" data-target="#modal_confirmation_envoi" disabled>Envoyer la demande</button>
+						</li>
+					</ul>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal event -->
+	<div class="modal fade" id="modal_event" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+
+				<div class="modal-header bg-light-blue">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel"><strong>Modifier une location</strong></h4>
+				</div>
+
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-xs-12">
+							<div class="form-group">
+								<label id="produit_event">Produit</label>
+								<div class="input-group">
+									<div class="input-group-addon">
+										<i class="fa fa-calendar"></i>
+									</div>
+									<input type="text" class="form-control pull-right" id="periode_event">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-danger pull-left" id="del_event">Supprimer</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+					<button type="button" class="btn btn-primary" id="save_event">Valider</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<!-- Modal : Confirmation de l'envoi -->
+	<div class="modal fade" id="modal_confirmation_envoi" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  	<div class="modal-dialog" role="document">
+			<div class="modal-content">
+
+		  		<div class="modal-header bg-light-blue">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel"><strong>Envoyer les réservations</strong></h4>
+		  		</div>
+
+		  		<div class="modal-body">
+
+					<form action={{ action }} method="post">
+
+						<!-- Box infos -->
+						<h4>Votre demande de réservations est prête à être envoyée.</h4>
+
+						<div class="form-group">
+							<textarea id="detail_reservations" class="form-control" rows="6" maxlength="300" placeholder="" readonly></textarea>
+						</div>
+
+						<!-- Box commentaires -->
+						<h4>Vous pouvez ajouter un commentaire</h4>
+						<div class="form-group">
+							<textarea id="commentaire" class="form-control" rows="2" maxlength="300" placeholder=""></textarea>
+						</div>
+
+						<!-- Div pour affiche erreur éventuelle de validation du form -->
+						<div id="message_erreur" class="text-red"></div>
+
+					</form>
+
+				</div><!-- Fin modal body -->
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-danger" data-dismiss="modal">Annuler</button>
+					<button type="button" class="btn btn-primary" id="confirmation">Valider</button>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+
+	<!-- Modal : Annulation des modifications -->
+	<div class="modal fade" id="modal_annulation" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+
+		  		<div class="modal-header bg-light-blue">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel"><strong>Annuler les modifications</strong></h4>
+		  		</div>
+
+		  		<div class="modal-body">
+
+					<form action={{ action }} method="post">
+						<!-- Box infos -->
+						<div>Souhaitez-vous vraiment annuler vos dernières modifications ?</div>
+						<br>
+		  			</form>
+
+		  		</div><!-- Fin modal body -->
+
+		  		<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Non, je veux les conserver</button>
+					<button type="button" class="btn btn-danger" id="confirmation_annulation">Oui, je veux les annuler</button>
+			  </div>
+
+			</div>
+	  	</div>
+	</div>
+
+	<!-- Légende -->
+	<div class="box box-solid">
+		<div class="box-header with-border">
+			<h3 class="box-title">Légende</h3>
+		</div>
+		<div class="box-body">
+			<div class="row">
+					<div class="col-sm-4 col-md-4"><small class="label bg-orange">&nbsp;&nbsp;</small> Réservation en attente de validation</div>
+					<div class="col-sm-4 col-md-4"><small class="label bg-green">&nbsp;&nbsp;</small> Réservation traitée et validée</div>
+					<div class="col-sm-4 col-md-4"><small class="label bg-red disabled">&nbsp;&nbsp;</small> Ressource indisponible</div>
+			</div>
+		</div>
+	</div>
+
+{%- endblock content %}
+
+
+{% block scripts %}
+	{{ super() }}
+	<!-- Calendrier -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+	<script src="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.min.js', cdn='local', use_minified=False)}}"></script>
+	<script src="{{ adminlte_find_resource('plugins/fullcalendar/locale/fr.js', cdn='local', use_minified=False)}}"></script>
+	<script src="{{ adminlte_find_resource('plugins/fullcalendar/scheduler.min.js', cdn='local', use_minified=False)}}"></script>
+
+	<!-- daterangepicker -->
+	<script src="{{ adminlte_find_resource('plugins/daterangepicker/daterangepicker.js', cdn='local', use_minified=False)}}"></script>
+
+	<script>
+	// Préparation de la modal Appliquer une semaine-type
+	jQuery(document).ready(function () {
+		// Préparation du datepicker
+		$('#periode_event').daterangepicker({
+				showDropdowns: false,
+				parentEl: '#modal_event',
+				opens: "right",
+				alwaysShowCalendars: true,
+				showWeekNumbers: false,
+				timePicker: true,
+				timePicker24Hour: true,
+				timePickerIncrement: 5,
+				locale: {
+					"format": "DD/MM/YYYY H:mm",
+					"separator": " - ",
+					"applyLabel": "Valider",
+					"cancelLabel": "Annuler",
+					"fromLabel": "De",
+					"toLabel": "à",
+					"weekLabel": "N°",
+					"daysOfWeek": [
+						"Dim",
+						"Lun",
+						"Mar",
+						"Mer",
+						"Jeu",
+						"Ven",
+						"Sam"
+					],
+					"monthNames": [
+						"Janvier",
+						"Février",
+						"Mars",
+						"Avril",
+						"Mai",
+						"Juin",
+						"Juillet",
+						"Août",
+						"Septembre",
+						"Octobre",
+						"Novembre",
+						"Décembre"
+					],
+					"firstDay": 1
+					}
+				});
+		});
+	</script>
+
+
+	<script>
+		$(function () {
+			var event_edit;
+			var dict_modifications = {};
+			$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+			function is_dirty() {
+				$("#annuler").attr("disabled", false);
+				$("#envoyer").attr("disabled", false);
+			};
+
+			function isOverlapping(id, start, end, resourceId){
+				var array = $('#calendrier_locations').fullCalendar('clientEvents');
+				for(i in array){
+					if(array[i]._id != id && array[i].resourceId == resourceId){
+						if((array[i].end > start) && (array[i].start < end)){
+							return true;
+						}
+					}
+				}
+				return false;
+			};
+
+			function create_UUID(){
+				var dt = new Date().getTime();
+				var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+					var r = (dt + Math.random()*16)%16 | 0;
+					dt = Math.floor(dt/16);
+					return (c=='x' ? r :(r&0x3|0x8)).toString(16);
+				});
+				return uuid;
+			};
+
+			function convert_event(event) {
+				new_event = {
+					title: event.title,
+					start: event.start.format('YYYY-MM-DD HH:mm:ss'),
+					end: event.end.format('YYYY-MM-DD HH:mm:ss'),
+					//allDay: event.allDay,
+					resourceId: event.resourceId,
+					nom_ressource: $("#calendrier_locations").fullCalendar("getResourceById", event.resourceId).title,
+					id: event.id,
+				};
+				return new_event;
+			};
+
+			function modifier_event(event) {
+				if(event.id in dict_modifications) {
+					dict_modifications[event.id]["event"] = convert_event(event);
+				} else {
+					dict_modifications[event.id] = {"etat": "modifier", "event": convert_event(event)};
+				};
+				is_dirty();
+			};
+
+			$('#calendrier_locations').fullCalendar({
+				schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+				selectable: true,
+				// eventOverlap: false,
+				aspectRatio: 2.5,
+				header: {
+					left: 'prev,next today',
+					center: 'title',
+					right: 'timelineDay,timelineWeek,timelineMonth,agendaDay,listWeek'
+				},
+				views: {
+					agendaDay: {
+						buttonText: 'Agenda',
+					}
+				},
+				defaultView: 'timelineDay',
+				nowIndicator: true,
+				weekNumbers: true,
+				editable: true,
+				droppable: true,
+				resourceLabelText: 'Ressources',
+				resourceAreaWidth: '25%',
+				resourceGroupField: 'groupId',
+				resources: '{{ url_for('get_produits') }}',
+				events: {
+					url: '{{ url_for('get_locations', idfamille=current_user.IDfamille) }}',
+					success: function (content) {
+						// Enleve les events supprimes
+						var new_content = [];
+						content.forEach(function(event) {
+							if(event.id in dict_modifications){
+								if(dict_modifications[event.id]["etat"] !== "supprimer") {
+									new_content.push(event);
+								};
+							} else {
+								new_content.push(event);
+							};
+						});
+						return new_content;
+					},
+				},
+				eventAllow: function(dropInfo, draggedEvent) {
+					if(draggedEvent.start < moment() || draggedEvent.end < moment()) {
+						return false;
+					} else {
+						return true;
+					};
+				},
+				eventDrop: function(event) { // called when an event (already on the calendar) is moved
+					var resource = $("#calendrier_locations").fullCalendar("getResourceById", event.resourceId);
+					event.title = resource.title;
+					$('#calendrier_locations').fullCalendar('updateEvent', event);
+					modifier_event(event);
+				},
+				select: function(start, end, allDay, view, resource) {
+					if(start < moment() || end < moment()){
+						alert("Vous ne pouvez enregistrer une location passée !");
+						return false
+					};
+					if(isOverlapping(null, start, end, resource.id)) {
+						alert("Attention, l'événement que vous essayez de créer chevauche un autre événement !");
+						return false
+					};
+					new_event = {
+							title: resource.title,
+							start: start,
+							end: end,
+							allDay: allDay,
+							resourceId: resource.id,
+							overlap: false,
+							color: "orange",
+							id: create_UUID(),
+					};
+					$("#calendrier_locations").fullCalendar('renderEvent',
+						new_event,
+						true
+					);
+					$('#calendrier_locations').fullCalendar('unselect');
+					dict_modifications[new_event.id] = {"etat": "ajouter", "event": convert_event(new_event)};
+					is_dirty();
+				},
+				eventClick: function(event, jsEvent, view) {
+					if(event.editable === false){
+						alert("Vous ne pouvez pas modifier une location passée !");
+						return false;
+					};
+					var resource = $("#calendrier_locations").fullCalendar("getResourceById", event.resourceId);
+					$('#produit_event').html(resource.groupId + ' - ' + resource.title);
+					$("#periode_event").data('daterangepicker').setStartDate(event.start);
+					$("#periode_event").data('daterangepicker').setEndDate(event.end);
+					event_edit = event;
+					$('#modal_event').modal();
+				},
+				eventResize: function (event, delta, revertFunc) {
+					modifier_event(event);
+				},
+				eventOverlap: function(stillEvent, movingEvent) {
+					return stillEvent.allDay && movingEvent.allDay;
+				},
+			});
+
+			// Modification d'un event avec dialog
+			$('button#save_event').bind('click', function() {
+				// Récupération de la période d'application
+				var debut = $('#periode_event').data('daterangepicker').startDate;
+				var fin = $('#periode_event').data('daterangepicker').endDate;
+				if(debut < moment() || fin < moment()){
+					alert("Vous ne pouvez enregistrer une location passée !");
+					return false
+				}
+				if(isOverlapping(event_edit._id, debut, fin, event_edit.resourceId)) {
+					alert("L'événement que vous essayez de modifier chevauche un autre événement !");
+					return false
+				};
+				if((event_edit.start.format('YYYY-MM-DD HH:mm:ss') != debut.format('YYYY-MM-DD HH:mm:ss')) || (event_edit.end.format('YYYY-MM-DD HH:mm:ss') != fin.format('YYYY-MM-DD HH:mm:ss'))) {
+					modifier_event(event_edit);
+					event_edit.start = debut;
+					event_edit.end = fin;
+					$('#calendrier_locations').fullCalendar('updateEvent', event_edit);
+				};
+				$('#modal_event').modal('hide');
+			});
+
+			// Suppression d'un event depuis le dialog
+			$('button#del_event').bind('click', function() {
+				var event = $('#calendrier_locations').fullCalendar("removeEvents", event_edit._id);
+				dict_modifications[event_edit.id] = {"etat": "supprimer", "event": convert_event(event_edit)};
+				$('#modal_event').modal('hide');
+				is_dirty();
+			});
+
+			// Bouton Annuler
+			$('button#annuler,a[id!="imprimer"]').bind('click', function(event) {
+				var href = $(this).attr('href');
+				if(Object.keys(dict_modifications).length > 0) {
+					$('#modal_annulation').modal('show');
+					event.preventDefault();
+				} else {
+					location.href = href
+				}
+			});
+
+			// Confirmation de l'annulation des modifications
+			$('button#confirmation_annulation').bind('click', function() {
+				location.href = "{{ url_for('locations') }}"
+			});
+
+			// Bouton Envoyer la demande
+			$('#modal_confirmation_envoi').on('show.bs.modal', function (event) {
+				var modal = $(this)
+
+				// Reset de champs
+				$('#commentaire').text('')
+				$('#message_erreur').text('')
+				modal.find('#detail_reservations').val('')
+
+				var csrf_token = "{{ csrf_token() }}";
+				$.ajaxSetup({
+					beforeSend: function(xhr, settings) {
+						if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+							xhr.setRequestHeader("X-CSRFToken", csrf_token);
+						}
+					}
+				});
+
+				// Demande le détail au serveur
+				$.getJSON({
+					url: $SCRIPT_ROOT + "/detail_envoi_locations",
+					data: {
+						dict_modifications: JSON.stringify(dict_modifications),
+					},
+					type: 'POST',
+				}, function(data) {
+					if (data.success) {
+						modal.find('#detail_reservations').val(data.detail)
+					} else {
+						// Affiche un message d'erreur dans la fenêtre modale
+						$('#message_erreur').text('Erreur: ' + data.error_msg)
+					}
+				});
+			});
+
+			// Bouton Confirmer Envoi demande
+			$('button#confirmation').bind('click', function() {
+				$.ajax({
+					type: 'POST',
+					dataType: "json",
+					url: $SCRIPT_ROOT + '/envoyer_locations',
+					data: {
+						dict_modifications: JSON.stringify(dict_modifications),
+					},
+					success: function(data) {
+						if (data.success) {
+							// Cache la fenêtre modale
+							$('#modal_confirmation_envoi').modal('hide');
+							// Recharge la page
+							location.href = "{{ url_for('locations') }}"
+						} else {
+							$('#message_erreur').text('Erreur : ' + data.error_msg)
+						}
+					}
+				});
+			});
+
+
+
+	  	})
+	</script>
+
+{%- endblock scripts %}

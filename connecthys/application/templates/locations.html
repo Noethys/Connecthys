@@ -1,0 +1,88 @@
+{% extends "page.html" %}
+{% import "macros_historique.html" as macros_historique with context %}
+
+{%- block styles %}
+	{{ super() }}
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.min.css', cdn='local', use_minified=False) }}" rel="stylesheet">
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.print.min.css', cdn='local', use_minified=False) }}" rel="stylesheet"  media="print">
+	<link href="{{ adminlte_find_resource('plugins/fullcalendar/scheduler.min.css', cdn='local', use_minified=False) }}" rel="stylesheet">
+{%- endblock styles %}
+
+
+{% block content -%}
+	
+	{% if GetParametre("LOCATIONS_INTRO", dict_parametres) != '' %}
+		<h4 class="page-header">
+			<small><i class="fa fa-info-circle"></i> {{ GetParametre("LOCATIONS_INTRO", dict_parametres) }}</small>
+		</h4>
+	{% endif %}
+
+	<!-- Liste des locations -->
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="box box-primary">
+
+				<div class="box-header with-border">
+					<h3 class="box-title">Prochaines locations</h3>
+				</div>
+				<!-- /.box-header -->
+
+				{% if prochaines_locations|length == 0 %}
+					<div class="box-body">
+						Aucune location à afficher
+					</div>
+				{% else %}
+					<div class="box-body table-responsive no-padding">
+						<table class="table table-bordered table-striped">
+							<tbody>
+								<tr>
+									<th><center>Du</center></th>
+									<th><center>Au</center></th>
+									<th><center>Ressource</center></th>
+									<th><center>Etat</center></th>
+								</tr>
+
+								{% for location in prochaines_locations %}
+									{% if location.etat in ("attente", "valide") %}
+									<tr>
+										<td><center>{{ DateDTEnFr(location.debut) }}</center></td>
+										<td><center>{{ DateDTEnFr(location.fin) }}</center></td>
+										<td><center>{{ dict_produits[location.IDproduit] }}</center></td>
+										{% if location.etat == "valide" %}
+											<td><center><p class="text-green">Réservation validée</p></center></td>
+										{% else %}
+											<td><center><p class="text-orange">En attente de validation</p></center></td>
+										{% endif %}
+									</tr>
+									{% endif %}
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				{% endif %}
+				<!-- /.box-body -->
+
+				<div class="box-footer">
+					<ul class="no-margin pull-right">
+						<a href="{{ url_for('planning_locations') }}" class="btn btn-primary" ><i class="icon fa fa-calendar"></i>&nbsp;&nbsp; Accéder au calendrier des réservations</a>
+					</ul>
+				</div>
+
+			</div>
+			<!-- /.box -->
+		</div>
+	</div>
+
+	<br>
+	{# Historique des demandes #}
+	{{ macros_historique.historique_body(titre="Historique des demandes", soustitre="Vous pouvez supprimer des demandes non traitées.", historique=historique) }}
+
+{%- endblock content %}
+
+
+{% block scripts %}
+	{{ super() }}
+	{# Historiques des demandes #}
+	{{ macros_historique.historique_scripts(historique=historique, page="locations") }}
+
+{%- endblock scripts %}
