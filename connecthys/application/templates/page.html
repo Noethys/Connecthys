@@ -13,11 +13,13 @@
     <!-- bootstrap 3.0.2 -->
     <link href="{{ adminlte_find_resource('bootstrap/css/bootstrap.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
     <!-- Toastr Notifications -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet" />
+    <!-- <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet" /> -->
+	<link href="{{ adminlte_find_resource('plugins/toastr/toastr.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
     <!-- font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css"> -->
+	<link href="{{ adminlte_find_resource('plugins/font-awesome/css/font-awesome.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
     <!-- Ionicons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css"> -->
     <!-- Theme style -->
     <link href="{{ adminlte_find_resource('dist/css/AdminLTE.min.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css" />
     <!-- Skin  -->
@@ -27,8 +29,7 @@
     <!-- iCheck -->
     <link href="{{ adminlte_find_resource('plugins/iCheck/all.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">		
     <!-- daterangepicker -->
-	<link href="{{ adminlte_find_resource('plugins/daterangepicker/daterangepicker.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">		
-	
+	<link href="{{ adminlte_find_resource('plugins/daterangepicker/daterangepicker.css', cdn='local', use_minified=False) }}" rel="stylesheet" type="text/css">
 	<!-- Pour affichage logo organisateur dans sidebar -->
 	<style type="text/css" media="screen">
 	.user-panel {
@@ -178,12 +179,13 @@
 
 {% block scripts %}
 <!-- jQuery -->
-<script src="{{ adminlte_find_resource('plugins/jQuery/jquery-2.2.3.min.js', cdn='local',  use_minified=False) }}"></script>
+<script src="{{ adminlte_find_resource('plugins/jQuery/jquery.min.js', cdn='local',  use_minified=False) }}"></script>
 <script src="{{ adminlte_find_resource('plugins/jQueryUI/jquery-ui.min.js', cdn='local',  use_minified=False) }}"></script>
 <!-- Bootstrap -->
 <script src="{{ adminlte_find_resource('bootstrap/js/bootstrap.min.js', cdn='local',  use_minified=False) }}"></script>
 <!-- Toastr Notifications -->
-<script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+<!-- <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script> -->
+<script src="{{ adminlte_find_resource('plugins/toastr/toastr.min.js', cdn='local', use_minified=False)}}"></script>
 <!-- PACE -->
 <script src="{{ adminlte_find_resource('plugins/pace/pace.js', cdn='local', use_minified=False) }}"></script>
 <!-- Slimscroll -->
