@@ -313,7 +313,7 @@ def login():
 
     # Génération du form de login
     form = forms.LoginForm()
-    
+
     # Affiche la page de login
     if request.method == 'GET':
         dict_parametres = models.GetDictParametres()
@@ -321,7 +321,7 @@ def login():
     
     # Validation du form de login avec Flask-WTF
     if form.validate_on_submit():
-    
+
         # Recherche l'identifiant
         registered_user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
         
