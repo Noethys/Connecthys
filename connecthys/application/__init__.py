@@ -36,9 +36,9 @@ except :
     config_ok = False
     
 # Flask compress
-#from flask_compress import Compress
-#compress = Compress()
-#compress.init_app(app)
+# from flask_compress import Compress
+# compress = Compress()
+# compress.init_app(app)
 
 # Connexion avec le journal d'évènements
 handler = RotatingFileHandler(os.path.join(REP_CONNECTHYS, "journal.log"), maxBytes=100000, backupCount=10)
@@ -62,8 +62,26 @@ if config_ok == True :
     if Config_application.DEBUG == True :
         app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
         app.config['DEBUG_TB_PROFILER_ENABLED'] = True
+        app.config['DEBUG_TB_PANELS'] = (
+            'flask_debugtoolbar.panels.versions.VersionDebugPanel',
+            # 'flask_debugtoolbar.panels.timer.TimerDebugPanel', # Désactivé car cause un bug
+            'flask_debugtoolbar.panels.headers.HeaderDebugPanel',
+            'flask_debugtoolbar.panels.request_vars.RequestVarsDebugPanel',
+            'flask_debugtoolbar.panels.config_vars.ConfigVarsDebugPanel',
+            'flask_debugtoolbar.panels.template.TemplateDebugPanel',
+            'flask_debugtoolbar.panels.sqlalchemy.SQLAlchemyDebugPanel',
+            'flask_debugtoolbar.panels.logger.LoggingPanel',
+            'flask_debugtoolbar.panels.route_list.RouteListDebugPanel',
+            'flask_debugtoolbar.panels.profiler.ProfilerDebugPanel',
+            'flask_debugtoolbar.panels.g.GDebugPanel',
+        )
         from flask_debugtoolbar import DebugToolbarExtension
         toolbar = DebugToolbarExtension(app)
+
+    # Flask Talisman
+    if not Config_application.DEBUG:
+        from flask_talisman import Talisman
+        Talisman(app, force_https=False, content_security_policy=None)
 
     # Connexion avec flask_login
     from flask_login import LoginManager
@@ -124,5 +142,4 @@ if config_ok == True :
 if config_ok == False :
     AdminLTE(app)
     import noconfig
-    
     
