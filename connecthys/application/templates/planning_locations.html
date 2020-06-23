@@ -177,7 +177,7 @@
 {% block scripts %}
 	{{ super() }}
 	<!-- Calendrier -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+	<script src="{{ adminlte_find_resource('plugins/moment/moment.min.js', cdn='local', use_minified=False)}}"></script>
 	<script src="{{ adminlte_find_resource('plugins/fullcalendar/fullcalendar.min.js', cdn='local', use_minified=False)}}"></script>
 	<script src="{{ adminlte_find_resource('plugins/fullcalendar/locale/fr.js', cdn='local', use_minified=False)}}"></script>
 	<script src="{{ adminlte_find_resource('plugins/fullcalendar/scheduler.min.js', cdn='local', use_minified=False)}}"></script>

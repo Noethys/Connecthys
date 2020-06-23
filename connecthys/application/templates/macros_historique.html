@@ -123,7 +123,7 @@
 			  <div class="modal-body">
 			  
 				<form>
-				<input type='hidden' id="idaction" value=0>
+				<input type='hidden' id="idaction_detail" value=0>
 				</form>
 				
 				<span class="text-blue"><strong><div id="description"></div></strong></span>
@@ -197,7 +197,7 @@
 				// Remplissage des champs
 				var button = $(event.relatedTarget)
 				var modal = $(this)
-				modal.find('#idaction').val(button.data('idaction'))
+				modal.find('#idaction_detail').val(button.data('idaction'))
 				$('#description').text(button.data('description'))
 				modal.find('#detail').val('')
 				

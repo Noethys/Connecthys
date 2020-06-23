@@ -93,7 +93,7 @@
 						<td><center>{{ jour }}</center></td>
 						{% for unite in dict_planning['liste_unites'] %}
 							<td>
-								<center><input type='checkbox' id='case_type' class='flat-black' data-semaine='{{ num_semaine }}' data-jour='{{ rowloop.index0 }}' data-IDunite={{ unite.IDunite }}></center>
+								<center><input type='checkbox' name='case_type' class='flat-black' data-semaine='{{ num_semaine }}' data-jour='{{ rowloop.index0 }}' data-IDunite={{ unite.IDunite }}></center>
 							</td>
 						{% endfor %}
 					</tr>
@@ -331,7 +331,7 @@
 		});
 	</script>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+	<script src="{{ adminlte_find_resource('plugins/moment/moment.min.js', cdn='local', use_minified=False)}}"></script>
 	<script src="{{ adminlte_find_resource('plugins/daterangepicker/daterangepicker.js', cdn='local', use_minified=False)}}"></script>
 	<script>
 	// Préparation de la modal Appliquer une semaine-type
@@ -388,7 +388,7 @@
 
 	
 	<script>
-		$('input#case_type').on('ifClicked', function(event){
+		$("input[name='case_type']").on('ifClicked', function(event){
 			// Coche une unité à la fois
 			if({{ dict_planning["periode"].activite.unites_multiples }} == 0) {
 				var semaine = $(this).attr('data-semaine');
@@ -595,7 +595,7 @@
 			
 			// Récupération des jours de la semaine-type
 			var liste_resultats = [];
-			$("input#case_type:checked").each(function() {
+			$("input[name='case_type']:checked").each(function() {
 				var semaine = parseInt($(this).attr('data-semaine'));
 				var jour = parseInt($(this).attr('data-jour'));
 				var IDunite = parseInt($(this).attr('data-IDunite'));
