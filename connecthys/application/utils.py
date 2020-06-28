@@ -151,9 +151,9 @@ def GetIconeFichier(nomFichier=""):
     else :
         return "fa-file-o"   
     
-def GetNbrePeriodesActives(individu):
+def GetNbrePeriodesActives(inscriptions_actives):
     nbre_periodes_actives = 0
-    for inscription in individu.get_inscriptions() :
+    for inscription in inscriptions_actives:
         if inscription.activite.Get_nbre_periodes_actives() > 0 :
             nbre_periodes_actives += 1
     return nbre_periodes_actives

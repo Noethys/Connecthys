@@ -46,7 +46,7 @@ except Exception as err:
     Base = declarative_base()
     PREFIXE_TABLES = ""
 
-    
+
 def GetVersionDB():
     try :
         version = Parametre.query.filter_by(nom="version").first().parametre
@@ -255,9 +255,9 @@ class User(Base):
                 dict_parametres[nom] = valeur
         return dict_parametres
 
-    def Is_paiement_ligne_actif(self):
-        if GetParametre(nom="PAIEMENT_EN_LIGNE_ACTIF", defaut="False") == "True":
-            if GetParametre(nom="PAIEMENT_OFF_SI_PRELEVEMENT", defaut="False") == "True" and self.GetParametres().get("prelevement_auto", "0") == "1":
+    def Is_paiement_ligne_actif(self, dict_parametres=None):
+        if GetParametre(nom="PAIEMENT_EN_LIGNE_ACTIF", dict_parametres=dict_parametres, defaut="False") == "True":
+            if GetParametre(nom="PAIEMENT_OFF_SI_PRELEVEMENT", dict_parametres=dict_parametres, defaut="False") == "True" and self.GetParametres().get("prelevement_auto", "0") == "1":
                 return False
             return True
         return False
@@ -876,7 +876,7 @@ class Individu(Base):
             datenaiss = self.date_naiss
         age = today.year - datenaiss.year - ((today.month, today.day) < (datenaiss.month, datenaiss.day))
         return u"%d ans" % age
-        
+
     def get_inscriptions(self, avec_periode_actives=False):
         liste_inscriptions = []
         liste_temp = Inscription.query.filter_by(IDfamille=self.IDfamille, IDindividu=self.IDindividu).filter((Inscription.date_desinscription==None)|(Inscription.date_desinscription>datetime.date.today())).all()

@@ -311,12 +311,13 @@ def login():
     if current_user.is_authenticated :
         return redirect(url_for('accueil'))
 
+    dict_parametres = models.GetDictParametres()
+
     # Génération du form de login
     form = forms.LoginForm()
 
     # Affiche la page de login
     if request.method == 'GET':
-        dict_parametres = models.GetDictParametres()
         return render_template('login.html', form=form, dict_parametres=dict_parametres)
     
     # Validation du form de login avec Flask-WTF
@@ -347,12 +348,12 @@ def login():
             
             # Mémorisation du user
             login_user(registered_user, remember=False)
-            texte_bienvenue = models.GetParametre(nom="ACCUEIL_BIENVENUE")
+            texte_bienvenue = models.GetParametre(nom="ACCUEIL_BIENVENUE", dict_parametres=dict_parametres)
             flash(texte_bienvenue)
             app.logger.debug("Connexion reussie de %s", form.identifiant.data)
 
             # Force la modification du mot de passe
-            if "custom" not in registered_user.password and models.GetParametre(nom="MDP_FORCER_MODIFICATION", defaut="True") == "True" :
+            if "custom" not in registered_user.password and models.GetParametre(nom="MDP_FORCER_MODIFICATION", dict_parametres=dict_parametres, defaut="True") == "True" :
                 app.logger.debug("Force modification mot de passe pour %s", form.identifiant.data)
                 return redirect(url_for('force_change_password'))
 
@@ -424,8 +425,10 @@ def accueil():
 @app.route('/accueil_famille')
 @login_required
 def accueil_famille():
+    dict_parametres = models.GetDictParametres()
+
     # Vérifie que son mot de passe est personnalisé, sinon on le logout
-    if "custom" not in current_user.password and models.GetParametre(nom="MDP_FORCER_MODIFICATION", defaut="True") == "True":
+    if "custom" not in current_user.password and models.GetParametre(nom="MDP_FORCER_MODIFICATION", dict_parametres=dict_parametres, defaut="True") == "True":
         flash(u"Vous devez obligatoirement modifier votre mot de passe !", 'error')
         return redirect(url_for('logout'))
 
@@ -442,8 +445,7 @@ def accueil_famille():
     for message in liste_messages_temp :
         if message.Is_actif_today() :
             liste_messages.append(message)
-            
-    dict_parametres = models.GetDictParametres()
+
     app.logger.debug("Page ACCUEIL (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('accueil.html', active_page="accueil_famille",\
                             liste_pieces_manquantes=liste_pieces_manquantes, \
@@ -472,6 +474,8 @@ def accueil_admin():
 def factures():
     if current_user.role != "famille" :
         return redirect(url_for('logout'))
+
+    dict_parametres = models.GetDictParametres()
 
     # Récupération de la liste des factures
     liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
@@ -530,7 +534,7 @@ def factures():
     # Recherche la préfacturation
     liste_prefacturation = []
     prefacturation_has_impaye = False
-    if models.GetParametre(nom="FACTURES_PREFACTURATION") == "True":
+    if models.GetParametre(nom="FACTURES_PREFACTURATION", dict_parametres=dict_parametres) == "True":
         liste_prefacturation = models.Prefacturation.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Prefacturation.IDperiode.desc()).all()
         for prefacturation in liste_prefacturation :
 
@@ -558,9 +562,8 @@ def factures():
         texte_impayes += u"pour un total de <strong>%s</strong>" % utils.CallFonction("Formate_montant", montant_impaye)
 
     # Recherche l'historique des demandes liées aux factures
-    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures")
-    
-    dict_parametres = models.GetDictParametres()
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="factures", dict_parametres=dict_parametres)
+
     app.logger.debug("Page FACTURES (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('factures.html', active_page="factures", liste_factures=liste_factures, texte_impayes=texte_impayes, \
                             liste_paiements=liste_paiements, liste_prefacturation=liste_prefacturation, \
@@ -600,10 +603,11 @@ def envoyer_demande_facture():
                             
 
 def GetPaymentPayzen():
-    site_id = models.GetParametre(nom="PAYZEN_SITE_ID")
-    mode = models.GetParametre(nom="PAYZEN_MODE")
-    certificat_test = models.GetParametre(nom="PAYZEN_CERTIFICAT_TEST")
-    certificat_production = models.GetParametre(nom="PAYZEN_CERTIFICAT_PRODUCTION")
+    dict_parametres = models.GetDictParametres()
+    site_id = models.GetParametre(nom="PAYZEN_SITE_ID", dict_parametres=dict_parametres)
+    mode = models.GetParametre(nom="PAYZEN_MODE", dict_parametres=dict_parametres)
+    certificat_test = models.GetParametre(nom="PAYZEN_CERTIFICAT_TEST", dict_parametres=dict_parametres)
+    certificat_production = models.GetParametre(nom="PAYZEN_CERTIFICAT_PRODUCTION", dict_parametres=dict_parametres)
 
     # Envoi de la requete
     p = Payment("payzen", {
@@ -639,6 +643,8 @@ def effectuer_paiement_en_ligne():
 
     app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
 
+    dict_parametres = models.GetDictParametres()
+
     try:
 
         # Récupération des données de la requête
@@ -650,7 +656,7 @@ def effectuer_paiement_en_ligne():
             return jsonify(success=0, error_msg=u"Le montant doit être supérieur à zéro !")
 
         # Vérifie que le montant est supérieur au montant minimal fixé
-        montant_minimal = float(models.GetParametre(nom="PAIEMENT_EN_LIGNE_MONTANT_MINIMAL"))
+        montant_minimal = float(models.GetParametre(nom="PAIEMENT_EN_LIGNE_MONTANT_MINIMAL", dict_parametres=dict_parametres))
         if montant_reglement < montant_minimal :
             return jsonify(success=0, error_msg=u"Le paiement en ligne nécessite un montant minimal de %.2f € !" % montant_minimal)
 
@@ -677,7 +683,7 @@ def effectuer_paiement_en_ligne():
 
         # --------------------------- Mode démo -----------------------------
 
-        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "4":
+        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME", dict_parametres=dict_parametres) == "4":
             app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE MODE DEMO (IDFamille %s) : montant=%s factures_ID=%s", current_user.identifiant, str(montant_reglement), factures_ID_str)
 
             return jsonify(success=1, systeme_paiement="demo")
@@ -685,10 +691,10 @@ def effectuer_paiement_en_ligne():
 
         # ----------------------- Paiement avec TIPI -------------------------
 
-        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "1":
+        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME", dict_parametres=dict_parametres) == "1":
             systeme_paiement = "tipi_regie"
             liste_regies = models.Regie.query.all()
-            saisie_type = models.GetParametre(nom="PAIEMENT_EN_LIGNE_TIPI_SAISIE")
+            saisie_type = models.GetParametre(nom="PAIEMENT_EN_LIGNE_TIPI_SAISIE", dict_parametres=dict_parametres)
             app.logger.debug("Page EFFECTUER_PAIEMENT EN LIGNE (%s): famille id(%s) saisie_type(%s)", current_user.identifiant, current_user.IDfamille, saisie_type)
 
             # validation
@@ -741,7 +747,7 @@ def effectuer_paiement_en_ligne():
             return jsonify(success=1, systeme_paiement="tipi_regie", urltoredirect=requete[2])
 
         # ----------------------- Paiement avec PAYZEN ----------------------
-        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME") == "3":
+        if models.GetParametre(nom="PAIEMENT_EN_LIGNE_SYSTEME", dict_parametres=dict_parametres) == "3":
             systeme_paiement = "payzen"
 
             # Envoi de la requete
@@ -755,7 +761,7 @@ def effectuer_paiement_en_ligne():
 
             # Enregistrement du paiement dans la base
             m = models.Paiement(IDfamille=current_user.IDfamille, systeme_paiement=systeme_paiement, factures_ID=factures_ID_str,
-                                IDtransaction=transaction_id, montant=montant_reglement, saisie=models.GetParametre(nom="PAYZEN_MODE"),
+                                IDtransaction=transaction_id, montant=montant_reglement, saisie=models.GetParametre(nom="PAYZEN_MODE", dict_parametres=dict_parametres),
                                 ventilation=ventilation_str, horodatage=datetime.datetime.now())
             db.session.add(m)
             db.session.commit()
@@ -942,8 +948,8 @@ def reglements():
                 liste_paiements.append(paiement)
 
     # Recherche l'historique des demandes liées aux règlements
-    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reglements")
     dict_parametres = models.GetDictParametres()
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reglements", dict_parametres=dict_parametres)
     
     app.logger.debug("Page REGLEMENTS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('reglements.html', active_page="reglements", liste_reglements=liste_reglements, \
@@ -992,8 +998,8 @@ def historique():
         return redirect(url_for('logout'))
 
     # Recherche l'historique général
-    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie=None)
     dict_parametres = models.GetDictParametres()
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie=None, dict_parametres=dict_parametres)
     app.logger.debug("Page HISTORIQUE (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('historique.html', active_page="historique", historique=historique, dict_parametres=dict_parametres)
                             
@@ -1074,9 +1080,9 @@ def locations():
         dict_produits[produit.IDproduit] = produit.nom
 
     # Recherche l'historique des demandes liées aux réservations
-    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="locations")
-
     dict_parametres = models.GetDictParametres()
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="locations", dict_parametres=dict_parametres)
+    
     app.logger.debug("Page LOCATIONS (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('locations.html', active_page="locations", prochaines_locations=prochaines_locations, dict_produits=dict_produits, \
                            dict_parametres=dict_parametres, historique=historique)
@@ -1355,19 +1361,40 @@ def reservations():
 
     # Récupération des individus
     liste_individus_temp = models.Individu.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Individu.prenom).all()
-    
+
+    # Récupération des inscriptions
+    inscriptions = models.Inscription.query.filter_by(IDfamille=current_user.IDfamille).filter((models.Inscription.date_desinscription == None) | (models.Inscription.date_desinscription > datetime.date.today())).all()
+    dict_inscriptions = {}
+    liste_activites = []
+    for inscription in inscriptions:
+        dict_inscriptions.setdefault(inscription.IDindividu, [])
+        dict_inscriptions[inscription.IDindividu].append(inscription)
+        if inscription.IDactivite not in liste_activites:
+            liste_activites.append(inscription.IDactivite)
+
+    # Récupération des périodes
+    liste_periodes = models.Periode.query.filter(models.Periode.IDactivite.in_(liste_activites)).all()
+    dict_periodes = {}
+    for periode in liste_periodes:
+        dict_periodes.setdefault(periode.IDactivite, [])
+        if periode.Is_active_today():
+            dict_periodes[periode.IDactivite].append(periode)
+
     liste_individus = []
-    for individu in liste_individus_temp :
-        if len(individu.get_inscriptions()) > 0 :
+    for individu in liste_individus_temp:
+        inscriptions = dict_inscriptions.get(individu.IDindividu, [])
+        if inscriptions:
             # Attribution d'une couleur
-            index_couleur = random.randint(0, len(COULEURS)-1)
+            index_couleur = random.randint(0, len(COULEURS) - 1)
             individu.index_couleur = index_couleur
             individu.couleur = COULEURS[index_couleur]
+            individu.inscriptions_actives = [inscription for inscription in inscriptions if len(dict_periodes.get(inscription.IDactivite, []))]
             liste_individus.append(individu)
-    
+
     # Recherche l'historique des demandes liées aux réservations
-    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reservations")
     dict_parametres = models.GetDictParametres()
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="reservations", dict_parametres=dict_parametres)
+    
     app.logger.debug("Page RESERVATIONS (%s): famille id(%s) - liste_individus: %s", current_user.identifiant, current_user.IDfamille, liste_individus)
     return render_template('reservations.html', active_page="reservations", \
                             liste_individus = liste_individus, \
@@ -1769,9 +1796,9 @@ def renseignements():
         individu.renseignements = dict_renseignements[individu.IDindividu]
         
     # Recherche l'historique des demandes liées aux renseignements
-    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="renseignements")
     dict_parametres = models.GetDictParametres()
-    
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="renseignements", dict_parametres=dict_parametres)
+
     if dict_parametres["RENSEIGNEMENTS_AFFICHER"] == 'False' :
         return redirect(url_for('accueil'))
     
@@ -1992,6 +2019,7 @@ def inscriptions():
             index_couleur = random.randint(0, len(COULEURS)-1)
             individu.index_couleur = index_couleur
             individu.couleur = COULEURS[index_couleur]
+            individu.inscriptions = individu.get_inscriptions()
             liste_individus.append(individu)
     
     # Liste des activités
@@ -2004,8 +2032,9 @@ def inscriptions():
         dict_groupes[groupe.IDactivite].append(groupe)
     
     # Recherche l'historique des demandes liées aux réservations
-    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="inscriptions")
     dict_parametres = models.GetDictParametres()
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="inscriptions", dict_parametres=dict_parametres)
+
     app.logger.debug("Page INSCRIPTIONS (%s): famille id(%s) liste_individus: %s", current_user.identifiant, current_user.IDfamille, liste_individus)
     return render_template('inscriptions.html', active_page="inscriptions", \
                             liste_individus = liste_individus, \
@@ -2394,18 +2423,20 @@ def reset_password(token=None):
 
 # ------------------------------------------------------------------------------------------------------------------
 
-def GetHistorique(IDfamille=None, categorie=None):
+def GetHistorique(IDfamille=None, categorie=None, dict_parametres=None):
     """ Historique : Récupération de la liste des dernières actions liées à une catégorie """
     """ Si categorie == None > Toutes les catégories sont affichées """
     # Récupération de la date de la dernière synchro
-    m = models.Parametre.query.filter_by(nom="derniere_synchro").first()
-    if m != None :
-        derniere_synchro = datetime.datetime.strptime(m.parametre, "%Y%m%d%H%M%S%f")
-    else :
-        derniere_synchro = None
-    
+    derniere_synchro = None
+    if dict_parametres and "derniere_synchro" in dict_parametres:
+        derniere_synchro = datetime.datetime.strptime(dict_parametres.get("derniere_synchro"), "%Y%m%d%H%M%S%f")
+    else:
+        m = models.Parametre.query.filter_by(nom="derniere_synchro").first()
+        if m != None:
+            derniere_synchro = datetime.datetime.strptime(m.parametre, "%Y%m%d%H%M%S%f")
+
     # Récupération des actions
-    historique_delai = int(models.GetParametre(nom="HISTORIQUE_DELAI", defaut=0))
+    historique_delai = int(models.GetParametre(nom="HISTORIQUE_DELAI", dict_parametres=dict_parametres, defaut=0))
     date_limite = datetime.datetime.now() - datetime.timedelta(days=(historique_delai+1)*30)
     if categorie == None :
         liste_actions = models.Action.query.filter(models.Action.IDfamille==IDfamille, models.Action.horodatage>=date_limite).order_by(models.Action.horodatage.desc()).all()
