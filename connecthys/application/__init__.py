@@ -79,7 +79,7 @@ if config_ok == True :
         toolbar = DebugToolbarExtension(app)
 
     # Flask Talisman
-    if not Config_application.DEBUG:
+    if not Config_application.DEBUG and hasattr(Config_application, "TALISMAN") and Config_application.TALISMAN:
         from flask_talisman import Talisman
         Talisman(app, force_https=False, content_security_policy=None)
 
