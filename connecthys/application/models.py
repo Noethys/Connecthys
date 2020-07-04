@@ -131,6 +131,7 @@ def UpgradeDB():
 def RepairDB():
     """ Tentative de réparation de la DB """
     with app.app_context():
+        app.logger.info("Tentative de reparation de la DB")
 
         # Création du répertoire migrations si manquant
         if os.path.isdir(REP_MIGRATIONS) == False :
@@ -141,11 +142,22 @@ def RepairDB():
                 pass
             except Exception as err:
                 pass
+        else:
+            # Suppression de la table alembic et du répertoire des versions
+            app.logger.info("Suppression table alembic_version...")
+            result = db.session.execute("DROP TABLE IF EXISTS alembic_version;")
+            app.logger.info("Suppression du repertoire migrations...")
+            shutil.rmtree(REP_MIGRATIONS)
+            flask_migrate.init(directory=REP_MIGRATIONS)
+            flask_migrate.migrate()
 
-        # Enregistre la dernière num_version dans la table alembic
-        app.logger.info("Stamp...")
-        flask_migrate.stamp(directory=REP_MIGRATIONS)
-
+        # # Enregistre la dernière num_version dans la table alembic
+        # app.logger.info("Stamp...")
+        # try:
+        #     flask_migrate.stamp(directory=REP_MIGRATIONS)
+        # except Exception as err:
+        #     app.logger.info("Erreur dans migration > repair.")
+        #     app.logger.info(err)
 
 
 
