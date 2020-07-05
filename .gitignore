@@ -1,7 +1,9 @@
 # Connecthys
 Travaux/
 migrations/
-journal.log
+temp/
+journal.log*
+debug.log*
 config.py
 *.crypt
 Connecthys.egg-info/
