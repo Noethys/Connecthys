@@ -8,9 +8,7 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-import time
-import os
-import os.path
+import time, os, os.path, datetime
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 from application import db, app, models
@@ -41,7 +39,20 @@ def quick_mapper(table):
 
 def Importation(secret=0):
     """ Importation des données depuis le serveur """
-    
+    # Nettoyage des anciens fichiers de synchro qui traînent
+    try:
+        rep = os.path.join(basedir, "data")
+        hier = datetime.date.today() - datetime.timedelta(days=1)
+        for nom_fichier in os.listdir(rep):
+            if nom_fichier.startswith("import_"):
+                chemin_fichier = os.path.join(rep, nom_fichier)
+                modif_date = datetime.datetime.fromtimestamp(os.path.getmtime(chemin_fichier)).date()
+                if modif_date < hier:
+                    os.remove(chemin_fichier)
+    except Exception as err:
+        app.logger.info("Erreur dans nettoyage des anciens fichiers import")
+        app.logger.info(err)
+
     # Vérifie que le fichier d'import existe bien (vérification du code secret)
     nomFichier = os.path.join(basedir, "data/import_%d.crypt" % secret)
     if not os.path.isfile(nomFichier):
