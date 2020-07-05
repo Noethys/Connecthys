@@ -151,13 +151,13 @@ def RepairDB():
             flask_migrate.init(directory=REP_MIGRATIONS)
             flask_migrate.migrate()
 
-        # # Enregistre la dernière num_version dans la table alembic
-        # app.logger.info("Stamp...")
-        # try:
-        #     flask_migrate.stamp(directory=REP_MIGRATIONS)
-        # except Exception as err:
-        #     app.logger.info("Erreur dans migration > repair.")
-        #     app.logger.info(err)
+        # Enregistre la dernière num_version dans la table alembic
+        app.logger.info("Stamp...")
+        try:
+            flask_migrate.stamp(directory=REP_MIGRATIONS)
+        except Exception as err:
+            app.logger.info("Erreur dans migration > repair.")
+            app.logger.info(err)
 
 
 

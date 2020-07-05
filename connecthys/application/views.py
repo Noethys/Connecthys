@@ -324,8 +324,24 @@ def login():
     if form.validate_on_submit():
 
         # Recherche l'identifiant
-        registered_user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
-        
+        try:
+            registered_user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
+        except Exception as err:
+            app.logger.info("Erreur dans recherche du user durant le login")
+            app.logger.info(err)
+
+            # Tentative de réparation de la DB
+            if "no such column" in str(err) or "Unknown column" in str(err):
+                app.logger.info("Il semble manquer une colonne : tentative de reparation de la DB")
+                try:
+                    models.RepairDB()
+                    models.UpgradeDB()
+                except:
+                    pass
+
+            flash(u"Une erreur a été rencontrée. Veuillez réessayer de vous connecter.", 'error')
+            return redirect(url_for('login'))
+
         # Codes d'accès corrects
         if registered_user is not None:
             app.logger.debug("Connexion de l'utilisateur %s", form.identifiant.data)
