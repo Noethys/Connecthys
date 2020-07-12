@@ -222,6 +222,10 @@ def load_user(session_token):
     
 @app.before_request
 def before_request():
+    # Vérifie si le mode maintenance est activé
+    if os.path.exists("maintenance.txt"):
+        abort(503)
+
     # Mémorise l'utilisateur en cours
     g.user = current_user
 
@@ -301,6 +305,10 @@ def handle_csrf_error(e):
     app.logger.debug(u"Erreur de CSRF :")
     app.logger.debug(e.description)
     return render_template('csrf_error.html'), 400
+
+@app.errorhandler(503)
+def maintenance(error):
+    return render_template('maintenance.html'), 503
 
 
 # ------------------------- LOGIN et LOGOUT ---------------------------------- 
