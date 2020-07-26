@@ -291,6 +291,15 @@
 				is_dirty();
 			};
 
+			function verifie_periode_saisie(start, end) {
+				var date_max = moment().add({{ GetParametre('LOCATIONS_PERIODE_SAISIE', dict_parametres) }}, 'M');
+				if(start > date_max || end > date_max){
+					alert("Cette période de réservation n'est pas encore ouverte !");
+					return false;
+				}
+				return true;
+			};
+
 			$('#calendrier_locations').fullCalendar({
 				schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
 				selectable: true,
@@ -335,9 +344,11 @@
 				eventAllow: function(dropInfo, draggedEvent) {
 					if(draggedEvent.start < moment() || draggedEvent.end < moment()) {
 						return false;
-					} else {
-						return true;
 					};
+					if(verifie_periode_saisie(draggedEvent.start, draggedEvent.end) == false) {
+						return false;
+					};
+					return true;
 				},
 				eventDrop: function(event) { // called when an event (already on the calendar) is moved
 					var resource = $("#calendrier_locations").fullCalendar("getResourceById", event.resourceId);
@@ -347,9 +358,12 @@
 				},
 				select: function(start, end, allDay, view, resource) {
 					if(start < moment() || end < moment()){
-						alert("Vous ne pouvez enregistrer une location passée !");
+						alert("Vous ne pouvez pas enregistrer une location passée !");
 						return false
 					};
+					if(verifie_periode_saisie(start, end) == false) {
+						return false
+					}
 					if(isOverlapping(null, start, end, resource.id)) {
 						alert("Attention, l'événement que vous essayez de créer chevauche un autre événement !");
 						return false
@@ -401,6 +415,9 @@
 					alert("Vous ne pouvez enregistrer une location passée !");
 					return false
 				}
+				if(verifie_periode_saisie(debut, fin) == false) {
+					return false;
+				};
 				if(isOverlapping(event_edit._id, debut, fin, event_edit.resourceId)) {
 					alert("L'événement que vous essayez de modifier chevauche un autre événement !");
 					return false
