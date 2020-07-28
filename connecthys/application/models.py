@@ -669,8 +669,9 @@ class Produit(Base):
     quantite = Column(Integer)
     montant = Column(Float)
     nom_categorie = Column(String(200))
+    activation_partage = Column(Integer)
 
-    def __init__(self, IDproduit=None, IDcategorie=None, nom=None, quantite=None, montant=None, nom_categorie=None):
+    def __init__(self, IDproduit=None, IDcategorie=None, nom=None, quantite=None, montant=None, nom_categorie=None, activation_partage=None):
         if IDproduit != None:
             self.IDproduit = IDproduit
         self.IDcategorie = IDcategorie
@@ -678,6 +679,7 @@ class Produit(Base):
         self.quantite = quantite
         self.montant = montant
         self.nom_categorie = nom_categorie
+        self.activation_partage = activation_partage
 
     def __repr__(self):
         return '<IDproduit %d>' % (self.IDproduit)
@@ -691,8 +693,9 @@ class Location(Base):
     date_debut = Column(DateTime)
     date_fin = Column(DateTime)
     quantite = Column(Integer)
+    partage = Column(Integer)
 
-    def __init__(self, IDlocation=None, IDfamille=None, IDproduit=None, date_debut=None, date_fin=None, quantite=None):
+    def __init__(self, IDlocation=None, IDfamille=None, IDproduit=None, date_debut=None, date_fin=None, quantite=None, partage=None):
         if IDlocation != None:
             self.IDlocation = IDlocation
         self.IDfamille = IDfamille
@@ -700,6 +703,7 @@ class Location(Base):
         self.date_debut = date_debut
         self.date_fin = date_fin
         self.quantite = quantite
+        self.partage = partage
 
     def __repr__(self):
         return '<IDlocation %d>' % (self.IDlocation)
@@ -715,8 +719,9 @@ class Reservation_location(Base):
     etat = Column(String(100))
     IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
     action = relationship("Action")
+    partage = Column(Integer)
 
-    def __init__(self, IDreservation=None, IDlocation=None, date_debut=None, date_fin=None, IDproduit=None, etat=None, IDaction=None):
+    def __init__(self, IDreservation=None, IDlocation=None, date_debut=None, date_fin=None, IDproduit=None, etat=None, IDaction=None, partage=None):
         if IDreservation != None:
             self.IDreservation = IDreservation
         self.IDlocation = IDlocation
@@ -725,6 +730,7 @@ class Reservation_location(Base):
         self.IDproduit = IDproduit
         self.etat = etat
         self.IDaction = IDaction
+        self.partage = partage
 
     def __repr__(self):
         return '<IDreservation %d>' % (self.IDreservation)

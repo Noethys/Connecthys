@@ -1118,8 +1118,12 @@ def planning_locations():
     if current_user.role != "famille":
         return redirect(url_for('logout'))
 
+    liste_produits = []
+    for produit in models.Produit.query.order_by(models.Produit.nom).all():
+        liste_produits.append({"IDproduit": produit.IDproduit, "partage": 1 if produit.activation_partage else 0})
+
     dict_parametres = models.GetDictParametres()
-    return render_template('planning_locations.html', active_page="locations", dict_parametres=dict_parametres)
+    return render_template('planning_locations.html', active_page="locations", liste_produits=liste_produits, dict_parametres=dict_parametres)
 
 
 @app.route('/get_produits')
@@ -1132,7 +1136,8 @@ def get_produits():
             "id": str(produit.IDproduit),
             "groupId": produit.nom_categorie,
             "title": produit.nom,
-            "eventColor": 'green'
+            "eventColor": 'green',
+            "activation_partage": produit.activation_partage,
         }
         liste_finale.append(dictProduit)
     return jsonify(liste_finale)
@@ -1183,6 +1188,7 @@ def get_locations(idfamille=None):
             "resourceId": str(location.IDproduit),
             'overlap': False,
             'color': "green",
+            "partage": location.partage,
         }
 
         # Si la location a déjà commencé, on empêche la modification
@@ -1219,6 +1225,7 @@ def get_locations(idfamille=None):
                 "resourceId": str(reservation.IDproduit),
                 "overlap": False,
                 "color": "orange",
+                "partage": reservation.partage,
             }
             liste_events.append(dictEvent)
 
@@ -1244,6 +1251,7 @@ def detail_envoi_locations():
                 "resourceId": dict_event["event"]["resourceId"],
                 "nom_ressource": dict_event["event"]["nom_ressource"],
                 "id": dict_event["event"]["id"],
+                "partage": dict_event["event"]["partage"],
             })
 
         liste_modifications = sorted(liste_modifications, key=itemgetter('start'))
@@ -1296,6 +1304,7 @@ def envoyer_locations():
             "IDproduit": int(dict_event["event"]["resourceId"]),
             "nom_produit": dict_event["event"]["nom_ressource"],
             "id": dict_event["event"]["id"],
+            "partage": dict_event["event"]["partage"],
         })
         liste_dates.append(start)
         liste_dates.append(end)
@@ -1332,7 +1341,8 @@ def envoyer_locations():
 
         # Enregistrement des réservations
         for dict_event in liste_modifications:
-            reservation = models.Reservation_location(IDlocation=str(dict_event["id"]), date_debut=dict_event["debut"], date_fin=dict_event["fin"], IDproduit=dict_event["IDproduit"], IDaction=action.IDaction, etat=dict_event["etat"])
+            reservation = models.Reservation_location(IDlocation=str(dict_event["id"]), date_debut=dict_event["debut"], date_fin=dict_event["fin"],
+                                                      IDproduit=dict_event["IDproduit"], IDaction=action.IDaction, etat=dict_event["etat"], partage=dict_event["partage"])
             db.session.add(reservation)
 
         db.session.commit()
@@ -1631,7 +1641,7 @@ def planning():
         return redirect(url_for('reservations'))
     
     dict_parametres = models.GetDictParametres()
-    return render_template('planning.html', active_page="reservations", dict_planning = dict_planning, dict_parametres=dict_parametres)
+    return render_template('planning.html', active_page="reservations", dict_planning=dict_planning, dict_parametres=dict_parametres)
 
     
 @app.route('/imprimer_reservations')

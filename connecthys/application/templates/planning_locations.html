@@ -69,6 +69,9 @@
 									</div>
 									<input type="text" class="form-control pull-right" id="periode_event">
 								</div>
+								<div class="input-group" id="div_partage" style="margin-top: 20px;">
+									<input type='checkbox' id="check_partage" class='square-blue'><span style="margin-left: 8px;">J'accepte que cette location soit partagée avec un autre loueur</span>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -186,7 +189,13 @@
 	<script src="{{ adminlte_find_resource('plugins/daterangepicker/daterangepicker.js', cdn='local', use_minified=False)}}"></script>
 
 	<script>
-	// Préparation de la modal Appliquer une semaine-type
+	// Importation des activation_partage de chaque produit
+	var dict_produits = {};
+	{% for dict_produit in liste_produits %}
+		dict_produits[{{ dict_produit.IDproduit }}] = {{ dict_produit.partage }};
+	{% endfor %}
+
+	// Préparation de la modal
 	jQuery(document).ready(function () {
 		// Préparation du datepicker
 		$('#periode_event').daterangepicker({
@@ -278,6 +287,7 @@
 					resourceId: event.resourceId,
 					nom_ressource: $("#calendrier_locations").fullCalendar("getResourceById", event.resourceId).title,
 					id: event.id,
+					partage: event.partage,
 				};
 				return new_event;
 			};
@@ -369,14 +379,15 @@
 						return false
 					};
 					new_event = {
-							title: resource.title,
-							start: start,
-							end: end,
-							allDay: allDay,
-							resourceId: resource.id,
-							overlap: false,
-							color: "orange",
-							id: create_UUID(),
+						title: resource.title,
+						start: start,
+						end: end,
+						allDay: allDay,
+						resourceId: resource.id,
+						overlap: false,
+						color: "orange",
+						id: create_UUID(),
+						partage: 0,
 					};
 					$("#calendrier_locations").fullCalendar('renderEvent',
 						new_event,
@@ -395,6 +406,16 @@
 					$('#produit_event').html(resource.groupId + ' - ' + resource.title);
 					$("#periode_event").data('daterangepicker').setStartDate(event.start);
 					$("#periode_event").data('daterangepicker').setEndDate(event.end);
+					if(dict_produits[resource.id] === 1) {
+						$("#div_partage").show();
+					} else {
+						$("#div_partage").hide();
+					}
+					if(event.partage === 1) {
+						$("#check_partage").iCheck("check");
+					} else {
+						$("#check_partage").iCheck("uncheck");
+					};
 					event_edit = event;
 					$('#modal_event').modal();
 				},
@@ -411,6 +432,11 @@
 				// Récupération de la période d'application
 				var debut = $('#periode_event').data('daterangepicker').startDate;
 				var fin = $('#periode_event').data('daterangepicker').endDate;
+				if($('#check_partage').iCheck('update')[0].checked === true) {
+					var partage = 1;
+				} else {
+					var partage = 0;
+				}
 				if(debut < moment() || fin < moment()){
 					alert("Vous ne pouvez enregistrer une location passée !");
 					return false
@@ -422,7 +448,8 @@
 					alert("L'événement que vous essayez de modifier chevauche un autre événement !");
 					return false
 				};
-				if((event_edit.start.format('YYYY-MM-DD HH:mm:ss') != debut.format('YYYY-MM-DD HH:mm:ss')) || (event_edit.end.format('YYYY-MM-DD HH:mm:ss') != fin.format('YYYY-MM-DD HH:mm:ss'))) {
+				if((event_edit.partage != partage || event_edit.start.format('YYYY-MM-DD HH:mm:ss') != debut.format('YYYY-MM-DD HH:mm:ss')) || (event_edit.end.format('YYYY-MM-DD HH:mm:ss') != fin.format('YYYY-MM-DD HH:mm:ss'))) {
+					event_edit.partage = partage;
 					modifier_event(event_edit);
 					event_edit.start = debut;
 					event_edit.end = fin;
