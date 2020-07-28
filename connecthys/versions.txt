@@ -81,3 +81,4 @@ version=0.7.5 # version_min_noethys=1.2.7.8
 version=0.7.6 # version_min_noethys=1.2.7.8
 version=0.7.7 # version_min_noethys=1.2.7.8
 version=0.7.8 # version_min_noethys=1.2.7.8
+version=0.7.9 # version_min_noethys=1.2.8.0
