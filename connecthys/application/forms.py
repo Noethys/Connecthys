@@ -8,16 +8,25 @@
 # Licence:         Licence GNU GPL
 #--------------------------------------------------------------
 
-try :
+try:
     from flask_wtf import FlaskForm
-except :
+    # from flask_wtf import RecaptchaField
+except:
     # Pour la compatibilit� avec les anciennes version de flask_wtf
     from flask_wtf import Form as FlaskForm
 
-from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField, SelectField
+from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField, SelectField, StringField
+from wtforms.validators import DataRequired
 
 
-class LoginForm(FlaskForm):  
+class LoginFormWithCaptcha(FlaskForm):
+    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
+    password = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=20)])
+    remember = BooleanField("remember", default=False)
+    # recaptcha = RecaptchaField()
+    captcha = StringField("captcha", validators=[DataRequired()])
+
+class LoginForm(FlaskForm):
     identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
     password = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=20)])
     remember = BooleanField("remember", default=False)
@@ -32,6 +41,12 @@ class ResetPassword(FlaskForm):
     password1 = PasswordField('password1',  [validators.Required(), validators.Length(min=0, max=20)])
     password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
     accept = BooleanField("accept", default=False)
+
+class LostPasswordWithCaptcha(FlaskForm):
+    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=1, max=20)])
+    email = TextField('email',  [validators.Required(), validators.Length(min=3, max=50)])
+    # recaptcha = RecaptchaField()
+    captcha = StringField("captcha", validators=[DataRequired()])
 
 class LostPassword(FlaskForm):
     identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=1, max=20)])

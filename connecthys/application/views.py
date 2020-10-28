@@ -18,7 +18,7 @@ except :
     from flask_wtf import CsrfProtect
 from itsdangerous import URLSafeTimedSerializer
 from flask_wtf.csrf import CSRFError
-from application import app, login_manager, db, mail, csrf
+from application import app, login_manager, db, mail, csrf, captcha
 from application import models, forms, utils, updater, exemples
 from sqlalchemy import or_
 from eopayment import Payment
@@ -322,7 +322,11 @@ def login():
     dict_parametres = models.GetDictParametres()
 
     # Génération du form de login
-    form = forms.LoginForm()
+    # if app.config.get('RECAPTCHA_ACTIVATION') and app.config.get('RECAPTCHA_PUBLIC_KEY'):
+    if app.config.get('CAPTCHA', 1) == 1:
+        form = forms.LoginFormWithCaptcha()
+    else:
+        form = forms.LoginForm()
 
     # Affiche la page de login
     if request.method == 'GET':
@@ -331,6 +335,11 @@ def login():
     # Validation du form de login avec Flask-WTF
     if form.validate_on_submit():
 
+        # Vérification du captcha
+        if hasattr(form, "captcha") and not captcha.validate():
+            flash(u"Le code de sécurité n'a pas été correctement recopié", 'error')
+            return redirect(url_for('login'))
+            
         # Recherche l'identifiant
         try:
             registered_user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
@@ -385,7 +394,10 @@ def login():
             #return redirect(request.args.get('next') or url_for('accueil'))
 
     # Re-demande codes si incorrects
-    flash(u"Codes d'accès incorrects" , 'error')
+    if "recaptcha" in form.errors:
+        flash(u"Vous devez cocher la case 'Je ne suis pas un robot'", 'error')
+    else:
+        flash(u"Codes d'accès incorrects", 'error')
     return redirect(url_for('login'))
                    
         
@@ -2342,7 +2354,11 @@ def lost_password():
         return redirect(url_for('login'))
 
     # Génération du form
-    form = forms.LostPassword()
+    # if app.config.get('RECAPTCHA_ACTIVATION') and app.config.get('RECAPTCHA_PUBLIC_KEY'):
+    if app.config.get('CAPTCHA', 1) == 1:
+        form = forms.LostPasswordWithCaptcha()
+    else:
+        form = forms.LostPassword()
     dict_parametres = models.GetDictParametres()
 
     # Affiche la page de login
@@ -2353,6 +2369,11 @@ def lost_password():
     if form.validate_on_submit():
 
         app.logger.debug("Demande reinit password identifiant=%s email=%s", form.identifiant.data, form.email.data)
+
+        # Vérification du captcha
+        if hasattr(form, "captcha") and not captcha.validate():
+            flash(u"Le code de sécurité n'a pas été correctement recopié", 'error')
+            return redirect(url_for('lost_password'))
 
         # Recherche si l'identifiant est correct
         user = models.User.query.filter_by(identifiant=form.identifiant.data).first()
@@ -2403,6 +2424,8 @@ def lost_password():
         return redirect(url_for('login'))
 
     # Renvoie le formulaire
+    if "recaptcha" in form.errors:
+        flash(u"Vous devez cocher la case 'Je ne suis pas un robot'", 'error')
     return redirect(url_for('lost_password'))
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])

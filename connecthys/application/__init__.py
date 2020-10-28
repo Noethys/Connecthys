@@ -83,6 +83,28 @@ if config_ok == True :
         from flask_talisman import Talisman
         Talisman(app, force_https=False, content_security_policy=None)
 
+    # Recaptcha
+    # try:
+    #     from data.config_extra import Config_extra
+    #     app.config.from_object(Config_extra)
+    # except:
+    #     app.config['RECAPTCHA_ACTIVATION'] = False
+
+    # Captcha
+    if app.config.get('CAPTCHA', 1) == 1:
+        from flask_sessionstore import Session
+        # from flask_session_captcha import FlaskSessionCaptcha
+        from captcha import MyFlaskSessionCaptcha as FlaskSessionCaptcha
+        app.config['SESSION_TYPE'] = 'sqlalchemy'
+        Session(app)
+        app.config['CAPTCHA_ENABLE'] = True
+        app.config['CAPTCHA_LENGTH'] = 5
+        app.config['CAPTCHA_WIDTH'] = 320
+        app.config['CAPTCHA_HEIGHT'] = 50
+        captcha = FlaskSessionCaptcha(app)
+    else:
+        captcha = None
+
     # Connexion avec flask_login
     from flask_login import LoginManager
     login_manager = LoginManager()
