@@ -94,7 +94,7 @@ if config_ok == True :
     if app.config.get('CAPTCHA', 1) == 1:
         from flask_sessionstore import Session
         # from flask_session_captcha import FlaskSessionCaptcha
-        from captcha import MyFlaskSessionCaptcha as FlaskSessionCaptcha
+        from captchas import MyFlaskSessionCaptcha as FlaskSessionCaptcha
         app.config['SESSION_TYPE'] = 'sqlalchemy'
         Session(app)
         app.config['CAPTCHA_ENABLE'] = True
