@@ -14,6 +14,7 @@ import shutil
 import os.path
 import traceback
 import six
+from dateutil import relativedelta
 
 
 try :
@@ -795,25 +796,38 @@ class Activite(Base):
                 options = limite[2]
             else :
                 options = ""
-            
-            date_limite = datetime.datetime(year=date.year, month=date.month, day=date.day, hour=int(heure[:2]), minute=int(heure[3:]))
-            x = 1
-            while x <= nbre_jours :
-                date_limite = date_limite - datetime.timedelta(days=1)
-                date_valide = True
-                
-                # Vérifie que la date est hors week-end
-                if "weekends" in options and date_limite.weekday() in (5, 6) :
-                    date_valide = False
-                    
-                # Vérifie que la date est hors fériés
-                if "feries" in options and utils.CallFonction("EstFerie", date_limite, dict_planning) == True :
-                    date_valide = False
-                    
-                if date_valide == True :
-                    x += 1
 
-            if datetime.datetime.now() > date_limite :
+            jours_semaine = [relativedelta.MO, relativedelta.TU, relativedelta.WE, relativedelta.TH, relativedelta.FR, relativedelta.SA, relativedelta.SU]
+            date_limite = datetime.datetime(year=date.year, month=date.month, day=date.day, hour=int(heure[:2]), minute=int(heure[3:]))
+
+            # Jour J-x
+            if 0 <= nbre_jours <= 999:
+                x = 1
+                while x <= nbre_jours :
+                    date_limite = date_limite - datetime.timedelta(days=1)
+                    date_valide = True
+
+                    # Vérifie que la date est hors week-end
+                    if "weekends" in options and date_limite.weekday() in (5, 6) :
+                        date_valide = False
+
+                    # Vérifie que la date est hors fériés
+                    if "feries" in options and utils.CallFonction("EstFerie", date_limite, dict_planning) == True :
+                        date_valide = False
+
+                    if date_valide == True :
+                        x += 1
+
+            # Lundi, mardi, mercredi... précédent
+            if 1000 <= nbre_jours <= 1006:
+                date_limite = date_limite - relativedelta.relativedelta(days=1, weekday=jours_semaine[nbre_jours-1000](-1))
+
+            # Lundi, mardi, mercredi... de la semaine précédente
+            if 2000 <= nbre_jours <= 2006:
+                date_limite = date_limite - relativedelta.relativedelta(weekday=relativedelta.SU(-1)) - relativedelta.relativedelta(weekday=jours_semaine[nbre_jours-2000](-1))
+
+            # Validation de la date limite
+            if datetime.datetime.now() > date_limite:
                 return False
 
         return True
