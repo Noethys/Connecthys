@@ -112,12 +112,13 @@ if config_ok == True :
 
     # Captcha
     if app.config.get('CAPTCHA', 1) == 1:
-        from flask_sessionstore import Session
+        from flask_sessionstore import Session, SqlAlchemySessionInterface
         # from flask_session_captcha import FlaskSessionCaptcha
         from captchas import MyFlaskSessionCaptcha as FlaskSessionCaptcha
         app.config['SESSION_TYPE'] = 'sqlalchemy'
         session = Session(app)
-        session.app.session_interface.db.create_all()
+        SqlAlchemySessionInterface(app, db, "sessions", "sess_")
+        # session.app.session_interface.db.create_all()
         app.config['CAPTCHA_ENABLE'] = True
         app.config['CAPTCHA_LENGTH'] = 5
         app.config['CAPTCHA_WIDTH'] = 320
