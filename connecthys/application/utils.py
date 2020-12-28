@@ -256,10 +256,17 @@ def TriElementsPourBlog(liste_elements=[]):
     return liste_temp
 
 def FusionDonneesOrganisateur(texte="", dict_parametres={}):
+    if six.PY2 and isinstance(texte, buffer):
+        stream = six.BytesIO(texte)
+        texte = stream.getvalue()
+        texte = texte.decode("utf8")
+
     for key, valeur in dict_parametres.items():
         if key.startswith("ORGANISATEUR_") :
             if six.PY3:
-                texte = texte.replace(b"{%s}" % key.encode('utf-8'), valeur.encode('utf-8'))
+                if isinstance(texte, bytes):
+                    texte = texte.decode()
+                texte = texte.replace("{%s}" % key, valeur)
             else:
                 texte = texte.replace(u"{%s}" % key, valeur)
     return texte
