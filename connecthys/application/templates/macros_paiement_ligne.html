@@ -74,6 +74,13 @@
 				<div>
 				    Montant du règlement : <strong><span class="total">0.00 €</span></strong>
 				</div>
+
+				{% if GetParametre('PAYZEN_ECHELONNEMENT', dict_parametres) != "True" %}
+					</br>
+					<div>
+						<input type="checkbox" name="check_echelonnement" class="flat-green" unchecked> Payer en 3 fois sans frais (Echelonnement sur 3 mois)
+					</div>
+				{% endif %}
 			</div>
 		  </div>
 		  <div class="modal-footer">
@@ -152,12 +159,16 @@ Validation du paiement en ligne
 			var nbr_selected_impayes = 0;
 			var selected_impayes = [];
 			var montant_reglement = 0;
+			var paiement_echelonne = 0;
 			$('#message_erreur').text('');
 			$("input[name='check_impaye']:checked").each(function() {
 				nbr_selected_impayes += 1;
 				selected_impayes.push($(this).attr("data-type") + "##" + $(this).attr("data-id") + "##" + $(this).attr("data-solde"));
 				montant_reglement += parseFloat($(this).attr("data-solde"));
 			});
+			if (($("input[name='check_echelonnement']").length) && ($("input[name='check_echelonnement']").iCheck('update')[0].checked === true)) {
+		    	paiement_echelonne = 1;
+			}
 
 			$.ajax({
 				async: false,
@@ -169,6 +180,7 @@ Validation du paiement en ligne
 				data: {
 					liste_impayes: selected_impayes.toString(),
 					montant_reglement: montant_reglement,
+					paiement_echelonne: paiement_echelonne,
 				},
 				success: function(data) {
 					if (data.success) {

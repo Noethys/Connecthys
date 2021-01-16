@@ -23,7 +23,7 @@ from application import models, forms, utils, updater, exemples
 from sqlalchemy import or_
 from eopayment import Payment
 from operator import itemgetter
-import six
+import six, re
 
 try :
     from flask_mail import Message
@@ -682,10 +682,10 @@ def effectuer_paiement_en_ligne():
     dict_parametres = models.GetDictParametres()
 
     try:
-
         # Récupération des données de la requête
         montant_reglement = request.args.get("montant_reglement", ",", type=float)
         liste_impayes_txt = request.args.get("liste_impayes", ",", type=str)
+        paiement_echelonne = request.args.get("paiement_echelonne", 0, type=int)
 
         # Vérifie que le montant est supérieur à zéro
         if montant_reglement == 0.0 :
@@ -790,7 +790,17 @@ def effectuer_paiement_en_ligne():
             p = GetPaymentPayzen()
 
             email = utils.CallFonction("DecrypteChaine", current_user.email).split(";")[0]
-            requete = p.request(amount=montant_reglement, email=email)
+            if paiement_echelonne == 1:
+                # Calcul des dates et montants échelonnés
+                montant_total = montant_reglement * 100
+                today = datetime.date.today()
+                paiement_1 = "%s=%d" % (today.strftime("%Y%m%d"), (montant_total // 3) + (montant_total % 3))
+                paiement_2 = "%s=%d" % ((today + datetime.timedelta(days=30)).strftime("%Y%m%d"), montant_total // 3)
+                paiement_3 = "%s=%d" % ((today + datetime.timedelta(days=60)).strftime("%Y%m%d"), montant_total // 3)
+                vads_payment_config = "MULTI_EXT:%s;%s;%s" % (paiement_1, paiement_2, paiement_3)
+            else:
+                vads_payment_config = "SINGLE"
+            requete = p.request(amount=montant_reglement, email=email, vads_payment_config=vads_payment_config)
             transaction_id, f, form = requete
 
             app.logger.debug("Page EFFECTUER_PAIEMENT_EN_LIGNE PAYZEN (IDFamille %s) : IDtransaction=%s montant=%s factures_ID=%s", current_user.identifiant, transaction_id, str(montant_reglement), factures_ID_str)
@@ -851,10 +861,19 @@ def ipn_payzen():
     paiement.message = reponse.bank_status.decode("utf8")
     db.session.commit()
 
+    # Paiement échelonné
+    vads_payment_config = request.form.get("vads_payment_config", "SINGLE", type=str)
+    vads_payment_config = vads_payment_config.replace("=", ">")
+
     # Enregistrement de l'action
     if resultat == "PAID":
-        parametres = u"systeme_paiement=%s#factures_ID=%s#IDpaiement=%s#IDtransaction=%s#montant=%s" % (paiement.systeme_paiement, paiement.factures_ID, paiement.IDpaiement, paiement.IDtransaction, paiement.montant)
+        parametres = u"systeme_paiement=%s#factures_ID=%s#IDpaiement=%s#IDtransaction=%s#montant=%s#config=%s" % (paiement.systeme_paiement, paiement.factures_ID, paiement.IDpaiement, paiement.IDtransaction, paiement.montant, vads_payment_config)
         commentaire = paiement.message
+        if vads_payment_config != "SINGLE":
+            liste_paiements = []
+            for date, montant in re.findall(r"([0-9]+)>([0-9]+)", vads_payment_config):
+                liste_paiements.append(u"%s (%s)" % (float(montant)/100, datetime.datetime.strptime(date, "%Y%m%d").strftime("%d/%m/%Y")))
+            commentaire += u". Paiement en plusieurs fois : %s." % ", ".join(liste_paiements)
         description = u"Paiement en ligne - Transaction n°%s de %s" % (paiement.IDtransaction.split("_")[1], utils.Formate_montant(paiement.montant))
         m = models.Action(IDfamille=paiement.IDfamille, categorie="reglements", action="paiement_en_ligne", IDpaiement=paiement.IDpaiement,
                           description=description, etat="attente", commentaire=commentaire, parametres=parametres, ventilation=paiement.ventilation)
