@@ -791,6 +791,11 @@ def effectuer_paiement_en_ligne():
 
             email = utils.CallFonction("DecrypteChaine", current_user.email).split(";")[0]
             if paiement_echelonne == 1:
+                # Vérifie le montant minimal pour le paiement échelonné
+                montant_minimal_echelonnement = 30.0
+                if montant_reglement < montant_minimal_echelonnement:
+                    return jsonify(success=0, error_msg=u"Le paiement en plusieurs fois nécessite un montant minimal de %.2f € !" % montant_minimal_echelonnement)
+
                 # Calcul des dates et montants échelonnés
                 montant_total = montant_reglement * 100
                 today = datetime.date.today()
