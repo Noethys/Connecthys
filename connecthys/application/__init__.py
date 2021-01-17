@@ -170,5 +170,5 @@ if config_ok == True :
 # Si configuration absente     
 if config_ok == False :
     AdminLTE(app)
-    import noconfig
+    from . import noconfig
     
