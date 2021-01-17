@@ -23,7 +23,7 @@ else:
 
 
 # Récupération du numéro de version de l'application
-import updater
+from . import updater
 __version__ = updater.GetVersionActuelle()
 
 # Init application
