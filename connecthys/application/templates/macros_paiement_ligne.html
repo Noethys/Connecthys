@@ -75,7 +75,7 @@
 				    Montant du règlement : <strong><span class="total">0.00 €</span></strong>
 				</div>
 
-				{% if GetParametre('PAYZEN_ECHELONNEMENT', dict_parametres) != "True" %}
+				{% if GetParametre('PAYZEN_ECHELONNEMENT', dict_parametres) == "True" %}
 					</br>
 					<div>
 						<input type="checkbox" name="check_echelonnement" class="flat-green" unchecked> Payer en 3 fois sans frais (Echelonnement sur 3 mois)
