@@ -2,6 +2,7 @@
 Travaux/
 migrations/
 temp/
+pieces/
 journal.log*
 debug.log*
 config.py

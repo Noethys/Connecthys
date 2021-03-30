@@ -24,6 +24,8 @@ from sqlalchemy import or_
 from eopayment import Payment
 from operator import itemgetter
 import six, re
+from uuid import uuid4
+from cryptage import IMPORT_AES, CrypterFichier
 
 try :
     from flask_mail import Message
@@ -1066,11 +1068,51 @@ def historique():
                             
 # ------------------------- PIECES ---------------------------------- 
 
-@app.route('/pieces')
+@app.route('/pieces', methods=['GET', 'POST'])
 @login_required
 def pieces():
-    if current_user.role != "famille" :
+    if current_user.role != "famille":
         return redirect(url_for('logout'))
+
+    # S'il s'agit d'un upload de pièce
+    if request.method == 'POST' and 'piece' in request.files:
+        nom, ext = request.files['piece'].filename.rsplit(".", 1)
+        try:
+            nom_fichier = app.pieces.save(request.files["piece"], name="%s.%s" % (str(uuid4()), ext))
+        except:
+            flash(u"Vous ne pouvez pas transmettre cette pièce", 'error')
+            return redirect(url_for('pieces'))
+        chemin_fichier = os.path.join(app.REP_PIECES, nom_fichier)
+
+        # Cryptage du fichier
+        if IMPORT_AES:
+            cryptage_mdp = app.config['SECRET_KEY'][:10]
+            resultat = CrypterFichier(chemin_fichier, chemin_fichier, cryptage_mdp)
+
+        choix_type_piece = request.form.get("choix_type_piece", "", type=int)
+        titre_piece = request.form.get("titre_piece", "", type=six.text_type)
+        commentaire = request.form.get("commentaire", "", type=six.text_type)
+        parametres = "chemin=%s" % chemin_fichier
+
+        # Recherche la pièce manquante
+        IDindividu = None
+        if choix_type_piece:
+            piece_manquante = models.Piece_manquante.query.filter_by(IDpiece_manquante=choix_type_piece).first()
+            titre_piece = piece_manquante.GetNom()
+            parametres += "#IDtype_piece=%d" % piece_manquante.IDtype_piece
+            if piece_manquante.IDindividu:
+                IDindividu = piece_manquante.IDindividu
+
+        description = u"Envoi de la pièce %s" % titre_piece
+        m = models.Action(IDfamille=current_user.IDfamille, IDindividu=IDindividu, categorie="pieces", action="envoyer", description=description, etat="attente", commentaire=commentaire, parametres=parametres)
+        db.session.add(m)
+        db.session.commit()
+
+        flash(u"Pièce enregistrée avec succès")
+        return redirect(url_for('pieces'))
+
+    # Form envoi de pièces
+    form = forms.Piece()
 
     # Récupération de la liste des pièces manquantes
     liste_pieces_manquantes = models.Piece_manquante.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Piece_manquante.IDtype_piece).all()
@@ -1078,10 +1120,14 @@ def pieces():
     # Récupération de la liste des types de pièces
     liste_types_pieces = models.Type_piece.query.order_by(models.Type_piece.nom).all()
     dict_parametres = models.GetDictParametres()
+
+    # Historique
+    historique = GetHistorique(IDfamille=current_user.IDfamille, categorie="pieces", dict_parametres=dict_parametres)
+
     app.logger.debug("Page PIECES (%s): famille id(%s) liste_pieces_manquantes: %s", current_user.identifiant, current_user.IDfamille, liste_pieces_manquantes)
-    return render_template('pieces.html', active_page="pieces", \
+    return render_template('pieces.html', active_page="pieces", form=form, \
                             liste_pieces_manquantes=liste_pieces_manquantes,\
-                            liste_types_pieces=liste_types_pieces, dict_parametres=dict_parametres)
+                            liste_types_pieces=liste_types_pieces, dict_parametres=dict_parametres, historique=historique)
 
 
 # ------------------------- COTISATIONS ---------------------------------- 
@@ -1410,6 +1456,13 @@ def supprimer_demande():
         action = models.Action.query.filter_by(IDaction=IDaction).first()
         action.etat = "suppression"
         db.session.commit()
+
+        # Si c'est une pièce, on supprime la pièce jointe
+        if action.categorie == "pieces":
+            for parametre in action.parametres.split("#"):
+                key, valeur = parametre.split("=")
+                if key == "chemin":
+                    os.remove(valeur)
         
         flash(u"Votre suppression a bien été enregistrée")
         app.logger.debug("SUPPRESSION DEMANDE (%s): famille id(%s) - demande(%s)", current_user.identifiant, current_user.IDfamille, IDaction)

@@ -10,3 +10,4 @@ flask-script
 flask-debugtoolbar
 flask-sessionstore
 flask-session-captcha
+flask-uploads

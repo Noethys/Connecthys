@@ -14,10 +14,11 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_adminlte import AdminLTE
 
+
 import os.path
 REP_APPLICATION = os.path.abspath(os.path.dirname(__file__))
 REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
-
+REP_PIECES = REP_CONNECTHYS + "/pieces"
 
 # Récupération du numéro de version de l'application
 import updater
@@ -148,6 +149,13 @@ if config_ok == True :
         from flask_wtf.csrf import CsrfProtect as CSRFProtect
     csrf = CSRFProtect()  
     csrf.init_app(app)
+
+    # Flask-uploads
+    from flask_uploads import configure_uploads, UploadSet, patch_request_class
+    app.REP_PIECES = REP_PIECES
+    app.pieces = UploadSet('pieces', ["pdf", "jpg", "jpeg", "png"], default_dest=lambda app: REP_PIECES)
+    configure_uploads(app, app.pieces)
+    patch_request_class(app, size=(5 * 1024 * 1024))
 
     # Import des views et des models
     import models, views, utils

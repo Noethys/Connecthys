@@ -1,8 +1,8 @@
 {% extends "page.html" %}
+{% import "macros_historique.html" as macros_historique with context %}
 
+{% block content %}
 
-{% block content -%}
-	
 	{% if GetParametre("PIECES_INTRO", dict_parametres) != '' %}
 		<h4 class="page-header">
 			<small><i class="fa fa-info-circle"></i> {{ GetParametre("PIECES_INTRO", dict_parametres) }}</small>
@@ -45,7 +45,7 @@
 	
 	
 	<!-- Zone de téléchargement -->
-	{% if liste_types_pieces|length > 0 %}
+	{% if GetParametre("PIECES_AUTORISER_TELECHARGEMENT", dict_parametres) == 'True' and liste_types_pieces|length > 0 %}
 	<div class="row">
 		<div class="col-xs-12">
 		  
@@ -55,9 +55,9 @@
 				</div>
 			
             <div class="box-body">
-			
+
 				<p>Cliquez sur les pièces ci-dessous pour les télécharger :</p>
-				
+
 				{% for type_piece in liste_types_pieces %}
 					{% for label_piece, nom_fichier in type_piece.GetListeFichiers() %}
 					<a class="btn btn-app" href="{{ url_for('static', filename='pieces/' + nom_fichier) }}" target="_blank" title="Cliquez ici pour télécharger cette pièce">
@@ -65,13 +65,169 @@
 					</a>
 					{% endfor %}
 				{% endfor %}
-				
+
 			</div>
             <!-- /.box-body -->
           </div>
 		  
-		</div>		
+		</div>
 	</div>	
 	{% endif %}
 
+
+	<!-- Zone d'upload de pièces -->
+	{% if GetParametre("PIECES_AUTORISER_UPLOAD", dict_parametres) == 'True' %}
+	<div class="row">
+		<div class="col-xs-12">
+
+			<div class="box box-success">
+				<div class="box-header">
+					<h3 class="box-title">Envoi de pièces</h3>
+				</div>
+
+            <div class="box-body">
+
+				<p>Cliquez sur le bouton ci-dessous pour transmettre une pièce à l'administrateur :</p>
+				<button type="button" id="upload" class="btn btn-primary" data-toggle="modal" data-target="#modal_upload_piece" data-backdrop="static" data-keyboard="false">
+					<i class="fa fa-send-o margin-r-5"></i> Transmettre une pièce
+				</button>
+
+			</div>
+            <!-- /.box-body -->
+          </div>
+
+		</div>
+	</div>
+	{% endif %}
+
+
+	<!-- Modal : Envoi d'une pièce -->
+	<div class="modal fade" id="modal_upload_piece" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+
+				<div class="modal-header bg-light-blue">
+					<h4 class="modal-title" id="myModalLabel"><strong>Envoyer une pièce</strong></h4>
+				</div>
+
+				<form method="POST" enctype="multipart/form-data" action="{{ url_for('pieces') }}" id="form_envoyer_piece">
+					{{ form.csrf_token }}
+
+					<div class="modal-body">
+
+						<div id="div_parametres_envoi">
+
+							<h4>Sélectionnez le fichier à transmettre</h4>
+							<div class="form-group">
+								{{ form.piece() }}
+								<p class="help-block">Formats acceptés : pdf, jpg, jpeg ou png (5 Mo max).</p>
+							</div>
+
+							<div {% if not liste_pieces_manquantes %}style="display: none;"{% endif %}>
+								<h4>De quelle pièce s'agit-il ?</h4>
+								<div class="form-group">
+									<select id="choix_type_piece" class="form-control" name="choix_type_piece">
+										{% for piece_manquante in liste_pieces_manquantes %}
+											<option value="{{ piece_manquante.IDpiece_manquante }}">{{ piece_manquante.GetNom() }}</option>
+										{% endfor %}
+										<option value="0">Un autre type de pièce</option>
+									</select>
+									<p class="help-block">Sélectionnez 'Un autre type de pièce' si la pièce souhaitée n'apparaît pas dans la liste.</p>
+								</div>
+							</div>
+
+							<div id="div_titre_piece">
+								<h4>Donnez un titre à cette pièce</h4>
+								<div class="form-group">
+									{{ form.titre_piece(class='form-control', placeholder='') }}
+									<p class="help-block">Exemple : Certificat médical de Soline.</p>
+								</div>
+							</div>
+
+							<h4>Vous pouvez ajouter un commentaire</h4>
+							<div class="form-group">
+								{{ form.commentaire(class='form-control', placeholder='', rows='2', maxlength='300') }}
+							</div>
+
+						</div>
+
+						<!-- Div pour affiche erreur éventuelle de validation du form -->
+						<div id="message_erreur" class="text-red"></div>
+
+						<!-- Chargement en cours -->
+						<div id="div_attente" class="alert alert-success no-margin" style="display: none;">
+							<h4></h><i class='fa fa-spinner fa-spin margin-r-5'></i> Envoi en cours</h4>
+							Merci de patienter quelques instants durant l'envoi du fichier...
+						</div>
+
+					</div><!-- Fin modal body -->
+
+					<div id="div_boutons_envoi" class="modal-footer">
+						<button type="button" class="btn btn-danger" data-dismiss="modal">Annuler</button>
+						<input type="submit" value="Valider" class="btn btn-primary">
+					</div>
+
+				</form>
+
+			</div>
+		</div>
+	</div>
+
+	<br>
+	{# Historique des demandes #}
+	{{ macros_historique.historique_body(titre="Historique des envois de pièces", soustitre="Vous pouvez supprimer des envois non traités.", historique=historique) }}
+
 {%- endblock content %}
+
+{% block scripts %}
+	{{ super() }}
+	{# Historiques des demandes #}
+	{{ macros_historique.historique_scripts(historique=historique, page="pieces") }}
+
+	<script type="text/javascript">
+
+		function On_change_type_piece(event) {
+			$('#message_erreur').text('');
+			$('#div_titre_piece').hide();
+			if($(this).val() == 0) {
+				$('#div_titre_piece').show();
+			};
+		}
+
+		$(document).ready(function() {
+
+			$('#modal_upload_piece').on('show.bs.modal', function (event) {
+				$('#message_erreur').text("");
+			})
+
+			$("#form_envoyer_piece").on('submit', function(event) {
+				$('#message_erreur').text("");
+
+				// Vérifie qu'un titre a été saisi
+				if (($('#choix_type_piece').val() == 0) & ($('#titre_piece').val() == "")) {
+					event.preventDefault();
+					$('#message_erreur').text("Vous devez saisir un titre pour cette pièce !");
+					return false;
+				};
+
+				// Vérifie la taille du fichier saisi
+				if ($('#piece')[0].files[0].size > 5242880) {
+					event.preventDefault();
+					$('#message_erreur').text("Ce fichier dépasse la limite de 5 Mo !");
+					return false;
+				}
+
+				$('#div_parametres_envoi').hide();
+				$('#div_boutons_envoi').hide();
+				$('#div_attente').show();
+		    	return true;
+		    });
+
+			$('#choix_type_piece').on('change', On_change_type_piece);
+			On_change_type_piece.call($('#choix_type_piece').get(0));
+
+		});
+
+	</script>
+
+{%- endblock scripts %}

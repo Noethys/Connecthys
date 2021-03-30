@@ -15,8 +15,10 @@ except:
     # Pour la compatibilit� avec les anciennes version de flask_wtf
     from flask_wtf import Form as FlaskForm
 
-from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField, SelectField, StringField
+from application import app
+from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField, SelectField, StringField, FileField, TextAreaField
 from wtforms.validators import DataRequired
+from flask_wtf.file import FileAllowed, FileRequired
 
 
 class LoginFormWithCaptcha(FlaskForm):
@@ -83,4 +85,8 @@ class Renseignements(FlaskForm):
     travail_tel = TextField('travail_tel')
     travail_mail = TextField('travail_mail')
     adresse_auto = SelectField('adresse_auto', coerce=int)
-    
+
+class Piece(FlaskForm):
+    piece = FileField('piece', validators=[FileRequired(),])
+    titre_piece = TextField('titre_piece')
+    commentaire = TextAreaField('commentaire')
