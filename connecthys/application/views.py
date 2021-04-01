@@ -1092,7 +1092,7 @@ def pieces():
         choix_type_piece = request.form.get("choix_type_piece", "", type=int)
         titre_piece = request.form.get("titre_piece", "", type=six.text_type)
         commentaire = request.form.get("commentaire", "", type=six.text_type)
-        parametres = "chemin=%s" % chemin_fichier
+        parametres = "chemin=%s" % nom_fichier
 
         # Recherche la pièce manquante
         IDindividu = None
@@ -1461,7 +1461,7 @@ def supprimer_demande():
         if action.categorie == "pieces":
             for parametre in action.parametres.split("#"):
                 key, valeur = parametre.split("=")
-                if key == "chemin":
+                if key == "chemin" and os.path.isfile(valeur):
                     os.remove(valeur)
         
         flash(u"Votre suppression a bien été enregistrée")

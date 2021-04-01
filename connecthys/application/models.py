@@ -32,6 +32,7 @@ try :
     Integer = db.Integer
     String = db.String
     Float = db.Float
+    Text = db.Text
     relationship = db.relationship
     import flask_migrate
     
@@ -41,7 +42,7 @@ try :
     
 except Exception as err:
     # Imports Sqlalchemy pour Noethys
-    from sqlalchemy import create_engine, ForeignKey, Column, Date, Integer, String, Float, DateTime
+    from sqlalchemy import create_engine, ForeignKey, Column, Date, Integer, String, Float, DateTime, Text
     from sqlalchemy.orm import relationship, sessionmaker
     from sqlalchemy.ext.declarative import declarative_base
     Base = declarative_base()
@@ -462,6 +463,14 @@ class Action(Base):
         self.reponse = reponse
         self.IDpaiement = IDpaiement
         self.ventilation = ventilation
+
+    def GetParametres(self):
+        dict_parametres = {}
+        for param in self.parametres.split("#"):
+            if "=" in param:
+                key, valeur = param.split("=")
+                dict_parametres[key] = valeur
+        return dict_parametres
         
     def GetRefUnique(self):
         horodatage = self.horodatage.strftime("%Y%m%d%H%M%S%f")

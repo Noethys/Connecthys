@@ -10,7 +10,7 @@
 
 from application import app, db, models
 from flask import json, Response
-import datetime
+import datetime, os
 from sqlalchemy import func
 
 
@@ -57,7 +57,22 @@ def Exportation(secret=0, last=0):
     else :
         m.parametre = maintenant_str
     db.session.commit()
-    
+
+    # Nettoyage du répertoire des pièces
+    if os.path.isdir(app.REP_PIECES):
+        liste_pieces = os.listdir(app.REP_PIECES)
+        if liste_pieces:
+            liste_actions = models.Action.query.filter(models.Action.categorie=="pieces", models.Action.ventilation==None, datetime.datetime.now() > (models.Action.horodatage + datetime.timedelta(days=0)), models.Action.etat=="validation").all()
+            for action in liste_actions:
+                nom_fichier = action.GetParametres().get("chemin", None)
+                if nom_fichier:
+                    chemin_fichier = os.path.join(app.REP_PIECES, nom_fichier)
+                    if os.path.isfile(chemin_fichier):
+                        app.logger.debug("Suppression de la piece %s" % nom_fichier)
+                        os.remove(chemin_fichier)
+                        action.ventilation = "suppr"
+            db.session.commit()
+
     # Encodage des champs spéciaux (dates...)
     def Encoder(obj):
         """JSON encoder function for SQLAlchemy special classes."""
