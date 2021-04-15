@@ -722,7 +722,7 @@ class Location(Base):
 class Reservation_location(Base):
     __tablename__ = "%sportail_reservations_locations" % PREFIXE_TABLES
     IDreservation = Column(Integer, primary_key=True)
-    IDlocation = Column(Integer)
+    IDlocation = Column(String(100))
     date_debut = Column(DateTime)
     date_fin = Column(DateTime)
     IDproduit = Column(Integer)
