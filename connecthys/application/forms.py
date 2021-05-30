@@ -90,3 +90,6 @@ class Piece(FlaskForm):
     piece = FileField('piece', validators=[FileRequired(),])
     titre_piece = TextField('titre_piece')
     commentaire = TextAreaField('commentaire')
+
+class Location(FlaskForm):
+    description = TextField('description')

@@ -1204,8 +1204,11 @@ def planning_locations():
     for produit in models.Produit.query.order_by(models.Produit.nom).all():
         liste_produits.append({"IDproduit": produit.IDproduit, "partage": 1 if produit.activation_partage else 0})
 
+    # Form location
+    form = forms.Location()
+
     dict_parametres = models.GetDictParametres()
-    return render_template('planning_locations.html', active_page="locations", liste_produits=liste_produits, dict_parametres=dict_parametres)
+    return render_template('planning_locations.html', active_page="locations", form=form, liste_produits=liste_produits, dict_parametres=dict_parametres)
 
 
 @app.route('/get_produits')
@@ -1271,7 +1274,10 @@ def get_locations(idfamille=None):
             'overlap': False,
             'color': "green",
             "partage": location.partage,
+            "description": location.description,
         }
+        if location.description:
+            dictEvent["title"] += " - " + location.description
 
         # Si la location a déjà commencé, on empêche la modification
         if location.date_debut <= datetime.datetime.now():
@@ -1308,7 +1314,10 @@ def get_locations(idfamille=None):
                 "overlap": False,
                 "color": "orange",
                 "partage": reservation.partage,
+                "description": reservation.description,
             }
+            if reservation.description:
+                dictEvent["title"] += " - " + reservation.description
             liste_events.append(dictEvent)
 
     return jsonify(liste_events)
@@ -1387,6 +1396,7 @@ def envoyer_locations():
             "nom_produit": dict_event["event"]["nom_ressource"],
             "id": dict_event["event"]["id"],
             "partage": dict_event["event"]["partage"],
+            "description": dict_event["event"]["description"],
         })
         liste_dates.append(start)
         liste_dates.append(end)
@@ -1424,7 +1434,8 @@ def envoyer_locations():
         # Enregistrement des réservations
         for dict_event in liste_modifications:
             reservation = models.Reservation_location(IDlocation=str(dict_event["id"]), date_debut=dict_event["debut"], date_fin=dict_event["fin"],
-                                                      IDproduit=dict_event["IDproduit"], IDaction=action.IDaction, etat=dict_event["etat"], partage=dict_event["partage"])
+                                                      IDproduit=dict_event["IDproduit"], IDaction=action.IDaction, etat=dict_event["etat"], partage=dict_event["partage"],
+                                                      description=dict_event["description"])
             db.session.add(reservation)
 
         db.session.commit()

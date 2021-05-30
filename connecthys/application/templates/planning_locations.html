@@ -63,12 +63,23 @@
 						<div class="col-xs-12">
 							<div class="form-group">
 								<label id="produit_event">Produit</label>
+
+								<h5>Période :</h5>
 								<div class="input-group">
 									<div class="input-group-addon">
 										<i class="fa fa-calendar"></i>
 									</div>
 									<input type="text" class="form-control pull-right" id="periode_event">
 								</div>
+
+								<div id="div_description">
+									<h5>Description :</h5>
+									<div class="form-group">
+										{{ form.description(class='form-control', placeholder='') }}
+										<p class="help-block">Exemple : Réservation pour formation, etc...</p>
+									</div>
+								</div>
+
 								<div class="input-group" id="div_partage" style="margin-top: 20px;">
 									<input type='checkbox' id="check_partage" class='square-blue'><span style="margin-left: 8px;">J'accepte que cette location soit partagée avec un autre loueur</span>
 								</div>
@@ -288,23 +299,39 @@
 					nom_ressource: $("#calendrier_locations").fullCalendar("getResourceById", event.resourceId).title,
 					id: event.id,
 					partage: event.partage,
+					description: event.description,
+				};
+				if (new_event.description) {
+					new_event.title = new_event.nom_ressource + " - " + new_event.description;
+				} else {
+					new_event.title = new_event.nom_ressource
 				};
 				return new_event;
 			};
 
 			function modifier_event(event) {
-				if(event.id in dict_modifications) {
-					dict_modifications[event.id]["event"] = convert_event(event);
+				event = convert_event(event);
+				if (event.id in dict_modifications) {
+					dict_modifications[event.id]["event"] = event;
 				} else {
-					dict_modifications[event.id] = {"etat": "modifier", "event": convert_event(event)};
+					dict_modifications[event.id] = {"etat": "modifier", "event": event};
 				};
 				is_dirty();
+				return event;
 			};
 
 			function verifie_periode_saisie(start, end) {
 				var date_max = moment().add({{ GetParametre('LOCATIONS_PERIODE_SAISIE', dict_parametres) }}, 'M');
 				if(start > date_max || end > date_max){
-					alert("Cette période de réservation n'est pas encore ouverte !");
+					alert("Cette période de réservation n'est pas ouverte !");
+					return false;
+				}
+				if ((start.format("HH:mm") < "{{ GetParametre('LOCATIONS_HEURE_MIN', dict_parametres) }}") || (start.format("HH:mm") > "{{ GetParametre('LOCATIONS_HEURE_MAX', dict_parametres) }}")) {
+					alert("L'heure de début doit être comprise entre {{ GetParametre('LOCATIONS_HEURE_MIN', dict_parametres) }} et {{ GetParametre('LOCATIONS_HEURE_MAX', dict_parametres) }}");
+					return false;
+				}
+				if ((end.format("HH:mm") < "{{ GetParametre('LOCATIONS_HEURE_MIN', dict_parametres) }}") || (end.format("HH:mm") > "{{ GetParametre('LOCATIONS_HEURE_MAX', dict_parametres) }}")) {
+					alert("L'heure de fin doit être comprise entre {{ GetParametre('LOCATIONS_HEURE_MIN', dict_parametres) }} et {{ GetParametre('LOCATIONS_HEURE_MAX', dict_parametres) }}");
 					return false;
 				}
 				return true;
@@ -333,9 +360,11 @@
 				resourceLabelText: 'Ressources',
 				resourceAreaWidth: '25%',
 				resourceGroupField: 'groupId',
-				resources: '{{ url_for('get_produits') }}',
+				minTime: "{{ GetParametre('LOCATIONS_HEURE_MIN', dict_parametres) }}:00",
+				maxTime: "{{ GetParametre('LOCATIONS_HEURE_MAX', dict_parametres) }}:00",
+				resources: "{{ url_for('get_produits') }}",
 				events: {
-					url: '{{ url_for('get_locations', idfamille=current_user.IDfamille) }}',
+					url: "{{ url_for('get_locations', idfamille=current_user.IDfamille) }}",
 					success: function (content) {
 						// Enleve les events supprimes
 						var new_content = [];
@@ -363,6 +392,9 @@
 				eventDrop: function(event) { // called when an event (already on the calendar) is moved
 					var resource = $("#calendrier_locations").fullCalendar("getResourceById", event.resourceId);
 					event.title = resource.title;
+					if (event.description) {
+						event.title += " - " + event.description;
+					}
 					$('#calendrier_locations').fullCalendar('updateEvent', event);
 					modifier_event(event);
 				},
@@ -388,6 +420,7 @@
 						color: "orange",
 						id: create_UUID(),
 						partage: 0,
+						description: "",
 					};
 					$("#calendrier_locations").fullCalendar('renderEvent',
 						new_event,
@@ -406,6 +439,7 @@
 					$('#produit_event').html(resource.groupId + ' - ' + resource.title);
 					$("#periode_event").data('daterangepicker').setStartDate(event.start);
 					$("#periode_event").data('daterangepicker').setEndDate(event.end);
+					$('#description').val(event.description);
 					if(dict_produits[resource.id] === 1) {
 						$("#div_partage").show();
 					} else {
@@ -432,13 +466,18 @@
 				// Récupération de la période d'application
 				var debut = $('#periode_event').data('daterangepicker').startDate;
 				var fin = $('#periode_event').data('daterangepicker').endDate;
+
+				// Récupération de la description
+				var description = $('#description').val();
+
+				// Récupération du partage
 				if($('#check_partage').iCheck('update')[0].checked === true) {
 					var partage = 1;
 				} else {
 					var partage = 0;
 				}
 				if(debut < moment() || fin < moment()){
-					alert("Vous ne pouvez enregistrer une location passée !");
+					alert("Vous ne pouvez pas enregistrer une location passée !");
 					return false
 				}
 				if(verifie_periode_saisie(debut, fin) == false) {
@@ -448,11 +487,13 @@
 					alert("L'événement que vous essayez de modifier chevauche un autre événement !");
 					return false
 				};
-				if((event_edit.partage != partage || event_edit.start.format('YYYY-MM-DD HH:mm:ss') != debut.format('YYYY-MM-DD HH:mm:ss')) || (event_edit.end.format('YYYY-MM-DD HH:mm:ss') != fin.format('YYYY-MM-DD HH:mm:ss'))) {
+				if((event_edit.description != description || event_edit.partage != partage || event_edit.start.format('YYYY-MM-DD HH:mm:ss') != debut.format('YYYY-MM-DD HH:mm:ss')) || (event_edit.end.format('YYYY-MM-DD HH:mm:ss') != fin.format('YYYY-MM-DD HH:mm:ss'))) {
 					event_edit.partage = partage;
-					modifier_event(event_edit);
+					event_edit.description = description;
+					var event_temp = modifier_event(event_edit);
 					event_edit.start = debut;
 					event_edit.end = fin;
+					event_edit.title = event_temp.title;
 					$('#calendrier_locations').fullCalendar('updateEvent', event_edit);
 				};
 				$('#modal_event').modal('hide');

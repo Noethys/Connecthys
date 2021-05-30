@@ -246,9 +246,9 @@ class User(Base):
         return '<User %d>' % (self.IDuser)
     
     def get_image(self):
-        if self.role == "utilisateur" :
-            return 'img/admin.png'
-        return 'img/famille.png'
+        # if self.role == "utilisateur" :
+        #     return 'img/admin.png'
+        return 'img/utilisateur.png'
     
     def SetInfos(self, key="", valeur=None):
         self.infos[key] = valeur
@@ -704,8 +704,9 @@ class Location(Base):
     date_fin = Column(DateTime)
     quantite = Column(Integer)
     partage = Column(Integer)
+    description = Column(String(200))
 
-    def __init__(self, IDlocation=None, IDfamille=None, IDproduit=None, date_debut=None, date_fin=None, quantite=None, partage=None):
+    def __init__(self, IDlocation=None, IDfamille=None, IDproduit=None, date_debut=None, date_fin=None, quantite=None, partage=None, description=None):
         if IDlocation != None:
             self.IDlocation = IDlocation
         self.IDfamille = IDfamille
@@ -714,6 +715,7 @@ class Location(Base):
         self.date_fin = date_fin
         self.quantite = quantite
         self.partage = partage
+        self.description = description
 
     def __repr__(self):
         return '<IDlocation %d>' % (self.IDlocation)
@@ -730,8 +732,9 @@ class Reservation_location(Base):
     IDaction = Column(Integer, ForeignKey("%sportail_actions.IDaction" % PREFIXE_TABLES))
     action = relationship("Action")
     partage = Column(Integer)
+    description = Column(String(200))
 
-    def __init__(self, IDreservation=None, IDlocation=None, date_debut=None, date_fin=None, IDproduit=None, etat=None, IDaction=None, partage=None):
+    def __init__(self, IDreservation=None, IDlocation=None, date_debut=None, date_fin=None, IDproduit=None, etat=None, IDaction=None, partage=None, description=None):
         if IDreservation != None:
             self.IDreservation = IDreservation
         self.IDlocation = IDlocation
@@ -741,6 +744,7 @@ class Reservation_location(Base):
         self.etat = etat
         self.IDaction = IDaction
         self.partage = partage
+        self.description = description
 
     def __repr__(self):
         return '<IDreservation %d>' % (self.IDreservation)
@@ -904,6 +908,8 @@ class Individu(Base):
             return "img/homme.png"
         if self.IDcivilite in (2, 3, 5) :
             return "img/femme.png"
+        if self.IDcivilite in (6, 7, 8, 9):
+            return "img/organisme.png"
         return 'img/homme.png'
 
     def get_date_naiss(self):
