@@ -93,7 +93,7 @@
 		<div class="widget-user-image">
 			<img class="img-circle" src="{{ url_for('static', filename=individu.get_image()) }}" alt="User Avatar">
 		</div>
-		<h3 class="widget-user-username">{{ individu.GetRenseignement("prenom") }}</h3>
+		<h3 class="widget-user-username">{{ individu.GetRenseignement("prenom") or individu.GetRenseignement("nom") }}</h3>
 		<h5 class="widget-user-desc">{{ individu.get_date_naiss() }}&nbsp;</h5>
 	</div>
 	

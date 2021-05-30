@@ -19,7 +19,7 @@
 	<!-- Add the bg color to the header using any of the bg-* classes -->
 	{% set individu = dict_planning["inscription"].get_individu() %}
 	<div class="widget-user-header bg-{{ dict_planning['couleur'] }}">
-	  <h3 class="widget-user-username">{{ individu.GetRenseignement("prenom") }}</h3>
+	  <h3 class="widget-user-username">{{ individu.GetRenseignement("prenom") or individu.GetRenseignement("nom") }}</h3>
 	  <h5 class="widget-user-desc">{{ individu.get_date_naiss() }}&nbsp;</h5>
 	</div>
 	<div class="widget-user-image">
@@ -78,7 +78,7 @@
 		</div>
 		{% endif %}
 		
-		<div class="box-body no-padding table-responsive">
+		<div id="div_table" class="box-body no-padding table-responsive">
 			{{ macros_planning.planning_body(dict_planning=dict_planning) }}
 		</div>
 		<div class="box-footer clearfix">
@@ -159,5 +159,7 @@
 
 	{{ super() }}
 	{{ macros_planning.planning_scripts(dict_planning=dict_planning) }}
+
+<!--	<script type="text/javascript" src="{{ url_for('static', filename='plugins/freeze-table/js/freeze-table.min.js') }}"></script>-->
 
 {%- endblock scripts %}
