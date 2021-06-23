@@ -501,8 +501,11 @@ class Action(Base):
 
         # Ajout des locations dans le dict
         dict_temp["locations"] = []
-        for reservation_location in self.reservations_locations :
-            dict_temp["locations"].append(reservation_location.as_dict())
+        try:
+            for reservation_location in self.reservations_locations :
+                dict_temp["locations"].append(reservation_location.as_dict())
+        except:
+            pass
 
         return dict_temp
 
