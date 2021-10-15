@@ -919,6 +919,17 @@ def retour_paiement_success():
     return render_template('retour_paiement.html', active_page="factures", resultat="success", dict_parametres=dict_parametres)
 
 
+@app.route('/fix_doublons', methods=['GET', 'POST'])
+def fix_doublons():
+    app.logger.debug("Suppression des doublons dans les actions...")
+    resultats = db.session.execute("select count(*) as nbre_doublons, IDpaiement, min(IDaction) from portail_actions where IDpaiement is not null group by IDpaiement having count(*) > 1;")
+    for index, (nbre_doublons, IDpaiement, IDaction) in enumerate(resultats, 1):
+        app.logger.debug("index=%d IDpaiement=%d min(IDaction)=%d" % (index, IDpaiement, IDaction))
+        models.Action.query.filter_by(IDpaiement=IDpaiement, etat="attente").filter(models.Action.IDaction!=IDaction).update({models.Action.etat: "validation"})
+    db.session.commit()
+    app.logger.debug("Fin de la suppression des doublons")
+    return jsonify(success=1, error_msg="ok")
+
 
 # -----------------------RETOUR TIPI REGIE-------------------
 
@@ -951,6 +962,11 @@ def retour_tipi():
         if paiement == None :
             app.logger.debug("Page RETOUR_TIPI: le paiement pre-enregistre n'a pas ete trouve.)")
             return jsonify(success=0, error_msg=u"Le paiement pré-enregistré n'a pas été trouvé dans la base.")
+
+        # Evite les doublons
+        if models.Action.query.filter_by(IDpaiement=paiement.IDpaiement).count():
+            app.logger.debug("Page RETOUR_TIPI: Doublon sur le retour tipi.)")
+            return redirect(url_for('retour_paiement_error'))
 
         paiement.resultrans = resultrans
         paiement.resultat = resultat
@@ -1241,6 +1257,9 @@ def get_locations(idfamille=None):
         start = datetime.datetime.strptime(request.args['start'], '%Y-%m-%dT%H:%M:%S')
         end = datetime.datetime.strptime(request.args['end'], '%Y-%m-%dT%H:%M:%S')
 
+    # Récupération des paramètres
+    dict_parametres = models.GetDictParametres()
+
     # Importation des produits
     liste_produits = models.Produit.query.all()
     dict_produits = {}
@@ -1261,6 +1280,11 @@ def get_locations(idfamille=None):
     else :
         dict_reservations = None
 
+    # Récupération des noms des autres loueurs
+    dict_loueurs = {}
+    if dict_parametres.get("LOCATIONS_AFFICHER_AUTRES_LOUEURS", False) == 'True':
+        dict_loueurs = {user.IDfamille: utils.CallFonction("DecrypteChaine", user.nom) for user in models.User.query.filter(models.User.IDfamille.in_([location.IDfamille for location in liste_locations])).all()}
+
     # Ajout des locations existantes
     liste_events = []
     for location in liste_locations:
@@ -1276,6 +1300,12 @@ def get_locations(idfamille=None):
             "partage": location.partage,
             "description": location.description,
         }
+
+        # Si afficher autres loueurs
+        if location.IDfamille in dict_loueurs and location.IDfamille != idfamille:
+            dictEvent["title"] = dict_loueurs[location.IDfamille] + " : " + dictEvent["title"]
+
+        # Si description existante
         if location.description:
             dictEvent["title"] += " - " + location.description
 
@@ -1285,8 +1315,10 @@ def get_locations(idfamille=None):
 
         # Affichage des locations des autres usagers
         if location.IDfamille != idfamille:
+            dictEvent["editable"] = False
             dictEvent["backgroundColor"] = "#f29da6"
-            dictEvent["rendering"] = 'background'
+            if dict_parametres.get("LOCATIONS_AFFICHER_AUTRES_LOUEURS", False) != 'True':
+                dictEvent["rendering"] = 'background'
 
         valide = True
         if str(location.IDlocation) in dict_reservations:
