@@ -16,56 +16,60 @@ except:
     from flask_wtf import Form as FlaskForm
 
 from application import app
-from wtforms import BooleanField, TextField, HiddenField, PasswordField, DateTimeField, validators, IntegerField, SubmitField, SelectField, StringField, FileField, TextAreaField
-from wtforms.validators import DataRequired
-from flask_wtf.file import FileAllowed, FileRequired
+from wtforms import BooleanField, HiddenField, PasswordField, validators, SelectField, StringField, FileField, TextAreaField
+from flask_wtf.file import FileRequired
+
+try:
+    from wtforms import TextField
+except:
+    from wtforms import StringField as TextField
 
 
 class LoginFormWithCaptcha(FlaskForm):
-    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
-    password = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=20)])
+    identifiant = TextField('identifiant', [validators.DataRequired(), validators.Length(min=0, max=20)])
+    password = PasswordField('password',  [validators.DataRequired(), validators.Length(min=0, max=20)])
     remember = BooleanField("remember", default=False)
     # recaptcha = RecaptchaField()
-    captcha = StringField("captcha", validators=[DataRequired()])
+    captcha = StringField("captcha", validators=[validators.DataRequired()])
 
 class LoginForm(FlaskForm):
-    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=0, max=20)])
-    password = PasswordField('password',  [validators.Required(), validators.Length(min=0, max=20)])
+    identifiant = TextField('identifiant', [validators.DataRequired(), validators.Length(min=0, max=20)])
+    password = PasswordField('password',  [validators.DataRequired(), validators.Length(min=0, max=20)])
     remember = BooleanField("remember", default=False)
 
 class ChangePassword(FlaskForm):
-    password1 = PasswordField('password1',  [validators.Required(), validators.Length(min=0, max=20)])
-    password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
+    password1 = PasswordField('password1',  [validators.DataRequired(), validators.Length(min=0, max=20)])
+    password2 = PasswordField('password2',  [validators.DataRequired(), validators.Length(min=0, max=20)])
     accept = BooleanField("accept", default=False)
 
 class ResetPassword(FlaskForm):
-    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=1, max=20)])
-    password1 = PasswordField('password1',  [validators.Required(), validators.Length(min=0, max=20)])
-    password2 = PasswordField('password2',  [validators.Required(), validators.Length(min=0, max=20)])
+    identifiant = TextField('identifiant', [validators.DataRequired(), validators.Length(min=1, max=20)])
+    password1 = PasswordField('password1',  [validators.DataRequired(), validators.Length(min=0, max=20)])
+    password2 = PasswordField('password2',  [validators.DataRequired(), validators.Length(min=0, max=20)])
     accept = BooleanField("accept", default=False)
 
 class LostPasswordWithCaptcha(FlaskForm):
-    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=1, max=20)])
-    email = TextField('email',  [validators.Required(), validators.Length(min=3, max=50)])
+    identifiant = TextField('identifiant', [validators.DataRequired(), validators.Length(min=1, max=20)])
+    email = TextField('email',  [validators.DataRequired(), validators.Length(min=3, max=50)])
     # recaptcha = RecaptchaField()
-    captcha = StringField("captcha", validators=[DataRequired()])
+    captcha = StringField("captcha", validators=[validators.DataRequired()])
 
 class LostPassword(FlaskForm):
-    identifiant = TextField('identifiant', [validators.Required(), validators.Length(min=1, max=20)])
-    email = TextField('email',  [validators.Required(), validators.Length(min=3, max=50)])
+    identifiant = TextField('identifiant', [validators.DataRequired(), validators.Length(min=1, max=20)])
+    email = TextField('email',  [validators.DataRequired(), validators.Length(min=3, max=50)])
 
 class RetourTipi(FlaskForm):
-    NUMCLI = TextField('numcli', [validators.Required(), validators.Length(min=0, max=20)])
-    EXER = TextField('exer', [validators.Required(), validators.Length(min=0, max=4)])
-    REFDET = TextField('refdet', [validators.Required(), validators.Length(min=0, max=30)])
-    OBJET = TextField('objet', [validators.Required(), validators.Length(min=0, max=30)])
-    MONTANT = TextField('montant', [validators.Required(), validators.Length(min=0, max=20)])
-    MEL = TextField('mel', [validators.Required(), validators.Length(min=0, max=30)])
-    SAISIE = TextField('saisie', [validators.Required(), validators.Length(min=0, max=5)])
-    RESULTRANS = TextField('resultrans', [validators.Required(), validators.Length(min=0, max=50)])
-    NUMAUTO = TextField('numauto', [validators.Required(), validators.Length(min=0, max=20)])
-    DATTRANS = TextField('dattrans', [validators.Required(), validators.Length(min=0, max=20)])
-    HEURTRANS = TextField('heurtrans', [validators.Required(), validators.Length(min=0, max=20)])
+    NUMCLI = TextField('numcli', [validators.DataRequired(), validators.Length(min=0, max=20)])
+    EXER = TextField('exer', [validators.DataRequired(), validators.Length(min=0, max=4)])
+    REFDET = TextField('refdet', [validators.DataRequired(), validators.Length(min=0, max=30)])
+    OBJET = TextField('objet', [validators.DataRequired(), validators.Length(min=0, max=30)])
+    MONTANT = TextField('montant', [validators.DataRequired(), validators.Length(min=0, max=20)])
+    MEL = TextField('mel', [validators.DataRequired(), validators.Length(min=0, max=30)])
+    SAISIE = TextField('saisie', [validators.DataRequired(), validators.Length(min=0, max=5)])
+    RESULTRANS = TextField('resultrans', [validators.DataRequired(), validators.Length(min=0, max=50)])
+    NUMAUTO = TextField('numauto', [validators.DataRequired(), validators.Length(min=0, max=20)])
+    DATTRANS = TextField('dattrans', [validators.DataRequired(), validators.Length(min=0, max=20)])
+    HEURTRANS = TextField('heurtrans', [validators.DataRequired(), validators.Length(min=0, max=20)])
     
 class Renseignements(FlaskForm):
     idindividu = HiddenField("idindividu")
