@@ -13,8 +13,7 @@ from systempayv2 import isonow
 
 __all__ = ['Payment']
 
-TIPIREGIE_URL = 'https://www.tipi.budget.gouv.fr' \
-        '/tpa/paiement.web'
+TIPIREGIE_URL = 'https://www.payfip.gouv.fr/tpa/paiement.web'
 LOGGER = logging.getLogger(__name__)
 
 #getcontext().prec = 3
