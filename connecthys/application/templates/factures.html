@@ -15,7 +15,7 @@
 	<div class="row">
 		<div class="col-xs-12">
 			
-			{% if texte_impayes != None %}
+			{% if texte_impayes != None and GetParametre("FACTURES_AFFICHER_SOLDE_TOTAL", dict_parametres) in ('True', '', None) %}
 				<div class="callout callout-danger">
 					<h5><i class="icon fa fa-warning"></i>  {{ texte_impayes|safe }}</h5>
 				</div>
@@ -93,8 +93,10 @@
 									<th><center>Au</center></th>
 									<th><center>N°</center></th>
 									<th><center>Montant</center></th>
-									<th><center>Déjà réglé</center></th>
-									<th><center>Reste à régler</center></th>
+									{% if GetParametre("FACTURES_AFFICHER_SOLDE_DETAIL", dict_parametres) in ('True', '', None) %}
+										<th><center>Déjà réglé</center></th>
+										<th><center>Reste à régler</center></th>
+									{% endif %}
 									<th><center>Recevoir</center></th>
 								</tr>
 						
@@ -104,8 +106,10 @@
 									<td><center>{{ DateDDEnFr(facture.date_fin) }}</center></td>
 									<td><center>{{ facture.numero }}</center></td>
 									<td><center>{{ Formate_montant(facture.montant) }}</center></td>
-									<td><center>{% if facture.en_cours_paiement == "1" %}<span class="badge bg-yellow">{{ Formate_montant(facture.montant_regle) }}</span>{% else %}{{ Formate_montant(facture.montant_regle) }}{% endif %}</center></td>
-									<td><center><span class="badge bg-{% if facture.en_cours_paiement == "1" %}yellow{% elif facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
+									{% if GetParametre("FACTURES_AFFICHER_SOLDE_DETAIL", dict_parametres) in ('True', '', None) %}
+										<td><center>{% if facture.en_cours_paiement == "1" %}<span class="badge bg-yellow">{{ Formate_montant(facture.montant_regle) }}</span>{% else %}{{ Formate_montant(facture.montant_regle) }}{% endif %}</center></td>
+										<td><center><span class="badge bg-{% if facture.en_cours_paiement == "1" %}yellow{% elif facture.montant_solde > 0.0 %}red{% else %}green{% endif %}">{{ Formate_montant(facture.montant_solde) }}</span></center></td>
+									{% endif %}
 									<td><center>
 										<button type="button" class="btn btn-box-tool" data-toggle="modal" data-target="#modal_recevoir_document" data-id="{{ facture.IDfacture }}" data-info="{{ facture.numero }}" title="Recevoir un exemplaire de cette facture par Email ou par la Poste">
 										<i class="fa fa-download"></i></button>
