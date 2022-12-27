@@ -566,6 +566,7 @@
 					url: $SCRIPT_ROOT + '/envoyer_locations',
 					data: {
 						dict_modifications: JSON.stringify(dict_modifications),
+						commentaire: $("#commentaire").val(),
 					},
 					success: function(data) {
 						if (data.success) {
