@@ -85,10 +85,10 @@ def CreationDB():
         flask_migrate.init(directory=REP_MIGRATIONS)
         app.logger.info("Initialisation ok.")
     
-    # Mémorisation du numéro de version dans la DB
-    m = Parametre(nom="version", parametre=app.config["VERSION_APPLICATION"])
-    db.session.add(m)
-    db.session.commit()
+        # Mémorisation du numéro de version dans la DB
+        m = Parametre(nom="version", parametre=app.config["VERSION_APPLICATION"])
+        db.session.add(m)
+        db.session.commit()
 
 def UpgradeDB():
     """ Mise à jour de la DB """
@@ -125,10 +125,10 @@ def UpgradeDB():
                 flask_migrate.init(directory=REP_MIGRATIONS)
                 flask_migrate.migrate()
 
-    # Mémorisation du nouveau numéro de version dans la DB
-    m = Parametre.query.filter_by(nom="version").first()
-    m.parametre=app.config["VERSION_APPLICATION"]
-    db.session.commit()
+        # Mémorisation du nouveau numéro de version dans la DB
+        m = Parametre.query.filter_by(nom="version").first()
+        m.parametre=app.config["VERSION_APPLICATION"]
+        db.session.commit()
 
 def RepairDB():
     """ Tentative de réparation de la DB """
@@ -1328,7 +1328,7 @@ class Bloc(Base):
     couleur = Column(String(100))
     categorie = Column(String(200))
     ordre = Column(Integer)
-    parametres = Column(String(100000))
+    parametres = Column(Text)
 
     def __init__(self, IDbloc=None, IDpage=None, titre=None, couleur=None, categorie=None, ordre=None, parametres=None):
         if IDbloc != None:
@@ -1354,8 +1354,8 @@ class Element(Base):
     categorie = Column(String(200))
     date_debut = Column(DateTime)
     date_fin = Column(DateTime)
-    parametres = Column(String(100000))
-    texte_html = Column(String(100000))
+    parametres = Column(Text)
+    texte_html = Column(Text)
 
     def __init__(self, IDelement=None, IDbloc=None, ordre=None, titre=None, categorie=None, date_debut=None, date_fin=None, parametres=None, texte_html=None):
         if IDelement != None:
