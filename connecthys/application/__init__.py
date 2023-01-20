@@ -113,7 +113,7 @@ if config_ok == True :
         manager = Manager(app)
         manager.add_command('db', MigrateCommand)
     except:
-        pass
+        app.logger.info("Application MigrateCommand impossible.")
 
     # Captcha
     captcha = None
