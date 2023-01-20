@@ -363,17 +363,17 @@ def login():
 
         # Codes d'accès corrects
         if registered_user is not None:
-            app.logger.debug("Connexion de l'utilisateur %s", form.identifiant.data)
+            app.logger.debug("Connexion de l'utilisateur %s" % form.identifiant.data)
             
             # Vérifie que le compte internet est actif
             if registered_user.is_active() == False :
-                app.logger.debug("Tentative de connexion a un compte desactive : Identifiant =", form.identifiant.data)
+                app.logger.debug("Tentative de connexion a un compte desactive : Identifiant = %s" % form.identifiant.data)
                 flash(u"Ce compte a été désactivé" , 'error')
                 return redirect(url_for('login'))
             
             # Vérification du mot de passe
             if registered_user.check_password(form.password.data) == False :
-                app.logger.debug("Mot de passe incorrect pour %s", form.identifiant.data)
+                app.logger.debug("Mot de passe incorrect pour %s" % form.identifiant.data)
                 registered_user = None
                 flash(u"Mot de passe incorrect" , 'error')
                 return redirect(url_for('login'))
@@ -763,12 +763,16 @@ def effectuer_paiement_en_ligne():
                 app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE TIPI (%s): Aucune régie n'a été paramétrée.", current_user.identifiant)
                 return jsonify(success=0, error_msg=u"Aucune régie n'a été paramétrée. Contactez l'administrateur du portail.")
 
+            objet = "Paiement " + regie.nom.encode("ascii", 'ignore')
+            if six.PY3:
+                objet = objet.decode("utf-8")
+
             app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE : IDfacture:%s montant:%s regie.nom: (%s) type(regie.nom): (%s) regie.numclitipi: (%s)", facture.IDfacture, montant_reglement, regie.nom, type(regie.nom), regie.numclitipi)
             p = Payment(systeme_paiement, {'numcli': regie.numclitipi})
             requete = p.request(amount=str(montant_reglement),
                 exer=str(facture.date_debut.year),
                 refdet=facture.numero,
-                objet="Paiement " + regie.nom.encode("ascii", 'ignore'),
+                objet=objet,
                 email=utils.CallFonction("DecrypteChaine", current_user.email).split(";")[0],
                 urlcl=url_for('retour_tipi', _external=True),
                 saisie=saisie)
