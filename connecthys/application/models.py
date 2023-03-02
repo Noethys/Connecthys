@@ -15,6 +15,8 @@ import os.path
 import traceback
 import six
 from dateutil import relativedelta
+import sqlalchemy
+from sqlalchemy.dialects import mysql
 
 
 try :
@@ -1355,7 +1357,7 @@ class Element(Base):
     date_debut = Column(DateTime)
     date_fin = Column(DateTime)
     parametres = Column(Text)
-    texte_html = Column(Text)
+    texte_html = Column(Text().with_variant(sqlalchemy.dialects.mysql.LONGTEXT, "mysql"))
 
     def __init__(self, IDelement=None, IDbloc=None, ordre=None, titre=None, categorie=None, date_debut=None, date_fin=None, parametres=None, texte_html=None):
         if IDelement != None:
