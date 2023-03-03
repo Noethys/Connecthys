@@ -220,6 +220,7 @@ def Importation(secret=0):
     
     if "mysql" in to_db :
         dengine.execute("SET foreign_key_checks = 0;")
+        dengine.execute("ALTER TABLE %sportail_elements MODIFY COLUMN texte_html LONGTEXT;" % PREFIXE_TABLES)
     
     for nom_table in tables:
         if nom_table in tables_modifiees_synchro:
