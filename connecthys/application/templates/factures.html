@@ -37,6 +37,17 @@
 				</div>
 			{% endif %}
 
+			{# Solde du compte famille #}
+			{% if GetParametre("FACTURES_AFFICHER_SOLDE_FAMILLE", dict_parametres) in ('True', '', None) %}
+				{% if solde_famille < 0.0 %}
+					<div class="callout callout-danger"><h5><i class="icon fa fa-info-circle"></i> &nbsp;&nbsp;Le solde de votre compte famille est de <b>{{ Formate_montant(solde_famille) }} (Impayés)</b></h5></div>
+				{% elif solde_famille == 0.0 %}
+					<div class="callout callout-success"><h5><i class="icon fa fa-info-circle"></i> &nbsp;&nbsp;Le solde de votre compte famille est de <b>{{ Formate_montant(solde_famille) }}</b></h5></div>
+				{% else %}
+					<div class="callout callout-success"><h5><i class="icon fa fa-info-circle"></i> &nbsp;&nbsp;Le solde de votre compte famille est de <b>{{ Formate_montant(solde_famille) }} (Avoir)</b></h5></div>
+				{% endif %}
+			{% endif %}
+
 			{% if liste_prefacturation|length > 0 %}
 				<div class="row">
 					<div class="col-xs-12">

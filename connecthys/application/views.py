@@ -515,6 +515,9 @@ def factures():
 
     dict_parametres = models.GetDictParametres()
 
+    # Récupération du solde global de la famille
+    solde_famille = float(current_user.GetParametres().get("solde", "0.00"))
+
     # Récupération de la liste des factures
     liste_factures = models.Facture.query.filter_by(IDfamille=current_user.IDfamille).order_by(models.Facture.date_debut.desc()).all()
     app.logger.debug("Page FACTURES (%s): famille id(%s) liste_factures:(%s)", current_user.identifiant, current_user.IDfamille, liste_factures)
@@ -604,7 +607,7 @@ def factures():
 
     app.logger.debug("Page FACTURES (%s): famille id(%s)", current_user.identifiant, current_user.IDfamille)
     return render_template('factures.html', active_page="factures", liste_factures=liste_factures, texte_impayes=texte_impayes, \
-                            liste_paiements=liste_paiements, liste_prefacturation=liste_prefacturation, \
+                            liste_paiements=liste_paiements, liste_prefacturation=liste_prefacturation, solde_famille=solde_famille, \
                             historique=historique, dict_parametres=dict_parametres)
 
                             

@@ -21,6 +21,8 @@ def GetToday():
     return datetime.date.today() 
     
 def Formate_montant(montant, symbole=u'€'):
+    if type(montant) == str:
+        montant = float(montant)
     return u"{0:.2f} {1}".format(montant, symbole)
 
 def DateDDEnFr(date):
