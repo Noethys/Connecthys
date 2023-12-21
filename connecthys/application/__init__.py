@@ -57,6 +57,12 @@ app.logger.addHandler(handlerdebug)
 
 app.logger.setLevel(logging.DEBUG)
 
+if os.path.isfile(os.path.join(REP_CONNECTHYS, "redirection_noethysweb.txt")):
+    AdminLTE(app)
+    import redirection_noethysweb
+    config_ok = None
+
+
 if config_ok == True :
 
     # Debugtoolbar
