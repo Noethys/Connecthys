@@ -656,6 +656,7 @@ def GetPaymentPayzen():
         'vads_ctx_mode': mode,
         'secret_test': certificat_test,
         'secret_production': certificat_production,
+        'signature_algo': "hmac_sha256",
         'vads_url_return': url_for('accueil', _external=True),
         'vads_url_cancel': url_for('retour_paiement_cancel', _external=True),
         'vads_url_error': url_for('retour_paiement_error', _external=True),
@@ -1588,7 +1589,7 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
         return None
     
     # Inscription
-    inscription = models.Inscription.query.filter_by(IDfamille=current_user.IDfamille, IDindividu=IDindividu, IDactivite=periode.IDactivite).first()
+    inscription = models.Inscription.query.filter_by(IDfamille=current_user.IDfamille, IDindividu=IDindividu, IDactivite=periode.IDactivite).filter((models.Inscription.date_desinscription == None) | (models.Inscription.date_desinscription > datetime.date.today())).first()
     if inscription == None :
         app.logger.warning(u"IDfamille %d : Tentative d'accéder à l'individu %s dans les réservations." % (current_user.IDfamille, IDindividu))
         flash(u"Vous n'êtes pas autorisé à accéder au planning de l'individu demandé !")
