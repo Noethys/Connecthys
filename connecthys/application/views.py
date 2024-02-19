@@ -106,6 +106,10 @@ def VerifyKey(secret=0):
     resultat = secret_key == secret
     return resultat
 
+def Supprimer_accents(texte=""):
+    import unicodedata
+    return unicodedata.normalize('NFKD', texte).encode('ASCII', 'ignore').decode("utf-8")
+
 
 @app.route('/robots.txt')
 def static_from_root():
@@ -767,24 +771,21 @@ def effectuer_paiement_en_ligne():
                 app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE TIPI (%s): Aucune régie n'a été paramétrée.", current_user.identifiant)
                 return jsonify(success=0, error_msg=u"Aucune régie n'a été paramétrée. Contactez l'administrateur du portail.")
 
-            objet = "Paiement " + regie.nom.encode("ascii", 'ignore')
-            if six.PY3:
-                objet = objet.decode("utf-8")
+            objet = "Paiement " + Supprimer_accents(regie.nom)
 
             app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE : IDfacture:%s montant:%s regie.nom: (%s) type(regie.nom): (%s) regie.numclitipi: (%s)", facture.IDfacture, montant_reglement, regie.nom, type(regie.nom), regie.numclitipi)
-            p = Payment(systeme_paiement, {'numcli': regie.numclitipi})
+            p = Payment("tipi", {'numcli': regie.numclitipi, "automatic_return_url": url_for('retour_tipi', _external=True)})
             requete = p.request(amount=str(montant_reglement),
                 exer=str(facture.date_debut.year),
                 refdet=facture.numero,
                 objet=objet,
                 email=utils.CallFonction("DecrypteChaine", current_user.email).split(";")[0],
-                urlcl=url_for('retour_tipi', _external=True),
                 saisie=saisie)
             app.logger.debug(u"Page EFFECTUER_PAIEMENT_EN_LIGNE (%s): requete: %s // systeme_paiement(%s)", current_user.identifiant, requete, systeme_paiement)
 
             # Enregistrement du paiement
             m = models.Paiement(IDfamille=current_user.IDfamille, systeme_paiement=systeme_paiement, factures_ID=factures_ID_str,
-                                IDtransaction=requete[0], refdet=facture.numero, montant=montant_reglement, objet=requete[3], saisie=saisie,
+                                IDtransaction=requete[0], refdet=facture.numero, montant=montant_reglement, objet=objet, saisie=saisie,
                                 ventilation=ventilation_str, horodatage=datetime.datetime.now())
             db.session.add(m)
             db.session.commit()
@@ -846,7 +847,7 @@ def ipn_payzen():
     app.logger.debug("Page RETOUR IPN PAYZEN")
 
     # Extraction des variables post
-    data = request.get_data(as_text=True).encode('ASCII')
+    data = request.get_data(as_text=True)
     app.logger.debug(data)
 
     # Récupération des données et calcul de la signature
@@ -873,7 +874,7 @@ def ipn_payzen():
     # Modification du paiement pré-enregistré
     paiement = models.Paiement.query.filter_by(IDtransaction=reponse.order_id).first()
     paiement.resultat = resultat
-    paiement.message = reponse.bank_status.decode("utf8")
+    paiement.message = reponse.bank_status
     db.session.commit()
 
     # Paiement échelonné
@@ -950,7 +951,8 @@ def retour_tipi():
     try :
 
         # Extraction des variables post
-        data = request.get_data(as_text=True).encode('ASCII')
+        data = request.get_data(as_text=True)
+        app.logger.debug(data)
 
         # Extraction des champs non traités par eopayment
         resultrans = request.form.get("resultrans", 0, type=str)
@@ -959,7 +961,7 @@ def retour_tipi():
         heurtrans = request.form.get("heurtrans", 0, type=str)
 
         # Récupération des données et calcul de la signature
-        p = Payment("tipi_regie", {})
+        p = Payment("tipi", {})
         reponse = p.response(data)
 
         # Recherche l'état du paiement
@@ -981,7 +983,7 @@ def retour_tipi():
         paiement.numauto = numauto
         paiement.dattrans = dattrans
         paiement.heurtrans = heurtrans
-        paiement.message = reponse.bank_status.decode("utf8")
+        paiement.message = reponse.bank_status
         db.session.commit()
 
         # Réponse dans log
