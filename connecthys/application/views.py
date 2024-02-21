@@ -1678,8 +1678,9 @@ def Get_dict_planning(IDindividu=None, IDperiode=None, index_couleur=0, coches=N
     for unite in liste_unites :
         liste_unites_principales = unite.Get_unites_principales()
         liste_unites_temp.append( (len(liste_unites_principales), liste_unites_principales, unite) )
-    liste_unites_temp.sort(reverse=True)
-    
+    # liste_unites_temp.sort(reverse=True)
+    liste_unites_temp = sorted(liste_unites_temp, key=itemgetter(0), reverse=True)
+
     dict_conso_par_unite_resa = {}
     
     for date in liste_dates :
