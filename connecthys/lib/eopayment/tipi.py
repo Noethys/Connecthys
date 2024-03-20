@@ -122,7 +122,7 @@ class Payment(PaymentCommon):
             raise ValueError('SAISIE invalid format, %r, must be M, T, X or A' % saisie)
 
         iso_now = isonow()
-        transaction_id = '%s_%s' % (iso_now, refdet)
+        transaction_id = '%s%s' % (iso_now, refdet)
         if objet:
             #objet = objet[:100-len(iso_now)-2] + ' ' + iso_now
              objet = objet[:100-len(transaction_id)-2] + ' ' + transaction_id
