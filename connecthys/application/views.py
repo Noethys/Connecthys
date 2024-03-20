@@ -970,7 +970,7 @@ def retour_tipi():
         # Modification du paiement pré-enregistré
         paiement = models.Paiement.query.filter_by(IDtransaction=reponse.transaction_id).first()
         if paiement == None :
-            app.logger.debug("Page RETOUR_TIPI: le paiement pre-enregistre n'a pas ete trouve.)")
+            app.logger.debug("Page RETOUR_TIPI: le paiement pre-enregistre %s n'a pas ete trouve." % reponse.transaction_id)
             return jsonify(success=0, error_msg=u"Le paiement pré-enregistré n'a pas été trouvé dans la base.")
 
         # Evite les doublons
