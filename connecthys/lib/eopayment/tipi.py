@@ -13,8 +13,7 @@ from systempayv2 import isonow
 
 __all__ = ['Payment']
 
-TIPI_URL = 'http://www.jepaiemesserviceslocaux.dgfip.finances.gouv.fr' \
-        '/tpa/paiement.web'
+TIPI_URL = 'https://www.payfip.gouv.fr/tpa/paiement.web'
 LOGGER = logging.getLogger(__name__)
 
 class Payment(PaymentCommon):
@@ -122,7 +121,7 @@ class Payment(PaymentCommon):
             raise ValueError('SAISIE invalid format, %r, must be M, T, X or A' % saisie)
 
         iso_now = isonow()
-        transaction_id = '%s%s' % (iso_now, refdet)
+        transaction_id = refdet #'%s%s' % (iso_now, refdet)
         if objet:
             #objet = objet[:100-len(iso_now)-2] + ' ' + iso_now
              objet = objet[:100-len(transaction_id)-2] + ' ' + transaction_id
@@ -152,11 +151,11 @@ class Payment(PaymentCommon):
         refdet = fields.get('refdet')
         if refdet is None:
             raise ValueError('refdet is missing')
-        if 'objet' in fields:
-            iso_now = fields['objet']
-        else:
-            iso_now = isonow()
-        transaction_id = '%s_%s' % (iso_now, refdet)
+        #if 'objet' in fields:
+        #    iso_now = fields['objet']
+        #else:
+        #    iso_now = isonow()
+        transaction_id = refdet #fields["objet"].split(" ")[-1] #'%s_%s' % (iso_now, refdet)
 
         result = fields.get('resultrans')
         if result == 'P':
