@@ -42,14 +42,14 @@ except :
 # compress.init_app(app)
 
 # Connexion avec le journal d'évènements
-handler = RotatingFileHandler(os.path.join(REP_CONNECTHYS, "journal.log"), maxBytes=100000, backupCount=10)
+handler = RotatingFileHandler(os.path.join(REP_CONNECTHYS, "journal.log"), maxBytes=100000, backupCount=5)
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d] %(message)s')
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 
 # Connexion avec le journal de debug
-handlerdebug = RotatingFileHandler(os.path.join(REP_CONNECTHYS, "debug.log"), maxBytes=204800, backupCount=30)
+handlerdebug = RotatingFileHandler(os.path.join(REP_CONNECTHYS, "debug.log"), maxBytes=204800, backupCount=5)
 handlerdebug.setLevel(logging.DEBUG)
 formatterdebug = logging.Formatter('[%(asctime)s][%(levelname)s][%(filename)s:%(lineno)d] %(message)s')
 handlerdebug.setFormatter(formatterdebug)
