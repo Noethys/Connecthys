@@ -62,6 +62,7 @@ def Exportation(secret=0, last=0):
     if os.path.isdir(app.REP_PIECES):
         liste_pieces = os.listdir(app.REP_PIECES)
         if liste_pieces:
+            # Nettoyage des pièces validées
             liste_actions = models.Action.query.filter(models.Action.categorie=="pieces", models.Action.ventilation==None, datetime.datetime.now() > (models.Action.horodatage + datetime.timedelta(days=0)), models.Action.etat=="validation").all()
             for action in liste_actions:
                 nom_fichier = action.GetParametres().get("chemin", None)
@@ -72,6 +73,16 @@ def Exportation(secret=0, last=0):
                         os.remove(chemin_fichier)
                         action.ventilation = "suppr"
             db.session.commit()
+
+            # Nettoyage des anciennes pièces qui traînent
+            for nom_fichier in liste_pieces:
+                try:
+                    chemin_fichier = os.path.join(app.REP_PIECES, nom_fichier)
+                    modif_date = datetime.datetime.fromtimestamp(os.path.getmtime(chemin_fichier)).date()
+                    if modif_date < datetime.date.today() - datetime.timedelta(days=365):
+                        os.remove(chemin_fichier)
+                except Exception as err:
+                    pass
 
     # Encodage des champs spéciaux (dates...)
     def Encoder(obj):
