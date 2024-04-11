@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
 
+# eopayment - online payment library
+# Copyright (C) 2011-2020 Entr'ouvert
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 from decimal import Decimal, ROUND_DOWN, getcontext
 from common import (PaymentCommon, PaymentResponse, URL, PAID, DENIED,
         CANCELLED, ERROR, ResponseError)
@@ -159,7 +176,7 @@ class Payment(PaymentCommon):
         #     iso_now = fields['objet'][-20:]
         # else:
         #     iso_now = isonow()
-        transaction_id = fields['objet'][-20:] #'%s%s' % (iso_now, refdet)
+        transaction_id = fields["objet"].split(" ")[-1] # fields['objet'][-20:] #'%s%s' % (iso_now, refdet)
 
         result = fields.get('resultrans')
         if result in ('P', 'V'):
