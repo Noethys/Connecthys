@@ -11,6 +11,7 @@
 import random, datetime, traceback, copy, re, sys, os
 from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response, send_from_directory
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
+import urllib.parse
 try :
     from flask_wtf import CSRFProtect
 except :
@@ -951,18 +952,12 @@ def retour_tipi():
     try :
 
         # Extraction des variables post
-        data = request.get_data(as_text=True)
+        data = urllib.parse.parse_qs(request.query_string.decode("utf-8"))
         app.logger.debug(data)
-
-        # Extraction des champs non traités par eopayment
-        resultrans = request.form.get("resultrans", 0, type=str)
-        numauto = request.form.get("numauto", 0, type=str)
-        dattrans = request.form.get("dattrans", 0, type=str)
-        heurtrans = request.form.get("heurtrans", 0, type=str)
 
         # Récupération des données et calcul de la signature
         p = Payment("tipi", {})
-        reponse = p.response(data)
+        reponse = p.response(request.query_string.decode("utf-8"))
 
         # Recherche l'état du paiement
         resultat = ETATS_PAIEMENTS[reponse.result]
@@ -978,11 +973,11 @@ def retour_tipi():
             app.logger.debug("Page RETOUR_TIPI: Doublon sur le retour tipi.)")
             return redirect(url_for('retour_paiement_error'))
 
-        paiement.resultrans = resultrans
         paiement.resultat = resultat
-        paiement.numauto = numauto
-        paiement.dattrans = dattrans
-        paiement.heurtrans = heurtrans
+        paiement.resultrans = request.form.get("resultrans", 0, type=str)
+        paiement.numauto = request.form.get("numauto", 0, type=str)
+        paiement.dattrans = request.form.get("dattrans", 0, type=str)
+        paiement.heurtrans = request.form.get("heurtrans", 0, type=str)
         paiement.message = reponse.bank_status
         db.session.commit()
 
