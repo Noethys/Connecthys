@@ -110,3 +110,4 @@ version=1.0.4 # version_min_noethys=1.3.3.0
 version=1.0.5 # version_min_noethys=1.3.3.0
 version=1.0.6 # version_min_noethys=1.3.3.0
 version=1.0.7 # version_min_noethys=1.3.3.0
+version=1.0.8 # version_min_noethys=1.3.3.0
