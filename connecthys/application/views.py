@@ -11,7 +11,6 @@
 import random, datetime, traceback, copy, re, sys, os
 from flask import Flask, render_template, session, request, flash, url_for, redirect, abort, g, jsonify, json, Response, send_from_directory
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
-import urllib.parse
 try :
     from flask_wtf import CSRFProtect
 except :
@@ -952,12 +951,12 @@ def retour_tipi():
     try :
 
         # Extraction des variables post
-        data = urllib.parse.parse_qs(request.query_string.decode("utf-8"))
+        data = request.get_data(as_text=True)
         app.logger.debug(data)
 
         # Récupération des données et calcul de la signature
         p = Payment("tipi", {})
-        reponse = p.response(request.query_string.decode("utf-8"))
+        reponse = p.response(data)
 
         # Recherche l'état du paiement
         resultat = ETATS_PAIEMENTS[reponse.result]
