@@ -954,6 +954,12 @@ def retour_tipi():
         data = request.get_data(as_text=True)
         app.logger.debug(data)
 
+        # Extraction des champs non traités par eopayment
+        resultrans = request.form.get("resultrans", 0, type=str)
+        numauto = request.form.get("numauto", 0, type=str)
+        dattrans = request.form.get("dattrans", 0, type=str)
+        heurtrans = request.form.get("heurtrans", 0, type=str)
+
         # Récupération des données et calcul de la signature
         p = Payment("tipi", {})
         reponse = p.response(data)
@@ -973,10 +979,10 @@ def retour_tipi():
             return redirect(url_for('retour_paiement_error'))
 
         paiement.resultat = resultat
-        paiement.resultrans = request.form.get("resultrans", 0, type=str)
-        paiement.numauto = request.form.get("numauto", 0, type=str)
-        paiement.dattrans = request.form.get("dattrans", 0, type=str)
-        paiement.heurtrans = request.form.get("heurtrans", 0, type=str)
+        paiement.resultrans = resultrans
+        paiement.numauto = numauto
+        paiement.dattrans = dattrans
+        paiement.heurtrans = heurtrans
         paiement.message = reponse.bank_status
         db.session.commit()
 
