@@ -1,9 +1,9 @@
 # event/registry.py
-# Copyright (C) 2005-2016 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: http://www.opensource.org/licenses/mit-license.php
+# the MIT License: https://www.opensource.org/licenses/mit-license.php
 
 """Provides managed registration services on behalf of :func:`.listen`
 arguments.
@@ -17,10 +17,12 @@ an equivalent :class:`._EventKey`.
 
 from __future__ import absolute_import
 
-import weakref
 import collections
 import types
-from .. import exc, util
+import weakref
+
+from .. import exc
+from .. import util
 
 
 _key_to_collection = collections.defaultdict(dict)
@@ -110,8 +112,18 @@ def _stored_in_collection_multi(newowner, oldowner, elements):
 
     for listen_fn in elements:
         listen_ref = weakref.ref(listen_fn)
-        key = old_listener_to_key[listen_ref]
-        dispatch_reg = _key_to_collection[key]
+        try:
+            key = old_listener_to_key[listen_ref]
+        except KeyError:
+            # can occur during interpreter shutdown.
+            # see #6740
+            continue
+
+        try:
+            dispatch_reg = _key_to_collection[key]
+        except KeyError:
+            continue
+
         if newowner in dispatch_reg:
             assert dispatch_reg[newowner] == listen_ref
         else:
@@ -137,15 +149,18 @@ def _clear(owner, elements):
 
 
 class _EventKey(object):
-    """Represent :func:`.listen` arguments.
-    """
+    """Represent :func:`.listen` arguments."""
 
     __slots__ = (
-        'target', 'identifier', 'fn', 'fn_key', 'fn_wrap', 'dispatch_target'
+        "target",
+        "identifier",
+        "fn",
+        "fn_key",
+        "fn_wrap",
+        "dispatch_target",
     )
 
-    def __init__(self, target, identifier,
-                 fn, dispatch_target, _fn_wrap=None):
+    def __init__(self, target, identifier, fn, dispatch_target, _fn_wrap=None):
         self.target = target
         self.identifier = identifier
         self.fn = fn
@@ -169,7 +184,7 @@ class _EventKey(object):
                 self.identifier,
                 self.fn,
                 self.dispatch_target,
-                _fn_wrap=fn_wrap
+                _fn_wrap=fn_wrap,
             )
 
     def with_dispatch_target(self, dispatch_target):
@@ -181,15 +196,19 @@ class _EventKey(object):
                 self.identifier,
                 self.fn,
                 dispatch_target,
-                _fn_wrap=self.fn_wrap
+                _fn_wrap=self.fn_wrap,
             )
 
     def listen(self, *args, **kw):
         once = kw.pop("once", False)
+        once_unless_exception = kw.pop("_once_unless_exception", False)
         named = kw.pop("named", False)
 
-        target, identifier, fn = \
-            self.dispatch_target, self.identifier, self._listen_fn
+        target, identifier, fn = (
+            self.dispatch_target,
+            self.identifier,
+            self._listen_fn,
+        )
 
         dispatch_collection = getattr(target.dispatch, identifier)
 
@@ -197,9 +216,18 @@ class _EventKey(object):
 
         self = self.with_wrapper(adjusted_fn)
 
-        if once:
+        stub_function = getattr(
+            self.dispatch_target.dispatch._events, self.identifier
+        )
+        if hasattr(stub_function, "_sa_warn"):
+            stub_function._sa_warn()
+
+        if once or once_unless_exception:
             self.with_wrapper(
-                util.only_once(self._listen_fn)).listen(*args, **kw)
+                util.only_once(
+                    self._listen_fn, retry_on_exception=once_unless_exception
+                )
+            ).listen(*args, **kw)
         else:
             self.dispatch_target.dispatch._listen(self, *args, **kw)
 
@@ -208,9 +236,10 @@ class _EventKey(object):
 
         if key not in _key_to_collection:
             raise exc.InvalidRequestError(
-                "No listeners found for event %s / %r / %s " %
-                (self.target, self.identifier, self.fn)
+                "No listeners found for event %s / %r / %s "
+                % (self.target, self.identifier, self.fn)
             )
+
         dispatch_reg = _key_to_collection.pop(key)
 
         for collection_ref, listener_ref in dispatch_reg.items():
@@ -220,24 +249,30 @@ class _EventKey(object):
                 collection.remove(self.with_wrapper(listener_fn))
 
     def contains(self):
-        """Return True if this event key is registered to listen.
-        """
+        """Return True if this event key is registered to listen."""
         return self._key in _key_to_collection
 
-    def base_listen(self, propagate=False, insert=False,
-                    named=False):
+    def base_listen(
+        self,
+        propagate=False,
+        insert=False,
+        named=False,
+        retval=None,
+        asyncio=False,
+    ):
 
-        target, identifier, fn = \
-            self.dispatch_target, self.identifier, self._listen_fn
+        target, identifier = self.dispatch_target, self.identifier
 
         dispatch_collection = getattr(target.dispatch, identifier)
 
+        for_modify = dispatch_collection.for_modify(target.dispatch)
+        if asyncio:
+            for_modify._set_asyncio()
+
         if insert:
-            dispatch_collection.\
-                for_modify(target.dispatch).insert(self, propagate)
+            for_modify.insert(self, propagate)
         else:
-            dispatch_collection.\
-                for_modify(target.dispatch).append(self, propagate)
+            for_modify.append(self, propagate)
 
     @property
     def _listen_fn(self):

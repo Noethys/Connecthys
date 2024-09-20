@@ -1,26 +1,25 @@
 # sybase/mxodbc.py
-# Copyright (C) 2005-2016 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: http://www.opensource.org/licenses/mit-license.php
+# the MIT License: https://www.opensource.org/licenses/mit-license.php
 """
 
 .. dialect:: sybase+mxodbc
     :name: mxODBC
     :dbapi: mxodbc
     :connectstring: sybase+mxodbc://<username>:<password>@<dsnname>
-    :url: http://www.egenix.com/
+    :url: https://www.egenix.com/
 
 .. note::
 
     This dialect is a stub only and is likely non functional at this time.
 
-
 """
+from sqlalchemy.connectors.mxodbc import MxODBCConnector
 from sqlalchemy.dialects.sybase.base import SybaseDialect
 from sqlalchemy.dialects.sybase.base import SybaseExecutionContext
-from sqlalchemy.connectors.mxodbc import MxODBCConnector
 
 
 class SybaseExecutionContext_mxodbc(SybaseExecutionContext):
@@ -29,5 +28,7 @@ class SybaseExecutionContext_mxodbc(SybaseExecutionContext):
 
 class SybaseDialect_mxodbc(MxODBCConnector, SybaseDialect):
     execution_ctx_cls = SybaseExecutionContext_mxodbc
+    supports_statement_cache = True
+
 
 dialect = SybaseDialect_mxodbc

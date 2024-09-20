@@ -1,18 +1,16 @@
 # sybase/pyodbc.py
-# Copyright (C) 2005-2016 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: http://www.opensource.org/licenses/mit-license.php
+# the MIT License: https://www.opensource.org/licenses/mit-license.php
 
 """
 .. dialect:: sybase+pyodbc
     :name: PyODBC
     :dbapi: pyodbc
-    :connectstring: sybase+pyodbc://<username>:<password>@<dsnname>\
-[/<database>]
-    :url: http://pypi.python.org/pypi/pyodbc/
-
+    :connectstring: sybase+pyodbc://<username>:<password>@<dsnname>[/<database>]
+    :url: https://pypi.org/project/pyodbc/
 
 Unicode Support
 ---------------
@@ -32,13 +30,15 @@ Currently *not* supported are::
     UNITEXT
     UNIVARCHAR
 
-"""
+"""  # noqa
 
-from sqlalchemy.dialects.sybase.base import SybaseDialect,\
-    SybaseExecutionContext
-from sqlalchemy.connectors.pyodbc import PyODBCConnector
-from sqlalchemy import types as sqltypes, processors
 import decimal
+
+from sqlalchemy import processors
+from sqlalchemy import types as sqltypes
+from sqlalchemy.connectors.pyodbc import PyODBCConnector
+from sqlalchemy.dialects.sybase.base import SybaseDialect
+from sqlalchemy.dialects.sybase.base import SybaseExecutionContext
 
 
 class _SybNumeric_pyodbc(sqltypes.Numeric):
@@ -51,12 +51,10 @@ class _SybNumeric_pyodbc(sqltypes.Numeric):
     """
 
     def bind_processor(self, dialect):
-        super_process = super(_SybNumeric_pyodbc, self).\
-            bind_processor(dialect)
+        super_process = super(_SybNumeric_pyodbc, self).bind_processor(dialect)
 
         def process(value):
-            if self.asdecimal and \
-                    isinstance(value, decimal.Decimal):
+            if self.asdecimal and isinstance(value, decimal.Decimal):
 
                 if value.adjusted() < -6:
                     return processors.to_float(value)
@@ -65,6 +63,7 @@ class _SybNumeric_pyodbc(sqltypes.Numeric):
                 return super_process(value)
             else:
                 return value
+
         return process
 
 
@@ -78,9 +77,13 @@ class SybaseExecutionContext_pyodbc(SybaseExecutionContext):
 
 class SybaseDialect_pyodbc(PyODBCConnector, SybaseDialect):
     execution_ctx_cls = SybaseExecutionContext_pyodbc
+    supports_statement_cache = True
 
-    colspecs = {
-        sqltypes.Numeric: _SybNumeric_pyodbc,
-    }
+    colspecs = {sqltypes.Numeric: _SybNumeric_pyodbc}
+
+    @classmethod
+    def dbapi(cls):
+        return PyODBCConnector.dbapi()
+
 
 dialect = SybaseDialect_pyodbc

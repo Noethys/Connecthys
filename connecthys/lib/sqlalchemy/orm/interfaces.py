@@ -1,71 +1,109 @@
 # orm/interfaces.py
-# Copyright (C) 2005-2016 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: http://www.opensource.org/licenses/mit-license.php
+# the MIT License: https://www.opensource.org/licenses/mit-license.php
 
 """
 
 Contains various base classes used throughout the ORM.
 
-Defines some key base classes prominent within the internals,
-as well as the now-deprecated ORM extension classes.
+Defines some key base classes prominent within the internals.
 
-Other than the deprecated extensions, this module and the
-classes within are mostly private, though some attributes
+This module and the classes within are mostly private, though some attributes
 are exposed when inspecting mappings.
 
 """
 
 from __future__ import absolute_import
 
+import collections
+
+from . import exc as orm_exc
+from . import path_registry
+from .base import _MappedAttribute  # noqa
+from .base import EXT_CONTINUE
+from .base import EXT_SKIP
+from .base import EXT_STOP
+from .base import InspectionAttr  # noqa
+from .base import InspectionAttrInfo  # noqa
+from .base import MANYTOMANY
+from .base import MANYTOONE
+from .base import NOT_EXTENSION
+from .base import ONETOMANY
+from .. import inspect
+from .. import inspection
 from .. import util
 from ..sql import operators
-from .base import (ONETOMANY, MANYTOONE, MANYTOMANY,
-                   EXT_CONTINUE, EXT_STOP, NOT_EXTENSION)
-from .base import (InspectionAttr, InspectionAttr,
-    InspectionAttrInfo, _MappedAttribute)
-import collections
-from .. import inspect
+from ..sql import roles
+from ..sql import visitors
+from ..sql.base import ExecutableOption
+from ..sql.traversals import HasCacheKey
 
-# imported later
-MapperExtension = SessionExtension = AttributeExtension = None
 
 __all__ = (
-    'AttributeExtension',
-    'EXT_CONTINUE',
-    'EXT_STOP',
-    'ONETOMANY',
-    'MANYTOMANY',
-    'MANYTOONE',
-    'NOT_EXTENSION',
-    'LoaderStrategy',
-    'MapperExtension',
-    'MapperOption',
-    'MapperProperty',
-    'PropComparator',
-    'SessionExtension',
-    'StrategizedProperty',
+    "EXT_CONTINUE",
+    "EXT_STOP",
+    "EXT_SKIP",
+    "ONETOMANY",
+    "MANYTOMANY",
+    "MANYTOONE",
+    "NOT_EXTENSION",
+    "LoaderStrategy",
+    "MapperOption",
+    "LoaderOption",
+    "MapperProperty",
+    "PropComparator",
+    "StrategizedProperty",
 )
 
 
-class MapperProperty(_MappedAttribute, InspectionAttr, util.MemoizedSlots):
-    """Represent a particular class attribute mapped by :class:`.Mapper`.
+class ORMStatementRole(roles.StatementRole):
+    _role_name = (
+        "Executable SQL or text() construct, including ORM " "aware objects"
+    )
+
+
+class ORMColumnsClauseRole(roles.ColumnsClauseRole):
+    _role_name = "ORM mapped entity, aliased entity, or Column expression"
+
+
+class ORMEntityColumnsClauseRole(ORMColumnsClauseRole):
+    _role_name = "ORM mapped or aliased entity"
+
+
+class ORMFromClauseRole(roles.StrictFromClauseRole):
+    _role_name = "ORM mapped entity, aliased entity, or FROM expression"
+
+
+@inspection._self_inspects
+class MapperProperty(
+    HasCacheKey, _MappedAttribute, InspectionAttr, util.MemoizedSlots
+):
+    """Represent a particular class attribute mapped by :class:`_orm.Mapper`.
 
     The most common occurrences of :class:`.MapperProperty` are the
-    mapped :class:`.Column`, which is represented in a mapping as
+    mapped :class:`_schema.Column`, which is represented in a mapping as
     an instance of :class:`.ColumnProperty`,
-    and a reference to another class produced by :func:`.relationship`,
+    and a reference to another class produced by :func:`_orm.relationship`,
     represented in the mapping as an instance of
     :class:`.RelationshipProperty`.
 
     """
 
     __slots__ = (
-        '_configure_started', '_configure_finished', 'parent', 'key',
-        'info'
+        "_configure_started",
+        "_configure_finished",
+        "parent",
+        "key",
+        "info",
     )
+
+    _cache_key_traversal = [
+        ("parent", visitors.ExtendedInternalTraversal.dp_has_cache_key),
+        ("key", visitors.ExtendedInternalTraversal.dp_string),
+    ]
 
     cascade = frozenset()
     """The set of 'cascade' attribute names.
@@ -82,17 +120,24 @@ class MapperProperty(_MappedAttribute, InspectionAttr, util.MemoizedSlots):
 
     """
 
+    @property
+    def _links_to_entity(self):
+        """True if this MapperProperty refers to a mapped entity.
+
+        Should only be True for RelationshipProperty, False for all others.
+
+        """
+        raise NotImplementedError()
+
     def _memoized_attr_info(self):
         """Info dictionary associated with the object, allowing user-defined
         data to be associated with this :class:`.InspectionAttr`.
 
         The dictionary is generated when first accessed.  Alternatively,
         it can be specified as a constructor argument to the
-        :func:`.column_property`, :func:`.relationship`, or :func:`.composite`
+        :func:`.column_property`, :func:`_orm.relationship`, or
+        :func:`.composite`
         functions.
-
-        .. versionadded:: 0.8  Added support for .info to all
-           :class:`.MapperProperty` subclasses.
 
         .. versionchanged:: 1.0.0 :attr:`.MapperProperty.info` is also
            available on extension types via the
@@ -108,7 +153,7 @@ class MapperProperty(_MappedAttribute, InspectionAttr, util.MemoizedSlots):
         """
         return {}
 
-    def setup(self, context, entity, path, adapter, **kwargs):
+    def setup(self, context, query_entity, path, adapter, **kwargs):
         """Called by Query for the purposes of constructing a SQL statement.
 
         Each MapperProperty associated with the target mapper processes the
@@ -117,15 +162,17 @@ class MapperProperty(_MappedAttribute, InspectionAttr, util.MemoizedSlots):
 
         """
 
-    def create_row_processor(self, context, path,
-                             mapper, result, adapter, populators):
+    def create_row_processor(
+        self, context, query_entity, path, mapper, result, adapter, populators
+    ):
         """Produce row processing functions and append to the given
         set of populators lists.
 
         """
 
-    def cascade_iterator(self, type_, state, visited_instances=None,
-                         halt_on=None):
+    def cascade_iterator(
+        self, type_, state, dict_, visited_states, halt_on=None
+    ):
         """Iterate through instances related to the given instance for
         a particular 'cascade', starting with this MapperProperty.
 
@@ -177,6 +224,7 @@ class MapperProperty(_MappedAttribute, InspectionAttr, util.MemoizedSlots):
         """Called after all mappers are created to assemble
         relationships between mappers and perform other post-mapper-creation
         initialization steps.
+
 
         """
         self._configure_started = True
@@ -233,21 +281,33 @@ class MapperProperty(_MappedAttribute, InspectionAttr, util.MemoizedSlots):
 
         """
 
-    def merge(self, session, source_state, source_dict, dest_state,
-              dest_dict, load, _recursive):
+    def merge(
+        self,
+        session,
+        source_state,
+        source_dict,
+        dest_state,
+        dest_dict,
+        load,
+        _recursive,
+        _resolve_conflict_map,
+    ):
         """Merge the attribute represented by this ``MapperProperty``
         from source to destination object.
 
         """
 
     def __repr__(self):
-        return '<%s at 0x%x; %s>' % (
+        return "<%s at 0x%x; %s>" % (
             self.__class__.__name__,
-            id(self), getattr(self, 'key', 'no key'))
+            id(self),
+            getattr(self, "key", "no key"),
+        )
 
 
+@inspection._self_inspects
 class PropComparator(operators.ColumnOperators):
-    """Defines SQL operators for :class:`.MapperProperty` objects.
+    r"""Defines SQL operators for :class:`.MapperProperty` objects.
 
     SQLAlchemy allows for operators to
     be redefined at both the Core and ORM level.  :class:`.PropComparator`
@@ -273,9 +333,9 @@ class PropComparator(operators.ColumnOperators):
 
         # definition of custom PropComparator subclasses
 
-        from sqlalchemy.orm.properties import \\
-                                ColumnProperty,\\
-                                CompositeProperty,\\
+        from sqlalchemy.orm.properties import \
+                                ColumnProperty,\
+                                CompositeProperty,\
                                 RelationshipProperty
 
         class MyColumnComparator(ColumnProperty.Comparator):
@@ -318,25 +378,32 @@ class PropComparator(operators.ColumnOperators):
     :attr:`.TypeEngine.comparator_factory` attribute.  See
     :ref:`types_operators` for more detail.
 
-    See also:
+    .. seealso::
 
-    :class:`.ColumnProperty.Comparator`
+        :class:`.ColumnProperty.Comparator`
 
-    :class:`.RelationshipProperty.Comparator`
+        :class:`.RelationshipProperty.Comparator`
 
-    :class:`.CompositeProperty.Comparator`
+        :class:`.CompositeProperty.Comparator`
 
-    :class:`.ColumnOperators`
+        :class:`.ColumnOperators`
 
-    :ref:`types_operators`
+        :ref:`types_operators`
 
-    :attr:`.TypeEngine.comparator_factory`
+        :attr:`.TypeEngine.comparator_factory`
 
     """
 
-    __slots__ = 'prop', 'property', '_parententity', '_adapt_to_entity'
+    __slots__ = "prop", "property", "_parententity", "_adapt_to_entity"
 
-    def __init__(self, prop, parentmapper, adapt_to_entity=None):
+    __visit_name__ = "orm_prop_comparator"
+
+    def __init__(
+        self,
+        prop,
+        parentmapper,
+        adapt_to_entity=None,
+    ):
         self.prop = self.property = prop
         self._parententity = adapt_to_entity or parentmapper
         self._adapt_to_entity = adapt_to_entity
@@ -344,8 +411,16 @@ class PropComparator(operators.ColumnOperators):
     def __clause_element__(self):
         raise NotImplementedError("%r" % self)
 
-    def _query_clause_element(self):
-        return self.__clause_element__()
+    def _bulk_update_tuples(self, value):
+        """Receive a SQL expression that represents a value in the SET
+        clause of an UPDATE statement.
+
+        Return a tuple that can be passed to a :class:`_expression.Update`
+        construct.
+
+        """
+
+        return [(self.__clause_element__(), value)]
 
     def adapt_to_entity(self, adapt_to_entity):
         """Return a copy of this PropComparator which will use the given
@@ -358,6 +433,18 @@ class PropComparator(operators.ColumnOperators):
         """legacy; this is renamed to _parententity to be
         compatible with QueryableAttribute."""
         return inspect(self._parententity).mapper
+
+    @property
+    def _propagate_attrs(self):
+        # this suits the case in coercions where we don't actually
+        # call ``__clause_element__()`` but still need to get
+        # resolved._propagate_attrs.  See #6558.
+        return util.immutabledict(
+            {
+                "compile_state_plugin": "orm",
+                "plugin_subject": self._parentmapper,
+            }
+        )
 
     @property
     def adapter(self):
@@ -387,26 +474,61 @@ class PropComparator(operators.ColumnOperators):
         return a.of_type(class_)
 
     def of_type(self, class_):
-        """Redefine this object in terms of a polymorphic subclass.
+        r"""Redefine this object in terms of a polymorphic subclass,
+        :func:`_orm.with_polymorphic` construct, or :func:`_orm.aliased`
+        construct.
 
         Returns a new PropComparator from which further criterion can be
         evaluated.
 
         e.g.::
 
-            query.join(Company.employees.of_type(Engineer)).\\
+            query.join(Company.employees.of_type(Engineer)).\
                filter(Engineer.name=='foo')
 
         :param \class_: a class or mapper indicating that criterion will be
             against this specific subclass.
 
+        .. seealso::
+
+            :ref:`queryguide_join_onclause` - in the :ref:`queryguide_toplevel`
+
+            :ref:`inheritance_of_type`
 
         """
 
         return self.operate(PropComparator.of_type_op, class_)
 
+    def and_(self, *criteria):
+        """Add additional criteria to the ON clause that's represented by this
+        relationship attribute.
+
+        E.g.::
+
+
+            stmt = select(User).join(
+                User.addresses.and_(Address.email_address != 'foo')
+            )
+
+            stmt = select(User).options(
+                joinedload(User.addresses.and_(Address.email_address != 'foo'))
+            )
+
+        .. versionadded:: 1.4
+
+        .. seealso::
+
+            :ref:`orm_queryguide_join_on_augmented`
+
+            :ref:`loader_option_criteria`
+
+            :func:`.with_loader_criteria`
+
+        """
+        return self.operate(operators.and_, *criteria)
+
     def any(self, criterion=None, **kwargs):
-        """Return true if this collection contains any member that meets the
+        r"""Return true if this collection contains any member that meets the
         given criterion.
 
         The usual implementation of ``any()`` is
@@ -424,7 +546,7 @@ class PropComparator(operators.ColumnOperators):
         return self.operate(PropComparator.any_op, criterion, **kwargs)
 
     def has(self, criterion=None, **kwargs):
-        """Return true if this element references a member which meets the
+        r"""Return true if this element references a member which meets the
         given criterion.
 
         The usual implementation of ``has()`` is
@@ -459,23 +581,41 @@ class StrategizedProperty(MapperProperty):
 
     """
 
-    __slots__ = '_strategies', 'strategy'
-
+    __slots__ = (
+        "_strategies",
+        "strategy",
+        "_wildcard_token",
+        "_default_path_loader_key",
+    )
+    inherit_cache = True
     strategy_wildcard_key = None
+
+    def _memoized_attr__wildcard_token(self):
+        return (
+            "%s:%s"
+            % (self.strategy_wildcard_key, path_registry._WILDCARD_TOKEN),
+        )
+
+    def _memoized_attr__default_path_loader_key(self):
+        return (
+            "loader",
+            (
+                "%s:%s"
+                % (self.strategy_wildcard_key, path_registry._DEFAULT_TOKEN),
+            ),
+        )
 
     def _get_context_loader(self, context, path):
         load = None
 
-        # use EntityRegistry.__getitem__()->PropRegistry here so
-        # that the path is stated in terms of our base
-        search_path = dict.__getitem__(path, self)
+        search_path = path[self]
 
         # search among: exact match, "attr.*", "default" strategy
         # if any.
         for path_key in (
             search_path._loader_key,
             search_path._wildcard_path_loader_key,
-            search_path._default_path_loader_key
+            search_path._default_path_loader_key,
         ):
             if path_key in context.attributes:
                 load = context.attributes[path_key]
@@ -487,42 +627,54 @@ class StrategizedProperty(MapperProperty):
         try:
             return self._strategies[key]
         except KeyError:
-            cls = self._strategy_lookup(*key)
-            self._strategies[key] = self._strategies[
-                cls] = strategy = cls(self)
-            return strategy
+            pass
 
-    def _get_strategy_by_cls(self, cls):
-        return self._get_strategy(cls._strategy_keys[0])
+        # run outside to prevent transfer of exception context
+        cls = self._strategy_lookup(self, *key)
+        # this previously was setting self._strategies[cls], that's
+        # a bad idea; should use strategy key at all times because every
+        # strategy has multiple keys at this point
+        self._strategies[key] = strategy = cls(self, key)
+        return strategy
 
-    def setup(
-            self, context, entity, path, adapter, **kwargs):
+    def setup(self, context, query_entity, path, adapter, **kwargs):
         loader = self._get_context_loader(context, path)
         if loader and loader.strategy:
             strat = self._get_strategy(loader.strategy)
         else:
             strat = self.strategy
-        strat.setup_query(context, entity, path, loader, adapter, **kwargs)
+        strat.setup_query(
+            context, query_entity, path, loader, adapter, **kwargs
+        )
 
     def create_row_processor(
-            self, context, path, mapper,
-            result, adapter, populators):
+        self, context, query_entity, path, mapper, result, adapter, populators
+    ):
         loader = self._get_context_loader(context, path)
         if loader and loader.strategy:
             strat = self._get_strategy(loader.strategy)
         else:
             strat = self.strategy
         strat.create_row_processor(
-            context, path, loader,
-            mapper, result, adapter, populators)
+            context,
+            query_entity,
+            path,
+            loader,
+            mapper,
+            result,
+            adapter,
+            populators,
+        )
 
     def do_init(self):
         self._strategies = {}
-        self.strategy = self._get_strategy_by_cls(self.strategy_class)
+        self.strategy = self._get_strategy(self.strategy_key)
 
     def post_instrument_class(self, mapper):
-        if not self.parent.non_primary and \
-                not mapper.class_manager._attr_has_impl(self.key):
+        if (
+            not self.parent.non_primary
+            and not mapper.class_manager._attr_has_impl(self.key)
+        ):
             self.strategy.init_class_attribute(mapper)
 
     _all_strategies = collections.defaultdict(dict)
@@ -532,16 +684,19 @@ class StrategizedProperty(MapperProperty):
         def decorate(dec_cls):
             # ensure each subclass of the strategy has its
             # own _strategy_keys collection
-            if '_strategy_keys' not in dec_cls.__dict__:
+            if "_strategy_keys" not in dec_cls.__dict__:
                 dec_cls._strategy_keys = []
             key = tuple(sorted(kw.items()))
             cls._all_strategies[cls][key] = dec_cls
             dec_cls._strategy_keys.append(key)
             return dec_cls
+
         return decorate
 
     @classmethod
-    def _strategy_lookup(cls, *key):
+    def _strategy_lookup(cls, requesting_property, *key):
+        requesting_property.parent._with_polymorphic_mappers
+
         for prop_cls in cls.__mro__:
             if prop_cls in cls._all_strategies:
                 strategies = cls._all_strategies[prop_cls]
@@ -549,11 +704,214 @@ class StrategizedProperty(MapperProperty):
                     return strategies[key]
                 except KeyError:
                     pass
-        raise Exception("can't locate strategy for %s %s" % (cls, key))
+
+        for property_type, strats in cls._all_strategies.items():
+            if key in strats:
+                intended_property_type = property_type
+                actual_strategy = strats[key]
+                break
+        else:
+            intended_property_type = None
+            actual_strategy = None
+
+        raise orm_exc.LoaderStrategyException(
+            cls,
+            requesting_property,
+            intended_property_type,
+            actual_strategy,
+            key,
+        )
 
 
-class MapperOption(object):
-    """Describe a modification to a Query."""
+class ORMOption(ExecutableOption):
+    """Base class for option objects that are passed to ORM queries.
+
+    These options may be consumed by :meth:`.Query.options`,
+    :meth:`.Select.options`, or in a more general sense by any
+    :meth:`.Executable.options` method.   They are interpreted at
+    statement compile time or execution time in modern use.  The
+    deprecated :class:`.MapperOption` is consumed at ORM query construction
+    time.
+
+    .. versionadded:: 1.4
+
+    """
+
+    __slots__ = ()
+
+    _is_legacy_option = False
+
+    propagate_to_loaders = False
+    """if True, indicate this option should be carried along
+    to "secondary" SELECT statements that occur for relationship
+    lazy loaders as well as attribute load / refresh operations.
+
+    """
+
+    _is_compile_state = False
+
+    _is_criteria_option = False
+
+    _is_strategy_option = False
+
+    def _adapt_cached_option_to_uncached_option(self, context, uncached_opt):
+        """given "self" which is an option from a cached query, as well as the
+        corresponding option from the uncached version of the same query,
+        return the option we should use in a new query, in the context of a
+        loader strategy being asked to load related rows on behalf of that
+        cached query, which is assumed to be building a new query based on
+        entities passed to us from the cached query.
+
+        Currently this routine chooses between "self" and "uncached" without
+        manufacturing anything new. If the option is itself a loader strategy
+        option which has a path, that path needs to match to the entities being
+        passed to us by the cached query, so the :class:`_orm.Load` subclass
+        overrides this to return "self". For all other options, we return the
+        uncached form which may have changing state, such as a
+        with_loader_criteria() option which will very often have new state.
+
+        This routine could in the future involve
+        generating a new option based on both inputs if use cases arise,
+        such as if with_loader_criteria() needed to match up to
+        ``AliasedClass`` instances given in the parent query.
+
+        However, longer term it might be better to restructure things such that
+        ``AliasedClass`` entities are always matched up on their cache key,
+        instead of identity, in things like paths and such, so that this whole
+        issue of "the uncached option does not match the entities" goes away.
+        However this would make ``PathRegistry`` more complicated and difficult
+        to debug as well as potentially less performant in that it would be
+        hashing enormous cache keys rather than a simple AliasedInsp. UNLESS,
+        we could get cache keys overall to be reliably hashed into something
+        like an md5 key.
+
+        .. versionadded:: 1.4.41
+
+
+        """
+        if uncached_opt is not None:
+            return uncached_opt
+        else:
+            return self
+
+
+class CompileStateOption(HasCacheKey, ORMOption):
+    """base for :class:`.ORMOption` classes that affect the compilation of
+    a SQL query and therefore need to be part of the cache key.
+
+    .. note::  :class:`.CompileStateOption` is generally non-public and
+       should not be used as a base class for user-defined options; instead,
+       use :class:`.UserDefinedOption`, which is easier to use as it does not
+       interact with ORM compilation internals or caching.
+
+    :class:`.CompileStateOption` defines an internal attribute
+    ``_is_compile_state=True`` which has the effect of the ORM compilation
+    routines for SELECT and other statements will call upon these options when
+    a SQL string is being compiled. As such, these classes implement
+    :class:`.HasCacheKey` and need to provide robust ``_cache_key_traversal``
+    structures.
+
+    The :class:`.CompileStateOption` class is used to implement the ORM
+    :class:`.LoaderOption` and :class:`.CriteriaOption` classes.
+
+    .. versionadded:: 1.4.28
+
+
+    """
+
+    _is_compile_state = True
+
+    def process_compile_state(self, compile_state):
+        """Apply a modification to a given :class:`.CompileState`."""
+
+    def process_compile_state_replaced_entities(
+        self, compile_state, mapper_entities
+    ):
+        """Apply a modification to a given :class:`.CompileState`,
+        given entities that were replaced by with_only_columns() or
+        with_entities().
+
+        .. versionadded:: 1.4.19
+
+        """
+
+
+class LoaderOption(CompileStateOption):
+    """Describe a loader modification to an ORM statement at compilation time.
+
+    .. versionadded:: 1.4
+
+    """
+
+    def process_compile_state_replaced_entities(
+        self, compile_state, mapper_entities
+    ):
+        """Apply a modification to a given :class:`.CompileState`,
+        given entities that were replaced by with_only_columns() or
+        with_entities().
+
+        .. versionadded:: 1.4.19
+
+        """
+        self.process_compile_state(compile_state)
+
+    def process_compile_state(self, compile_state):
+        """Apply a modification to a given :class:`.CompileState`."""
+
+
+class CriteriaOption(CompileStateOption):
+    """Describe a WHERE criteria modification to an ORM statement at
+    compilation time.
+
+    .. versionadded:: 1.4
+
+    """
+
+    _is_criteria_option = True
+
+    def process_compile_state(self, compile_state):
+        """Apply a modification to a given :class:`.CompileState`."""
+
+    def get_global_criteria(self, attributes):
+        """update additional entity criteria options in the given
+        attributes dictionary.
+
+        """
+
+
+class UserDefinedOption(ORMOption):
+    """Base class for a user-defined option that can be consumed from the
+    :meth:`.SessionEvents.do_orm_execute` event hook.
+
+    """
+
+    _is_legacy_option = False
+
+    propagate_to_loaders = False
+    """if True, indicate this option should be carried along
+    to "secondary" Query objects produced during lazy loads
+    or refresh operations.
+
+    """
+
+    def __init__(self, payload=None):
+        self.payload = payload
+
+
+@util.deprecated_cls(
+    "1.4",
+    "The :class:`.MapperOption class is deprecated and will be removed "
+    "in a future release.   For "
+    "modifications to queries on a per-execution basis, use the "
+    ":class:`.UserDefinedOption` class to establish state within a "
+    ":class:`.Query` or other Core statement, then use the "
+    ":meth:`.SessionEvents.before_orm_execute` hook to consume them.",
+    constructor=None,
+)
+class MapperOption(ORMOption):
+    """Describe a modification to a Query"""
+
+    _is_legacy_option = True
 
     propagate_to_loaders = False
     """if True, indicate this option should be carried along
@@ -563,13 +921,13 @@ class MapperOption(object):
     """
 
     def process_query(self, query):
-        """Apply a modification to the given :class:`.Query`."""
+        """Apply a modification to the given :class:`_query.Query`."""
 
     def process_query_conditionally(self, query):
         """same as process_query(), except that this option may not
         apply to the given query.
 
-        This is typically used during a lazy load or scalar refresh
+        This is typically applied during a lazy load or scalar refresh
         operation to propagate options stated in the original Query to the
         new Query being used for the load.  It occurs for those options that
         specify propagate_to_loaders=True.
@@ -603,18 +961,29 @@ class LoaderStrategy(object):
 
     """
 
-    __slots__ = 'parent_property', 'is_class_level', 'parent', 'key'
+    __slots__ = (
+        "parent_property",
+        "is_class_level",
+        "parent",
+        "key",
+        "strategy_key",
+        "strategy_opts",
+    )
 
-    def __init__(self, parent):
+    def __init__(self, parent, strategy_key):
         self.parent_property = parent
         self.is_class_level = False
         self.parent = self.parent_property.parent
         self.key = self.parent_property.key
+        self.strategy_key = strategy_key
+        self.strategy_opts = dict(strategy_key)
 
     def init_class_attribute(self, mapper):
         pass
 
-    def setup_query(self, context, entity, path, loadopt, adapter, **kwargs):
+    def setup_query(
+        self, compile_state, query_entity, path, loadopt, adapter, **kwargs
+    ):
         """Establish column and other state for a given QueryContext.
 
         This method fulfills the contract specified by MapperProperty.setup().
@@ -624,8 +993,17 @@ class LoaderStrategy(object):
 
         """
 
-    def create_row_processor(self, context, path, loadopt, mapper,
-                             result, adapter, populators):
+    def create_row_processor(
+        self,
+        context,
+        query_entity,
+        path,
+        loadopt,
+        mapper,
+        result,
+        adapter,
+        populators,
+    ):
         """Establish row processing functions for a given QueryContext.
 
         This method fulfills the contract specified by

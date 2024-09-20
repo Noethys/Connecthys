@@ -1,21 +1,18 @@
 # firebird/fdb.py
-# Copyright (C) 2005-2016 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: http://www.opensource.org/licenses/mit-license.php
+# the MIT License: https://www.opensource.org/licenses/mit-license.php
 
 """
 .. dialect:: firebird+fdb
     :name: fdb
     :dbapi: pyodbc
-    :connectstring: firebird+fdb://user:password@host:port/path/to/db\
-[?key=value&key=value...]
-    :url: http://pypi.python.org/pypi/fdb/
+    :connectstring: firebird+fdb://user:password@host:port/path/to/db[?key=value&key=value...]
+    :url: https://pypi.org/project/fdb/
 
     fdb is a kinterbasdb compatible DBAPI for Firebird.
-
-    .. versionadded:: 0.8 - Support for the fdb Firebird driver.
 
     .. versionchanged:: 0.9 - The fdb dialect is now the default dialect
        under the ``firebird://`` URL space, as ``fdb`` is now the official
@@ -32,7 +29,7 @@ accept every argument that Kinterbasdb does.
   the usage of "cursor.rowcount" with the
   Kinterbasdb dialect, which SQLAlchemy ordinarily calls upon automatically
   after any UPDATE or DELETE statement.   When disabled, SQLAlchemy's
-  ResultProxy will return -1 for result.rowcount.   The rationale here is
+  CursorResult will return -1 for result.rowcount.   The rationale here is
   that Kinterbasdb requires a second round trip to the database when
   .rowcount is called -  since SQLA's resultproxy automatically closes
   the cursor after a non-result-returning statement, rowcount must be
@@ -41,11 +38,11 @@ accept every argument that Kinterbasdb does.
   of Firebird, and setting this flag to False will also cause the
   SQLAlchemy ORM to ignore its usage. The behavior can also be controlled on a
   per-execution basis using the ``enable_rowcount`` option with
-  :meth:`.Connection.execution_options`::
+  :meth:`_engine.Connection.execution_options`::
 
       conn = engine.connect().execution_options(enable_rowcount=True)
       r = conn.execute(stmt)
-      print r.rowcount
+      print(r.rowcount)
 
 * ``retaining`` - False by default.   Setting this to True will pass the
   ``retaining=True`` keyword argument to the ``.commit()`` and ``.rollback()``
@@ -54,44 +51,40 @@ accept every argument that Kinterbasdb does.
   Please read the fdb and/or kinterbasdb DBAPI documentation in order to
   understand the implications of this flag.
 
-  .. versionadded:: 0.8.2 - ``retaining`` keyword argument specifying
-     transaction retaining behavior - in 0.8 it defaults to ``True``
-     for backwards compatibility.
-
   .. versionchanged:: 0.9.0 - the ``retaining`` flag defaults to ``False``.
      In 0.8 it defaulted to ``True``.
 
   .. seealso::
 
-    http://pythonhosted.org/fdb/usage-guide.html#retaining-transactions
+    https://pythonhosted.org/fdb/usage-guide.html#retaining-transactions
     - information on the "retaining" flag.
 
-"""
+"""  # noqa
 
 from .kinterbasdb import FBDialect_kinterbasdb
 from ... import util
 
 
 class FBDialect_fdb(FBDialect_kinterbasdb):
+    supports_statement_cache = True
 
-    def __init__(self, enable_rowcount=True,
-                 retaining=False, **kwargs):
+    def __init__(self, enable_rowcount=True, retaining=False, **kwargs):
         super(FBDialect_fdb, self).__init__(
-            enable_rowcount=enable_rowcount,
-            retaining=retaining, **kwargs)
+            enable_rowcount=enable_rowcount, retaining=retaining, **kwargs
+        )
 
     @classmethod
     def dbapi(cls):
-        return __import__('fdb')
+        return __import__("fdb")
 
     def create_connect_args(self, url):
-        opts = url.translate_connect_args(username='user')
-        if opts.get('port'):
-            opts['host'] = "%s/%s" % (opts['host'], opts['port'])
-            del opts['port']
+        opts = url.translate_connect_args(username="user")
+        if opts.get("port"):
+            opts["host"] = "%s/%s" % (opts["host"], opts["port"])
+            del opts["port"]
         opts.update(url.query)
 
-        util.coerce_kw_type(opts, 'type_conv', int)
+        util.coerce_kw_type(opts, "type_conv", int)
 
         return ([], opts)
 
@@ -114,5 +107,6 @@ class FBDialect_fdb(FBDialect_kinterbasdb):
         version = fbconn.db_info(isc_info_firebird_version)
 
         return self._parse_version_info(version)
+
 
 dialect = FBDialect_fdb
