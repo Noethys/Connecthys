@@ -1,17 +1,15 @@
 # testing/pickleable.py
-# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 """Classes used in pickling tests, need to be at the module level for
 unpickling.
 """
 
 from . import fixtures
-from ..schema import Column
-from ..types import String
 
 
 class User(fixtures.ComparableEntity):
@@ -48,36 +46,29 @@ class Parent(fixtures.ComparableEntity):
 
 
 class Screen(object):
+
     def __init__(self, obj, parent=None):
         self.obj = obj
         self.parent = parent
 
 
-class Mixin(object):
-    email_address = Column(String)
-
-
-class AddressWMixin(Mixin, fixtures.ComparableEntity):
-    pass
-
-
 class Foo(object):
-    def __init__(self, moredata, stuff="im stuff"):
-        self.data = "im data"
-        self.stuff = stuff
+
+    def __init__(self, moredata):
+        self.data = 'im data'
+        self.stuff = 'im stuff'
         self.moredata = moredata
 
     __hash__ = object.__hash__
 
     def __eq__(self, other):
-        return (
-            other.data == self.data
-            and other.stuff == self.stuff
-            and other.moredata == self.moredata
-        )
+        return other.data == self.data and \
+            other.stuff == self.stuff and \
+            other.moredata == self.moredata
 
 
 class Bar(object):
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -85,36 +76,35 @@ class Bar(object):
     __hash__ = object.__hash__
 
     def __eq__(self, other):
-        return (
-            other.__class__ is self.__class__
-            and other.x == self.x
-            and other.y == self.y
-        )
+        return other.__class__ is self.__class__ and \
+            other.x == self.x and \
+            other.y == self.y
 
     def __str__(self):
         return "Bar(%d, %d)" % (self.x, self.y)
 
 
 class OldSchool:
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
     def __eq__(self, other):
-        return (
-            other.__class__ is self.__class__
-            and other.x == self.x
-            and other.y == self.y
-        )
+        return other.__class__ is self.__class__ and \
+            other.x == self.x and \
+            other.y == self.y
 
 
 class OldSchoolWithoutCompare:
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
 
 class BarWithoutCompare(object):
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -124,6 +114,7 @@ class BarWithoutCompare(object):
 
 
 class NotComparable(object):
+
     def __init__(self, data):
         self.data = data
 
@@ -138,6 +129,7 @@ class NotComparable(object):
 
 
 class BrokenComparable(object):
+
     def __init__(self, data):
         self.data = data
 

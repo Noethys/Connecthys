@@ -1,10 +1,10 @@
 # sqlalchemy/log.py
-# Copyright (C) 2006-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2006-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 # Includes alterations by Vinay Sajip vinay_sajip@yahoo.co.uk
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 """Logging control and utilities.
 
@@ -12,8 +12,8 @@ Control of logging for SA can be performed from the regular python logging
 module.  The regular dotted module namespace is used, starting at
 'sqlalchemy'.  For class-level logging, the class name is appended.
 
-The "echo" keyword parameter, available on SQLA :class:`_engine.Engine`
-and :class:`_pool.Pool` objects, corresponds to a logger specific to that
+The "echo" keyword parameter, available on SQLA :class:`.Engine`
+and :class:`.Pool` objects, corresponds to a logger specific to that
 instance only.
 
 """
@@ -21,46 +21,26 @@ instance only.
 import logging
 import sys
 
-from .util import py311
-from .util import py38
-
-if py38:
-    STACKLEVEL = True
-    # needed as of py3.11.0b1
-    # #8019
-    STACKLEVEL_OFFSET = 2 if py311 else 1
-else:
-    STACKLEVEL = False
-    STACKLEVEL_OFFSET = 0
-
 # set initial level to WARN.  This so that
 # log statements don't occur in the absence of explicit
 # logging being enabled for 'sqlalchemy'.
-rootlogger = logging.getLogger("sqlalchemy")
+rootlogger = logging.getLogger('sqlalchemy')
 if rootlogger.level == logging.NOTSET:
     rootlogger.setLevel(logging.WARN)
 
 
 def _add_default_handler(logger):
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(
-        logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-    )
+    handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s %(name)s %(message)s'))
     logger.addHandler(handler)
 
 
 _logged_classes = set()
 
 
-def _qual_logger_name_for_cls(cls):
-    return (
-        getattr(cls, "_sqla_logger_namespace", None)
-        or cls.__module__ + "." + cls.__name__
-    )
-
-
 def class_logger(cls):
-    logger = logging.getLogger(_qual_logger_name_for_cls(cls))
+    logger = logging.getLogger(cls.__module__ + "." + cls.__name__)
     cls._should_log_debug = lambda self: logger.isEnabledFor(logging.DEBUG)
     cls._should_log_info = lambda self: logger.isEnabledFor(logging.INFO)
     cls.logger = logger
@@ -92,8 +72,8 @@ class InstanceLogger(object):
 
     'debug' -> logging.DEBUG
     True    -> logging.INFO
-    False   -> Effective level of underlying logger (
-    logging.WARNING by default)
+    False   -> Effective level of underlying logger
+               (logging.WARNING by default)
     None    -> same as False
     """
 
@@ -102,7 +82,7 @@ class InstanceLogger(object):
         None: logging.NOTSET,
         False: logging.NOTSET,
         True: logging.INFO,
-        "debug": logging.DEBUG,
+        'debug': logging.DEBUG,
     }
 
     def __init__(self, echo, name):
@@ -111,7 +91,8 @@ class InstanceLogger(object):
 
         # if echo flag is enabled and no handlers,
         # add a handler to the list
-        if self._echo_map[echo] <= logging.INFO and not self.logger.handlers:
+        if self._echo_map[echo] <= logging.INFO \
+           and not self.logger.handlers:
             _add_default_handler(self.logger)
 
     #
@@ -171,11 +152,6 @@ class InstanceLogger(object):
             selected_level = self.logger.getEffectiveLevel()
 
         if level >= selected_level:
-            if STACKLEVEL:
-                kwargs["stacklevel"] = (
-                    kwargs.get("stacklevel", 1) + STACKLEVEL_OFFSET
-                )
-
             self.logger._log(level, msg, args, **kwargs)
 
     def isEnabledFor(self, level):
@@ -198,12 +174,12 @@ def instance_logger(instance, echoflag=None):
     """create a logger for an instance that implements :class:`.Identified`."""
 
     if instance.logging_name:
-        name = "%s.%s" % (
-            _qual_logger_name_for_cls(instance.__class__),
-            instance.logging_name,
-        )
+        name = "%s.%s.%s" % (instance.__class__.__module__,
+                             instance.__class__.__name__,
+                             instance.logging_name)
     else:
-        name = _qual_logger_name_for_cls(instance.__class__)
+        name = "%s.%s" % (instance.__class__.__module__,
+                          instance.__class__.__name__)
 
     instance._echo = echoflag
 

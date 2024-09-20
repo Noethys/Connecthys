@@ -1,25 +1,21 @@
 # orm/identity.py
-# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 import weakref
-
-from . import util as orm_util
-from .. import exc as sa_exc
+from . import attributes
 from .. import util
-
+from .. import exc as sa_exc
+from . import util as orm_util
 
 class IdentityMap(object):
     def __init__(self):
         self._dict = {}
         self._modified = set()
         self._wr = weakref.ref(self)
-
-    def _kill(self):
-        self._add_unpresent = _killed
 
     def keys(self):
         return self._dict.keys()
@@ -35,7 +31,7 @@ class IdentityMap(object):
         in the map"""
         self.add(state)
 
-    def update(self, dict_):
+    def update(self, dict):
         raise NotImplementedError("IdentityMap uses add() to insert data")
 
     def clear(self):
@@ -88,6 +84,7 @@ class IdentityMap(object):
 
 
 class WeakInstanceDict(IdentityMap):
+
     def __getitem__(self, key):
         state = self._dict[key]
         o = state.obj()
@@ -127,13 +124,10 @@ class WeakInstanceDict(IdentityMap):
                 if existing is not state:
                     self._manage_removed_state(existing)
                 else:
-                    return None
-        else:
-            existing = None
+                    return
 
         self._dict[state.key] = state
         self._manage_incoming_state(state)
-        return existing
 
     def add(self, state):
         key = state.key
@@ -151,9 +145,8 @@ class WeakInstanceDict(IdentityMap):
                         raise sa_exc.InvalidRequestError(
                             "Can't attach instance "
                             "%s; another instance with key %s is already "
-                            "present in this session."
-                            % (orm_util.state_str(state), state.key)
-                        )
+                            "present in this session." % (
+                                orm_util.state_str(state), state.key))
                 else:
                     return False
         self._dict[key] = state
@@ -242,13 +235,121 @@ class WeakInstanceDict(IdentityMap):
                     self._dict.pop(state.key, None)
                     self._manage_removed_state(state)
 
+    def prune(self):
+        return 0
 
-def _killed(state, key):
-    # external function to avoid creating cycles when assigned to
-    # the IdentityMap
-    raise sa_exc.InvalidRequestError(
-        "Object %s cannot be converted to 'persistent' state, as this "
-        "identity map is no longer valid.  Has the owning Session "
-        "been closed?" % orm_util.state_str(state),
-        code="lkrp",
-    )
+
+class StrongInstanceDict(IdentityMap):
+    """A 'strong-referencing' version of the identity map.
+
+    .. deprecated 1.1::
+        The strong
+        reference identity map is legacy.  See the
+        recipe at :ref:`session_referencing_behavior` for
+        an event-based approach to maintaining strong identity
+        references.
+
+
+    """
+
+    if util.py2k:
+        def itervalues(self):
+            return self._dict.itervalues()
+
+        def iteritems(self):
+            return self._dict.iteritems()
+
+    def __iter__(self):
+        return iter(self.dict_)
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __contains__(self, key):
+        return key in self._dict
+
+    def get(self, key, default=None):
+        return self._dict.get(key, default)
+
+    def values(self):
+        return self._dict.values()
+
+    def items(self):
+        return self._dict.items()
+
+    def all_states(self):
+        return [attributes.instance_state(o) for o in self.values()]
+
+    def contains_state(self, state):
+        return (
+            state.key in self and
+            attributes.instance_state(self[state.key]) is state)
+
+    def replace(self, state):
+        if state.key in self._dict:
+            existing = self._dict[state.key]
+            existing = attributes.instance_state(existing)
+            if existing is not state:
+                self._manage_removed_state(existing)
+            else:
+                return
+
+        self._dict[state.key] = state.obj()
+        self._manage_incoming_state(state)
+
+    def add(self, state):
+        if state.key in self:
+            if attributes.instance_state(self._dict[state.key]) is not state:
+                raise sa_exc.InvalidRequestError(
+                    "Can't attach instance "
+                    "%s; another instance with key %s is already "
+                    "present in this session." % (
+                        orm_util.state_str(state), state.key))
+            return False
+        else:
+            self._dict[state.key] = state.obj()
+            self._manage_incoming_state(state)
+            return True
+
+    def _add_unpresent(self, state, key):
+        # inlined form of add() called by loading.py
+        self._dict[key] = state.obj()
+        state._instance_dict = self._wr
+
+    def _fast_discard(self, state):
+        # used by InstanceState for state being
+        # GC'ed, inlines _managed_removed_state
+        try:
+            obj = self._dict[state.key]
+        except KeyError:
+            # catch gc removed the key after we just checked for it
+            pass
+        else:
+            if attributes.instance_state(obj) is state:
+                self._dict.pop(state.key, None)
+
+    def discard(self, state):
+        self.safe_discard(state)
+
+    def safe_discard(self, state):
+        if state.key in self._dict:
+            obj = self._dict[state.key]
+            st = attributes.instance_state(obj)
+            if st is state:
+                self._dict.pop(state.key, None)
+                self._manage_removed_state(state)
+
+    def prune(self):
+        """prune unreferenced, non-dirty states."""
+
+        ref_count = len(self)
+        dirty = [s.obj() for s in self.all_states() if s.modified]
+
+        # work around http://bugs.python.org/issue6149
+        keepers = weakref.WeakValueDictionary()
+        keepers.update(self)
+
+        self._dict.clear()
+        self._dict.update(keepers)
+        self.modified = bool(dirty)
+        return ref_count - len(self)

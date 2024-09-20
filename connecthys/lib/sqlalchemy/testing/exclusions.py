@@ -1,20 +1,18 @@
 # testing/exclusions.py
-# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 
-import contextlib
 import operator
-import re
-import sys
-
+from ..util import decorator
 from . import config
 from .. import util
-from ..util import decorator
-from ..util.compat import inspect_getfullargspec
+import inspect
+import contextlib
+from sqlalchemy.util.compat import inspect_getargspec
 
 
 def skip_if(predicate, reason=None):
@@ -39,13 +37,6 @@ class compound(object):
 
     def __add__(self, other):
         return self.add(other)
-
-    def as_skips(self):
-        rule = compound()
-        rule.skips.update(self.skips)
-        rule.skips.update(self.fails)
-        rule.tags.update(self.tags)
-        return rule
 
     def add(self, *others):
         copy = compound()
@@ -78,15 +69,15 @@ class compound(object):
 
     def matching_config_reasons(self, config):
         return [
-            predicate._as_string(config)
-            for predicate in self.skips.union(self.fails)
+            predicate._as_string(config) for predicate
+            in self.skips.union(self.fails)
             if predicate(config)
         ]
 
     def include_test(self, include_tags, exclude_tags):
         return bool(
-            not self.tags.intersection(exclude_tags)
-            and (not include_tags or self.tags.intersection(include_tags))
+            not self.tags.intersection(exclude_tags) and
+            (not include_tags or self.tags.intersection(include_tags))
         )
 
     def _extend(self, other):
@@ -95,14 +86,13 @@ class compound(object):
         self.tags.update(other.tags)
 
     def __call__(self, fn):
-        if hasattr(fn, "_sa_exclusion_extend"):
+        if hasattr(fn, '_sa_exclusion_extend'):
             fn._sa_exclusion_extend._extend(self)
             return fn
 
         @decorator
         def decorate(fn, *args, **kw):
             return self._do(config._current, fn, *args, **kw)
-
         decorated = decorate(fn)
         decorated._sa_exclusion_extend = self
         return decorated
@@ -123,8 +113,8 @@ class compound(object):
         for skip in self.skips:
             if skip(cfg):
                 msg = "'%s' : %s" % (
-                    config.get_current_test_name(),
-                    skip._as_string(cfg),
+                    fn.__name__,
+                    skip._as_string(cfg)
                 )
                 config.skip_test(msg)
 
@@ -136,40 +126,32 @@ class compound(object):
             self._expect_success(cfg, name=fn.__name__)
             return return_value
 
-    def _expect_failure(self, config, ex, name="block"):
+    def _expect_failure(self, config, ex, name='block'):
         for fail in self.fails:
             if fail(config):
-                if util.py2k:
-                    str_ex = unicode(ex).encode(  # noqa: F821
-                        "utf-8", errors="ignore"
-                    )
-                else:
-                    str_ex = str(ex)
-                print(
-                    (
-                        "%s failed as expected (%s): %s "
-                        % (name, fail._as_string(config), str_ex)
-                    )
-                )
+                print(("%s failed as expected (%s): %s " % (
+                    name, fail._as_string(config), str(ex))))
                 break
         else:
-            util.raise_(ex, with_traceback=sys.exc_info()[2])
+            util.raise_from_cause(ex)
 
-    def _expect_success(self, config, name="block"):
+    def _expect_success(self, config, name='block'):
         if not self.fails:
             return
-
         for fail in self.fails:
-            if fail(config):
-                raise AssertionError(
-                    "Unexpected success for '%s' (%s)"
-                    % (
-                        name,
-                        " and ".join(
-                            fail._as_string(config) for fail in self.fails
-                        ),
+            if not fail(config):
+                break
+        else:
+            raise AssertionError(
+                "Unexpected success for '%s' (%s)" %
+                (
+                    name,
+                    " and ".join(
+                        fail._as_string(config)
+                        for fail in self.fails
                     )
                 )
+            )
 
 
 def requires_tag(tagname):
@@ -203,28 +185,20 @@ class Predicate(object):
             return predicate
         elif isinstance(predicate, (list, set)):
             return OrPredicate(
-                [cls.as_predicate(pred) for pred in predicate], description
-            )
+                [cls.as_predicate(pred) for pred in predicate],
+                description)
         elif isinstance(predicate, tuple):
             return SpecPredicate(*predicate)
         elif isinstance(predicate, util.string_types):
-            tokens = re.match(
-                r"([\+\w]+)\s*(?:(>=|==|!=|<=|<|>)\s*([\d\.]+))?", predicate
-            )
-            if not tokens:
-                raise ValueError(
-                    "Couldn't locate DB name in predicate: %r" % predicate
-                )
-            db = tokens.group(1)
-            op = tokens.group(2)
-            spec = (
-                tuple(int(d) for d in tokens.group(3).split("."))
-                if tokens.group(3)
-                else None
-            )
-
+            tokens = predicate.split(" ", 2)
+            op = spec = None
+            db = tokens.pop(0)
+            if tokens:
+                op = tokens.pop(0)
+            if tokens:
+                spec = tuple(int(d) for d in tokens.pop(0).split("."))
             return SpecPredicate(db, op, spec, description=description)
-        elif callable(predicate):
+        elif util.callable(predicate):
             return LambdaPredicate(predicate, description)
         else:
             assert False, "unknown predicate type: %s" % predicate
@@ -235,13 +209,11 @@ class Predicate(object):
             bool_ = not negate
         return self.description % {
             "driver": config.db.url.get_driver_name()
-            if config
-            else "<no driver>",
+            if config else "<no driver>",
             "database": config.db.url.get_backend_name()
-            if config
-            else "<no database>",
+            if config else "<no database>",
             "doesnt_support": "doesn't support" if bool_ else "does support",
-            "does_support": "does support" if bool_ else "doesn't support",
+            "does_support": "does support" if bool_ else "doesn't support"
         }
 
     def _as_string(self, config=None, negate=False):
@@ -268,24 +240,21 @@ class SpecPredicate(Predicate):
         self.description = description
 
     _ops = {
-        "<": operator.lt,
-        ">": operator.gt,
-        "==": operator.eq,
-        "!=": operator.ne,
-        "<=": operator.le,
-        ">=": operator.ge,
-        "in": operator.contains,
-        "between": lambda val, pair: val >= pair[0] and val <= pair[1],
+        '<': operator.lt,
+        '>': operator.gt,
+        '==': operator.eq,
+        '!=': operator.ne,
+        '<=': operator.le,
+        '>=': operator.ge,
+        'in': operator.contains,
+        'between': lambda val, pair: val >= pair[0] and val <= pair[1],
     }
 
     def __call__(self, config):
-        if config is None:
-            return False
-
         engine = config.db
 
         if "+" in self.db:
-            dialect, driver = self.db.split("+")
+            dialect, driver = self.db.split('+')
         else:
             dialect, driver = self.db, None
 
@@ -298,9 +267,8 @@ class SpecPredicate(Predicate):
             assert driver is None, "DBAPI version specs not supported yet"
 
             version = _server_version(engine)
-            oper = (
-                hasattr(self.op, "__call__") and self.op or self._ops[self.op]
-            )
+            oper = hasattr(self.op, '__call__') and self.op \
+                or self._ops[self.op]
             return oper(version, self.spec)
         else:
             return True
@@ -315,14 +283,22 @@ class SpecPredicate(Predicate):
                 return "%s" % self.db
         else:
             if negate:
-                return "not %s %s %s" % (self.db, self.op, self.spec)
+                return "not %s %s %s" % (
+                    self.db,
+                    self.op,
+                    self.spec
+                )
             else:
-                return "%s %s %s" % (self.db, self.op, self.spec)
+                return "%s %s %s" % (
+                    self.db,
+                    self.op,
+                    self.spec
+                )
 
 
 class LambdaPredicate(Predicate):
     def __init__(self, lambda_, description=None, args=None, kw=None):
-        spec = inspect_getfullargspec(lambda_)
+        spec = inspect_getargspec(lambda_)
         if not spec[0]:
             self.lambda_ = lambda db: lambda_()
         else:
@@ -374,9 +350,8 @@ class OrPredicate(Predicate):
             conjunction = " and "
         else:
             conjunction = " or "
-        return conjunction.join(
-            p._as_string(config, negate=negate) for p in self.predicates
-        )
+        return conjunction.join(p._as_string(config, negate=negate)
+                                for p in self.predicates)
 
     def _negation_str(self, config):
         if self.description is not None:
@@ -406,18 +381,18 @@ def _server_version(engine):
 
     # force metadata to be retrieved
     conn = engine.connect()
-    version = getattr(engine.dialect, "server_version_info", None)
-    if version is None:
-        version = ()
+    version = getattr(engine.dialect, 'server_version_info', ())
     conn.close()
     return version
 
 
 def db_spec(*dbs):
-    return OrPredicate([Predicate.as_predicate(db) for db in dbs])
+    return OrPredicate(
+        [Predicate.as_predicate(db) for db in dbs]
+    )
 
 
-def open():  # noqa
+def open():
     return skip_if(BooleanPredicate(False, "mark as execute"))
 
 
@@ -439,7 +414,11 @@ def fails_on(db, reason=None):
 
 
 def fails_on_everything_except(*dbs):
-    return succeeds_if(OrPredicate([Predicate.as_predicate(db) for db in dbs]))
+    return succeeds_if(
+        OrPredicate([
+            Predicate.as_predicate(db) for db in dbs
+        ])
+    )
 
 
 def skip(db, reason=None):
@@ -448,9 +427,8 @@ def skip(db, reason=None):
 
 def only_on(dbs, reason=None):
     return only_if(
-        OrPredicate(
-            [Predicate.as_predicate(db, reason) for db in util.to_list(dbs)]
-        )
+        OrPredicate([Predicate.as_predicate(db, reason)
+                     for db in util.to_list(dbs)])
     )
 
 
@@ -460,6 +438,7 @@ def exclude(db, op, spec, reason=None):
 
 def against(config, *queries):
     assert queries, "no queries sent!"
-    return OrPredicate([Predicate.as_predicate(query) for query in queries])(
-        config
-    )
+    return OrPredicate([
+        Predicate.as_predicate(query)
+        for query in queries
+    ])(config)

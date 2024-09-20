@@ -1,20 +1,16 @@
 # mssql/mxodbc.py
-# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 """
 .. dialect:: mssql+mxodbc
     :name: mxODBC
     :dbapi: mxodbc
     :connectstring: mssql+mxodbc://<username>:<password>@<dsnname>
-    :url: https://www.egenix.com/
-
-.. deprecated:: 1.4 The mxODBC DBAPI is deprecated and will be removed
-   in a future version. Please use one of the supported DBAPIs to
-   connect to mssql.
+    :url: http://www.egenix.com/
 
 Execution Modes
 ---------------
@@ -47,19 +43,18 @@ of ``False`` will unconditionally use string-escaped parameters.
 """
 
 
-from .base import _MSDate
-from .base import _MSDateTime
-from .base import _MSTime
-from .base import MSDialect
-from .base import VARBINARY
-from .pyodbc import _MSNumeric_pyodbc
-from .pyodbc import MSExecutionContext_pyodbc
 from ... import types as sqltypes
 from ...connectors.mxodbc import MxODBCConnector
+from .pyodbc import MSExecutionContext_pyodbc, _MSNumeric_pyodbc
+from .base import (MSDialect,
+                   MSSQLStrictCompiler,
+                   VARBINARY,
+                   _MSDateTime, _MSDate, _MSTime)
 
 
 class _MSNumeric_mxodbc(_MSNumeric_pyodbc):
-    """Include pyodbc's numeric processor."""
+    """Include pyodbc's numeric processor.
+    """
 
 
 class _MSDate_mxodbc(_MSDate):
@@ -69,7 +64,6 @@ class _MSDate_mxodbc(_MSDate):
                 return "%s-%s-%s" % (value.year, value.month, value.day)
             else:
                 return None
-
         return process
 
 
@@ -80,7 +74,6 @@ class _MSTime_mxodbc(_MSTime):
                 return "%s:%s:%s" % (value.hour, value.minute, value.second)
             else:
                 return None
-
         return process
 
 
@@ -105,7 +98,6 @@ class _VARBINARY_mxodbc(VARBINARY):
             else:
                 # should pull from mx.ODBC.Manager.BinaryNull
                 return dialect.dbapi.BinaryNull
-
         return process
 
 
@@ -115,7 +107,6 @@ class MSExecutionContext_mxodbc(MSExecutionContext_pyodbc):
     SELECT SCOPE_IDENTITY in cases where OUTPUT clause
     does not work (tables with insert triggers).
     """
-
     # todo - investigate whether the pyodbc execution context
     #       is really only being used in cases where OUTPUT
     #       won't work.
@@ -126,7 +117,6 @@ class MSDialect_mxodbc(MxODBCConnector, MSDialect):
     # this is only needed if "native ODBC" mode is used,
     # which is now disabled by default.
     # statement_compiler = MSSQLStrictCompiler
-    supports_statement_cache = True
 
     execution_ctx_cls = MSExecutionContext_mxodbc
 
@@ -145,6 +135,5 @@ class MSDialect_mxodbc(MxODBCConnector, MSDialect):
     def __init__(self, description_encoding=None, **params):
         super(MSDialect_mxodbc, self).__init__(**params)
         self.description_encoding = description_encoding
-
 
 dialect = MSDialect_mxodbc

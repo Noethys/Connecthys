@@ -1,64 +1,60 @@
 # util/topological.py
-# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 """Topological sorting algorithms."""
 
-from .. import util
 from ..exc import CircularDependencyError
+from .. import util
 
-__all__ = ["sort", "sort_as_subsets", "find_cycles"]
+__all__ = ['sort', 'sort_as_subsets', 'find_cycles']
 
 
-def sort_as_subsets(tuples, allitems):
+def sort_as_subsets(tuples, allitems, deterministic_order=False):
 
     edges = util.defaultdict(set)
     for parent, child in tuples:
         edges[child].add(parent)
 
-    todo = list(allitems)
-    todo_set = set(allitems)
+    Set = util.OrderedSet if deterministic_order else set
 
-    while todo_set:
-        output = []
+    todo = Set(allitems)
+
+    while todo:
+        output = Set()
         for node in todo:
-            if todo_set.isdisjoint(edges[node]):
-                output.append(node)
+            if todo.isdisjoint(edges[node]):
+                output.add(node)
 
         if not output:
             raise CircularDependencyError(
                 "Circular dependency detected.",
                 find_cycles(tuples, allitems),
-                _gen_edges(edges),
+                _gen_edges(edges)
             )
 
-        todo_set.difference_update(output)
-        todo = [t for t in todo if t in todo_set]
+        todo.difference_update(output)
         yield output
 
 
-def sort(tuples, allitems, deterministic_order=True):
+def sort(tuples, allitems, deterministic_order=False):
     """sort the given list of items by dependency.
 
     'tuples' is a list of tuples representing a partial ordering.
-
-    deterministic_order is no longer used, the order is now always
-    deterministic given the order of "allitems".    the flag is there
-    for backwards compatibility with Alembic.
-
+    'deterministic_order' keeps items within a dependency tier in list order.
     """
 
-    for set_ in sort_as_subsets(tuples, allitems):
+    for set_ in sort_as_subsets(tuples, allitems, deterministic_order):
         for s in set_:
             yield s
 
 
 def find_cycles(tuples, allitems):
     # adapted from:
-    # https://neopythonic.blogspot.com/2009/01/detecting-cycles-in-directed-graph.html
+    # http://neopythonic.blogspot.com/2009/01/detecting-cycles-in-directed-graph.html
 
     edges = util.defaultdict(set)
     for parent, child in tuples:
@@ -83,7 +79,7 @@ def find_cycles(tuples, allitems):
             top = stack[-1]
             for node in edges[top]:
                 if node in stack:
-                    cyc = stack[stack.index(node) :]
+                    cyc = stack[stack.index(node):]
                     todo.difference_update(cyc)
                     output.update(cyc)
 
@@ -97,4 +93,8 @@ def find_cycles(tuples, allitems):
 
 
 def _gen_edges(edges):
-    return set([(right, left) for left in edges for right in edges[left]])
+    return set([
+        (right, left)
+        for left in edges
+        for right in edges[left]
+    ])

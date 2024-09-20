@@ -1,25 +1,25 @@
 # ext/index.py
-# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 """Define attributes on ORM-mapped classes that have "index" attributes for
-columns with :class:`_types.Indexable` types.
+columns with :class:`~.types.Indexable` types.
 
 "index" means the attribute is associated with an element of an
-:class:`_types.Indexable` column with the predefined index to access it.
-The :class:`_types.Indexable` types include types such as
-:class:`_types.ARRAY`, :class:`_types.JSON` and
-:class:`_postgresql.HSTORE`.
+:class:`~.types.Indexable` column with the predefined index to access it.
+The :class:`~.types.Indexable` types include types such as
+:class:`~.types.ARRAY`, :class:`~.types.JSON` and
+:class:`~.postgresql.HSTORE`.
 
 
 
 The :mod:`~sqlalchemy.ext.indexable` extension provides
-:class:`_schema.Column`-like interface for any element of an
-:class:`_types.Indexable` typed column. In simple cases, it can be
-treated as a :class:`_schema.Column` - mapped attribute.
+:class:`~.schema.Column`-like interface for any element of an
+:class:`~.types.Indexable` typed column. In simple cases, it can be
+treated as a :class:`~.schema.Column` - mapped attribute.
 
 
 .. versionadded:: 1.1
@@ -174,6 +174,10 @@ data structure does not exist, and a set operation is called:
   rules.
 
 
+
+
+
+
 Subclassing
 ===========
 
@@ -192,7 +196,7 @@ where we want to also include automatic casting plus ``astext()``::
             return expr.astext.cast(self.cast_type)
 
 The above subclass can be used with the PostgreSQL-specific
-version of :class:`_postgresql.JSON`::
+version of :class:`.postgresql.JSON`::
 
     from sqlalchemy import Column, Integer
     from sqlalchemy.ext.declarative import declarative_base
@@ -210,7 +214,7 @@ version of :class:`_postgresql.JSON`::
 
 The ``age`` attribute at the instance level works as before; however
 when rendering SQL, PostgreSQL's ``->>`` operator will be used
-for indexed access, instead of the usual index operator of ``->``::
+for indexed access, instead of the usual index opearator of ``->``::
 
     >>> query = session.query(Person).filter(Person.age < 20)
 
@@ -220,21 +224,20 @@ The above query will render::
     FROM person
     WHERE CAST(person.data ->> %(data_1)s AS INTEGER) < %(param_1)s
 
-"""  # noqa
+"""
 from __future__ import absolute_import
 
-from .. import inspect
-from .. import util
-from ..ext.hybrid import hybrid_property
+from sqlalchemy import inspect
 from ..orm.attributes import flag_modified
+from ..ext.hybrid import hybrid_property
 
 
-__all__ = ["index_property"]
+__all__ = ['index_property']
 
 
 class index_property(hybrid_property):  # noqa
     """A property generator. The generated property describes an object
-    attribute that corresponds to an :class:`_types.Indexable`
+    attribute that corresponds to an :class:`~.types.Indexable`
     column.
 
     .. versionadded:: 1.1
@@ -248,14 +251,8 @@ class index_property(hybrid_property):  # noqa
     _NO_DEFAULT_ARGUMENT = object()
 
     def __init__(
-        self,
-        attr_name,
-        index,
-        default=_NO_DEFAULT_ARGUMENT,
-        datatype=None,
-        mutable=True,
-        onebased=True,
-    ):
+            self, attr_name, index, default=_NO_DEFAULT_ARGUMENT,
+            datatype=None, mutable=True, onebased=True):
         """Create a new :class:`.index_property`.
 
         :param attr_name:
@@ -302,9 +299,9 @@ class index_property(hybrid_property):  # noqa
                 self.datatype = dict
         self.onebased = onebased
 
-    def _fget_default(self, err=None):
+    def _fget_default(self):
         if self.default == self._NO_DEFAULT_ARGUMENT:
-            util.raise_(AttributeError(self.attr_name), replace_context=err)
+            raise AttributeError(self.attr_name)
         else:
             return self.default
 
@@ -315,8 +312,8 @@ class index_property(hybrid_property):  # noqa
             return self._fget_default()
         try:
             value = column_value[self.index]
-        except (KeyError, IndexError) as err:
-            return self._fget_default(err)
+        except (KeyError, IndexError):
+            return self._fget_default()
         else:
             return value
 
@@ -338,8 +335,8 @@ class index_property(hybrid_property):  # noqa
             raise AttributeError(self.attr_name)
         try:
             del column_value[self.index]
-        except KeyError as err:
-            util.raise_(AttributeError(self.attr_name), replace_context=err)
+        except KeyError:
+            raise AttributeError(self.attr_name)
         else:
             setattr(instance, attr_name, column_value)
             flag_modified(instance, attr_name)

@@ -1,9 +1,9 @@
 # ext/compiler.py
-# Copyright (C) 2005-2022 the SQLAlchemy authors and contributors
+# Copyright (C) 2005-2018 the SQLAlchemy authors and contributors
 # <see AUTHORS file>
 #
 # This module is part of SQLAlchemy and is released under
-# the MIT License: https://www.opensource.org/licenses/mit-license.php
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
 
 r"""Provides an API for creation of custom ClauseElements and compilers.
 
@@ -18,7 +18,7 @@ more callables defining its compilation::
     from sqlalchemy.sql.expression import ColumnClause
 
     class MyColumn(ColumnClause):
-        inherit_cache = True
+        pass
 
     @compiles(MyColumn)
     def compile_mycolumn(element, compiler, **kw):
@@ -31,8 +31,8 @@ when the object is compiled to a string::
 
     from sqlalchemy import select
 
-    s = select(MyColumn('x'), MyColumn('y'))
-    print(str(s))
+    s = select([MyColumn('x'), MyColumn('y')])
+    print str(s)
 
 Produces::
 
@@ -47,7 +47,6 @@ invoked for the dialect in use::
     from sqlalchemy.schema import DDLElement
 
     class AlterColumn(DDLElement):
-        inherit_cache = False
 
         def __init__(self, column, cmd):
             self.column = column
@@ -65,8 +64,6 @@ invoked for the dialect in use::
 The second ``visit_alter_table`` will be invoked when any ``postgresql``
 dialect is used.
 
-.. _compilerext_compiling_subelements:
-
 Compiling sub-elements of a custom expression construct
 =======================================================
 
@@ -81,8 +78,6 @@ method which can be used for compilation of embedded attributes::
     from sqlalchemy.sql.expression import Executable, ClauseElement
 
     class InsertFromSelect(Executable, ClauseElement):
-        inherit_cache = False
-
         def __init__(self, table, select):
             self.table = table
             self.select = select
@@ -90,12 +85,12 @@ method which can be used for compilation of embedded attributes::
     @compiles(InsertFromSelect)
     def visit_insert_from_select(element, compiler, **kw):
         return "INSERT INTO %s (%s)" % (
-            compiler.process(element.table, asfrom=True, **kw),
-            compiler.process(element.select, **kw)
+            compiler.process(element.table, asfrom=True),
+            compiler.process(element.select)
         )
 
-    insert = InsertFromSelect(t1, select(t1).where(t1.c.x>5))
-    print(insert)
+    insert = InsertFromSelect(t1, select([t1]).where(t1.c.x>5))
+    print insert
 
 Produces::
 
@@ -106,7 +101,7 @@ Produces::
 
     The above ``InsertFromSelect`` construct is only an example, this actual
     functionality is already available using the
-    :meth:`_expression.Insert.from_select` method.
+    :meth:`.Insert.from_select` method.
 
 .. note::
 
@@ -124,11 +119,10 @@ below where we generate a CHECK constraint that embeds a SQL expression::
 
     @compiles(MyConstraint)
     def compile_my_constraint(constraint, ddlcompiler, **kw):
-        kw['literal_binds'] = True
         return "CONSTRAINT %s CHECK (%s)" % (
             constraint.name,
             ddlcompiler.sql_compiler.process(
-                constraint.expression, **kw)
+                constraint.expression, literal_binds=True)
         )
 
 Above, we add an additional flag to the process step as called by
@@ -145,8 +139,7 @@ supported.
 Enabling Autocommit on a Construct
 ==================================
 
-Recall from the section :ref:`autocommit` that the :class:`_engine.Engine`,
-when
+Recall from the section :ref:`autocommit` that the :class:`.Engine`, when
 asked to execute a construct in the absence of a user-defined transaction,
 detects if the given construct represents DML or DDL, that is, a data
 modification or data definition statement, which requires (or may require,
@@ -171,7 +164,7 @@ is a "frozen" dictionary which supplies a generative ``union()`` method)::
 
 More succinctly, if the construct is truly similar to an INSERT, UPDATE, or
 DELETE, :class:`.UpdateBase` can be used, which already is a subclass
-of :class:`.Executable`, :class:`_expression.ClauseElement` and includes the
+of :class:`.Executable`, :class:`.ClauseElement` and includes the
 ``autocommit`` flag::
 
     from sqlalchemy.sql.expression import UpdateBase
@@ -257,7 +250,6 @@ A synopsis is as follows:
 
       class timestamp(ColumnElement):
           type = TIMESTAMP()
-          inherit_cache = True
 
 * :class:`~sqlalchemy.sql.functions.FunctionElement` - This is a hybrid of a
   ``ColumnElement`` and a "from clause" like object, and represents a SQL
@@ -270,125 +262,28 @@ A synopsis is as follows:
 
       class coalesce(FunctionElement):
           name = 'coalesce'
-          inherit_cache = True
 
       @compiles(coalesce)
       def compile(element, compiler, **kw):
-          return "coalesce(%s)" % compiler.process(element.clauses, **kw)
+          return "coalesce(%s)" % compiler.process(element.clauses)
 
       @compiles(coalesce, 'oracle')
       def compile(element, compiler, **kw):
           if len(element.clauses) > 2:
               raise TypeError("coalesce only supports two arguments on Oracle")
-          return "nvl(%s)" % compiler.process(element.clauses, **kw)
+          return "nvl(%s)" % compiler.process(element.clauses)
 
-* :class:`.DDLElement` - The root of all DDL expressions,
-  like CREATE TABLE, ALTER TABLE, etc. Compilation of :class:`.DDLElement`
-  subclasses is issued by a :class:`.DDLCompiler` instead of a
-  :class:`.SQLCompiler`. :class:`.DDLElement` can also be used as an event hook
-  in conjunction with event hooks like :meth:`.DDLEvents.before_create` and
-  :meth:`.DDLEvents.after_create`, allowing the construct to be invoked
-  automatically during CREATE TABLE and DROP TABLE sequences.
-
-  .. seealso::
-
-    :ref:`metadata_ddl_toplevel` - contains examples of associating
-    :class:`.DDL` objects (which are themselves :class:`.DDLElement`
-    instances) with :class:`.DDLEvents` event hooks.
+* :class:`~sqlalchemy.schema.DDLElement` - The root of all DDL expressions,
+  like CREATE TABLE, ALTER TABLE, etc. Compilation of ``DDLElement``
+  subclasses is issued by a ``DDLCompiler`` instead of a ``SQLCompiler``.
+  ``DDLElement`` also features ``Table`` and ``MetaData`` event hooks via the
+  ``execute_at()`` method, allowing the construct to be invoked during CREATE
+  TABLE and DROP TABLE sequences.
 
 * :class:`~sqlalchemy.sql.expression.Executable` - This is a mixin which
   should be used with any expression class that represents a "standalone"
   SQL statement that can be passed directly to an ``execute()`` method.  It
   is already implicit within ``DDLElement`` and ``FunctionElement``.
-
-Most of the above constructs also respond to SQL statement caching.   A
-subclassed construct will want to define the caching behavior for the object,
-which usually means setting the flag ``inherit_cache`` to the value of
-``False`` or ``True``.  See the next section :ref:`compilerext_caching`
-for background.
-
-
-.. _compilerext_caching:
-
-Enabling Caching Support for Custom Constructs
-==============================================
-
-SQLAlchemy as of version 1.4 includes a
-:ref:`SQL compilation caching facility <sql_caching>` which will allow
-equivalent SQL constructs to cache their stringified form, along with other
-structural information used to fetch results from the statement.
-
-For reasons discussed at :ref:`caching_caveats`, the implementation of this
-caching system takes a conservative approach towards including custom SQL
-constructs and/or subclasses within the caching system.   This includes that
-any user-defined SQL constructs, including all the examples for this
-extension, will not participate in caching by default unless they positively
-assert that they are able to do so.  The :attr:`.HasCacheKey.inherit_cache`
-attribute when set to ``True`` at the class level of a specific subclass
-will indicate that instances of this class may be safely cached, using the
-cache key generation scheme of the immediate superclass.  This applies
-for example to the "synopsis" example indicated previously::
-
-    class MyColumn(ColumnClause):
-        inherit_cache = True
-
-    @compiles(MyColumn)
-    def compile_mycolumn(element, compiler, **kw):
-        return "[%s]" % element.name
-
-Above, the ``MyColumn`` class does not include any new state that
-affects its SQL compilation; the cache key of ``MyColumn`` instances will
-make use of that of the ``ColumnClause`` superclass, meaning it will take
-into account the class of the object (``MyColumn``), the string name and
-datatype of the object::
-
-    >>> MyColumn("some_name", String())._generate_cache_key()
-    CacheKey(
-        key=('0', <class '__main__.MyColumn'>,
-        'name', 'some_name',
-        'type', (<class 'sqlalchemy.sql.sqltypes.String'>,
-                 ('length', None), ('collation', None))
-    ), bindparams=[])
-
-For objects that are likely to be **used liberally as components within many
-larger statements**, such as :class:`_schema.Column` subclasses and custom SQL
-datatypes, it's important that **caching be enabled as much as possible**, as
-this may otherwise negatively affect performance.
-
-An example of an object that **does** contain state which affects its SQL
-compilation is the one illustrated at :ref:`compilerext_compiling_subelements`;
-this is an "INSERT FROM SELECT" construct that combines together a
-:class:`_schema.Table` as well as a :class:`_sql.Select` construct, each of
-which independently affect the SQL string generation of the construct.  For
-this class, the example illustrates that it simply does not participate in
-caching::
-
-    class InsertFromSelect(Executable, ClauseElement):
-        inherit_cache = False
-
-        def __init__(self, table, select):
-            self.table = table
-            self.select = select
-
-    @compiles(InsertFromSelect)
-    def visit_insert_from_select(element, compiler, **kw):
-        return "INSERT INTO %s (%s)" % (
-            compiler.process(element.table, asfrom=True, **kw),
-            compiler.process(element.select, **kw)
-        )
-
-While it is also possible that the above ``InsertFromSelect`` could be made to
-produce a cache key that is composed of that of the :class:`_schema.Table` and
-:class:`_sql.Select` components together, the API for this is not at the moment
-fully public. However, for an "INSERT FROM SELECT" construct, which is only
-used by itself for specific operations, caching is not as critical as in the
-previous example.
-
-For objects that are **used in relative isolation and are generally
-standalone**, such as custom :term:`DML` constructs like an "INSERT FROM
-SELECT", **caching is generally less critical** as the lack of caching for such
-a construct will have only localized implications for that specific operation.
-
 
 Further Examples
 ================
@@ -412,7 +307,6 @@ For PostgreSQL and Microsoft SQL Server::
 
     class utcnow(expression.FunctionElement):
         type = DateTime()
-        inherit_cache = True
 
     @compiles(utcnow, 'postgresql')
     def pg_utcnow(element, compiler, **kw):
@@ -442,14 +336,13 @@ that is of the highest value - its equivalent to Python's ``max``
 function.  A SQL standard version versus a CASE based version which only
 accommodates two arguments::
 
-    from sqlalchemy.sql import expression, case
+    from sqlalchemy.sql import expression
     from sqlalchemy.ext.compiler import compiles
     from sqlalchemy.types import Numeric
 
     class greatest(expression.FunctionElement):
         type = Numeric()
         name = 'greatest'
-        inherit_cache = True
 
     @compiles(greatest)
     def default_greatest(element, compiler, **kw):
@@ -460,7 +353,12 @@ accommodates two arguments::
     @compiles(greatest, 'oracle')
     def case_greatest(element, compiler, **kw):
         arg1, arg2 = list(element.clauses)
-        return compiler.process(case([(arg1 > arg2, arg1)], else_=arg2), **kw)
+        return "CASE WHEN %s > %s THEN %s ELSE %s END" % (
+            compiler.process(arg1),
+            compiler.process(arg2),
+            compiler.process(arg1),
+            compiler.process(arg2),
+        )
 
 Example usage::
 
@@ -481,7 +379,7 @@ don't have a "false" constant::
     from sqlalchemy.ext.compiler import compiles
 
     class sql_false(expression.ColumnElement):
-        inherit_cache = True
+        pass
 
     @compiles(sql_false)
     def default_false(element, compiler, **kw):
@@ -498,76 +396,63 @@ Example usage::
     from sqlalchemy import select, union_all
 
     exp = union_all(
-        select(users.c.name, sql_false().label("enrolled")),
-        select(customers.c.name, customers.c.enrolled)
+        select([users.c.name, sql_false().label("enrolled")]),
+        select([customers.c.name, customers.c.enrolled])
     )
 
 """
 from .. import exc
-from .. import util
-from ..sql import sqltypes
+from ..sql import visitors
 
 
 def compiles(class_, *specs):
     """Register a function as a compiler for a
-    given :class:`_expression.ClauseElement` type."""
+    given :class:`.ClauseElement` type."""
 
     def decorate(fn):
         # get an existing @compiles handler
-        existing = class_.__dict__.get("_compiler_dispatcher", None)
+        existing = class_.__dict__.get('_compiler_dispatcher', None)
 
         # get the original handler.  All ClauseElement classes have one
         # of these, but some TypeEngine classes will not.
-        existing_dispatch = getattr(class_, "_compiler_dispatch", None)
+        existing_dispatch = getattr(class_, '_compiler_dispatch', None)
 
         if not existing:
             existing = _dispatcher()
 
             if existing_dispatch:
-
                 def _wrap_existing_dispatch(element, compiler, **kw):
                     try:
                         return existing_dispatch(element, compiler, **kw)
-                    except exc.UnsupportedCompilationError as uce:
-                        util.raise_(
-                            exc.UnsupportedCompilationError(
-                                compiler,
-                                type(element),
-                                message="%s construct has no default "
-                                "compilation handler." % type(element),
-                            ),
-                            from_=uce,
-                        )
-
-                existing.specs["default"] = _wrap_existing_dispatch
+                    except exc.UnsupportedCompilationError:
+                        raise exc.CompileError(
+                            "%s construct has no default "
+                            "compilation handler." % type(element))
+                existing.specs['default'] = _wrap_existing_dispatch
 
             # TODO: why is the lambda needed ?
-            setattr(
-                class_,
-                "_compiler_dispatch",
-                lambda *arg, **kw: existing(*arg, **kw),
-            )
-            setattr(class_, "_compiler_dispatcher", existing)
+            setattr(class_, '_compiler_dispatch',
+                    lambda *arg, **kw: existing(*arg, **kw))
+            setattr(class_, '_compiler_dispatcher', existing)
 
         if specs:
             for s in specs:
                 existing.specs[s] = fn
 
         else:
-            existing.specs["default"] = fn
+            existing.specs['default'] = fn
         return fn
-
     return decorate
 
 
 def deregister(class_):
     """Remove all custom compilers associated with a given
-    :class:`_expression.ClauseElement` type.
+    :class:`.ClauseElement` type."""
 
-    """
-
-    if hasattr(class_, "_compiler_dispatcher"):
-        class_._compiler_dispatch = class_._original_compiler_dispatch
+    if hasattr(class_, '_compiler_dispatcher'):
+        # regenerate default _compiler_dispatch
+        visitors._generate_dispatch(class_)
+        # remove custom directive
         del class_._compiler_dispatcher
 
 
@@ -580,34 +465,10 @@ class _dispatcher(object):
         fn = self.specs.get(compiler.dialect.name, None)
         if not fn:
             try:
-                fn = self.specs["default"]
-            except KeyError as ke:
-                util.raise_(
-                    exc.UnsupportedCompilationError(
-                        compiler,
-                        type(element),
-                        message="%s construct has no default "
-                        "compilation handler." % type(element),
-                    ),
-                    replace_context=ke,
-                )
+                fn = self.specs['default']
+            except KeyError:
+                raise exc.CompileError(
+                    "%s construct has no default "
+                    "compilation handler." % type(element))
 
-        # if compilation includes add_to_result_map, collect add_to_result_map
-        # arguments from the user-defined callable, which are probably none
-        # because this is not public API.  if it wasn't called, then call it
-        # ourselves.
-        arm = kw.get("add_to_result_map", None)
-        if arm:
-            arm_collection = []
-            kw["add_to_result_map"] = lambda *args: arm_collection.append(args)
-
-        expr = fn(element, compiler, **kw)
-
-        if arm:
-            if not arm_collection:
-                arm_collection.append(
-                    (None, None, (element,), sqltypes.NULLTYPE)
-                )
-            for tup in arm_collection:
-                arm(*tup)
-        return expr
+        return fn(element, compiler, **kw)
