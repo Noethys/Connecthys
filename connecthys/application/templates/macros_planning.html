@@ -605,7 +605,7 @@
 			});
 			
 			// Coche les cases du planning
-			$("input#case:enabled").each(function() {
+			$("input#case").not(":disabled").each(function() {
 			
 				var dateeng = $(this).attr('data-date');
 				var datejs = moment(dateeng, 'YYYY-MM-DD');
