@@ -17,7 +17,10 @@ from flask_adminlte import AdminLTE
 
 import os.path
 REP_APPLICATION = os.path.abspath(os.path.dirname(__file__))
-REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
+if sys.platform.startswith('linux'):
+    REP_CONNECTHYS = os.path.join("/", "var", "log", "connectys")
+else:
+    REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
 REP_PIECES = REP_CONNECTHYS + "/pieces"
 
 # Récupération du numéro de version de l'application
