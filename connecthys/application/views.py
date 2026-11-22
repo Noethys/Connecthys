@@ -303,8 +303,15 @@ def syncdown(secret=0, last=0):
 
 @app.errorhandler(500)
 def internal_error(exception):
-    trace = traceback.format_exc()
-    return("<pre>" + trace + "</pre>"), 500
+    # La trace complète est enregistrée dans le journal mais n'est jamais renvoyée au visiteur
+    # (elle divulgue les chemins serveur, les requêtes SQL et la configuration).
+    app.logger.error(u"Erreur interne 500 :\n%s", traceback.format_exc())
+    try :
+        db.session.rollback()
+    except :
+        pass
+    message = u"<h1>Une erreur est survenue</h1><p>Une erreur interne s'est produite. Merci de réessayer ultérieurement ou de contacter l'administrateur du portail.</p>"
+    return message, 500
     
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
@@ -855,8 +862,11 @@ def ipn_payzen():
     reponse = p.response(data)
 
     # Vérifie que la signature de la réponse est correcte
+    # IMPORTANT : une notification dont la signature est invalide doit être rejetée,
+    # sinon n'importe qui peut marquer un paiement comme réglé en envoyant un POST falsifié.
     if reponse.signed != True :
-        app.logger.debug(u"Paiement en ligne IDtransaction=%s : ATTENTION, erreur de signature dans la réponse !" % reponse.order_id)
+        app.logger.warning(u"Paiement en ligne IDtransaction=%s : signature invalide, notification rejetee !" % reponse.order_id)
+        abort(403)
 
     # Recherche l'état du paiement
     resultat = ETATS_PAIEMENTS[reponse.result]
@@ -873,6 +883,9 @@ def ipn_payzen():
 
     # Modification du paiement pré-enregistré
     paiement = models.Paiement.query.filter_by(IDtransaction=reponse.order_id).first()
+    if paiement == None :
+        app.logger.warning(u"Paiement en ligne IDtransaction=%s : le paiement pre-enregistre n'a pas ete trouve." % reponse.order_id)
+        return 'Notification ignored', 200
     paiement.resultat = resultat
     paiement.message = reponse.bank_status
     db.session.commit()
@@ -1506,7 +1519,11 @@ def supprimer_demande():
         IDaction = request.args.get("idaction", 0, type=int)
 
         # Suppression de l'action dans la db
-        action = models.Action.query.filter_by(IDaction=IDaction).first()
+        # Vérifie que la demande appartient bien à la famille connectée (évite la suppression des demandes d'autres familles)
+        action = models.Action.query.filter_by(IDaction=IDaction, IDfamille=current_user.IDfamille).first()
+        if action == None :
+            app.logger.warning(u"IDfamille %s : Tentative de suppression de la demande %s d'une autre famille (supprimer_demande).", current_user.IDfamille, IDaction)
+            return jsonify(success=0, error_msg=u"Demande introuvable")
         action.etat = "suppression"
         db.session.commit()
 
@@ -1824,7 +1841,13 @@ def envoyer_reservations():
         date_fin_periode = request.form.get("date_fin_periode", "", type=str)
         commentaire = request.form.get("commentaire", None, type=six.text_type)
         liste_reservations_initiale = request.form.get("liste_reservations_initiale", "", type=str)
-        
+
+        # Vérifie que l'inscription appartient bien à la famille connectée (évite les réservations sur l'inscription d'une autre famille)
+        inscription = models.Inscription.query.filter_by(IDinscription=IDinscription, IDfamille=current_user.IDfamille, IDindividu=IDindividu, IDactivite=IDactivite).first()
+        if inscription == None :
+            app.logger.warning(u"IDfamille %s : Tentative de reservation sur l'inscription %s (individu %s) n'appartenant pas a la famille (envoyer_reservations).", current_user.IDfamille, IDinscription, IDindividu)
+            return jsonify(success=0, error_msg=u"Inscription introuvable")
+
         # Paramètres
         parametres = u"IDactivite=%d#date_debut_periode=%s#date_fin_periode=%s" % (IDactivite, date_debut_periode, date_fin_periode)
         
@@ -2228,6 +2251,13 @@ def envoyer_demande_inscription():
 
     try:
         IDindividu = request.args.get("idindividu", 0, type=int)
+
+        # Vérifie que l'individu appartient bien à la famille connectée (évite les inscriptions pour un enfant d'une autre famille)
+        individu_famille = models.Individu.query.filter_by(IDindividu=IDindividu, IDfamille=current_user.IDfamille).first()
+        if individu_famille == None :
+            app.logger.warning(u"IDfamille %s : Tentative d'inscription de l'individu %s n'appartenant pas a la famille (envoyer_demande_inscription).", current_user.IDfamille, IDindividu)
+            return jsonify(success=0, error_msg=u"Individu introuvable")
+
         activite = request.args.get("activite", "", type=str)
         if activite == "" :
             return jsonify(success=0, error_msg=u"Aucune activité n'a été sélectionnée")
@@ -2403,7 +2433,13 @@ def detail_demande():
         IDaction = request.args.get("idaction", 0, type=int)
         categorie = request.args.get("categorie", "", type=str)
         detail = ""
-        
+
+        # Vérifie que la demande appartient bien à la famille connectée (évite l'accès aux demandes d'autres familles)
+        action = models.Action.query.filter_by(IDaction=IDaction, IDfamille=current_user.IDfamille).first()
+        if action == None :
+            app.logger.warning(u"IDfamille %s : Tentative d'acces a la demande %s d'une autre famille (detail_demande).", current_user.IDfamille, IDaction)
+            return jsonify(success=0, error_msg=u"Demande introuvable")
+
         # Détail des réservations
         if categorie == "reservations" :
         
