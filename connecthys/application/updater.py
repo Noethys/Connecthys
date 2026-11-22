@@ -13,7 +13,10 @@ import os.path
 REP_APPLICATION = os.path.abspath(os.path.dirname(__file__))
 REP_CONNECTHYS = os.path.dirname(REP_APPLICATION)
 import six
-from six.moves.urllib.request import urlopen, urlretrieve
+try:
+    from urllib.request import urlopen, urlretrieve      # Python 3
+except ImportError:                                      # Python 2
+    from six.moves.urllib.request import urlopen, urlretrieve
 import zipfile
 import codecs
 import datetime
